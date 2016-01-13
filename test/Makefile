@@ -4,15 +4,16 @@
 # Can only be built for Linux, not for the embedded
 # hardware.
 #
+include ../preprocessor.make
 
 OUTDIR = build
 TESTS = byteBuffer
 
 %.o: %.c
-	gcc -c -Wall -DNULL_CHECK -DBOUNDS_CHECK -DZERO_MEMORY -I../blibc/include -o $@ $^
+	gcc -c -Wall $(PRE_FLAGS) -I../blibc/include -o $(addprefix build/, $@) $^
 
 %.out: %.o
-	gcc -L../blibc/lib -o build/$@ $^ -lblibc_desktop
+	gcc -L../blibc/lib -o build/$@ $(addprefix build/, $^) -lblibc_desktop
 
 all: directories $(addsuffix Test.out, $(TESTS))
 

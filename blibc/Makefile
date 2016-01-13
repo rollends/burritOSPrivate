@@ -5,11 +5,11 @@
 # for a Linux machine with TARGET=desktop. By default,
 # the embedded target is chosen. 
 #
-
 ifndef TARGET
     TARGET=embedded
 endif
 
+include ../preprocessor.make
 include $(TARGET).make
 
 OUTDIR = build
@@ -22,10 +22,10 @@ _HEADER = $(addprefix include/, $(HEADER))
 all: directories $(OUT)
 
 %.s: src/%.c $(_HEADER)
-	$(XCC) -S $(CFLAGS) -DNULL_CHECK -DBOUNDS_CHECK -DZERO_MEMORY -o build/$@ $< 
+	$(XCC) -S $(CFLAGS) $(PRE_FLAGS) -o $(addprefix build/, $@) $< 
 
 %.o: %.s
-	$(AS) $(ASFLAGS) -o build/$@ build/$^
+	$(AS) $(ASFLAGS) -o $(addprefix build/, $@) $(addprefix build/, $^)
 
 $(OUT): $(SOURCE:.c=.o)
 	$(AR) $(ARFLAGS) lib/$@ $(addprefix build/, $^)
@@ -35,8 +35,8 @@ $(OUT): $(SOURCE:.c=.o)
 .SECONDARY:
 
 clean:
-	-rm -rf $(OUTDIR) $(LIBDIR)
+	-rm -rf $(OUTDIR)
 
 directories:
-		mkdir -p $(OUTDIR)
-		mkdir -p $(LIBDIR)
+	mkdir -p $(OUTDIR)
+	mkdir -p $(LIBDIR)
