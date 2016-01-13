@@ -19,8 +19,6 @@ int byteBufferInit(ByteBuffer* buffer, unsigned char* data, const unsigned short
     {
         return BUFFER_ERROR_LEN;
     }
-
-    buffer->count = 0;
 #endif
 
     buffer->data = data;
@@ -42,7 +40,7 @@ int byteBufferPeek(ByteBuffer* buffer)
 #endif
 
 #ifdef BOUNDS_CHECK
-    if (buffer->count == 0)
+    if (byteBufferCount(buffer) == 0)
     {
         return BUFFER_ERROR_EMPTY;
     }
@@ -61,17 +59,15 @@ int byteBufferGet(ByteBuffer* buffer)
 #endif
 
 #ifdef BOUNDS_CHECK
-    if (buffer->count == 0)
+    if (byteBufferCount(buffer) == 0)
     {
         return BUFFER_ERROR_EMPTY;
     }
-
-    buffer->count--;
 #endif
 
     int b = buffer->data[buffer->head];
 #if ZERO_MEMORY
-    buffer=>data[buffer->head] = 0;
+    buffer->data[buffer->head] = 0;
 #endif
     buffer->head = (buffer->head + 1) % buffer->length;
     buffer->full = 0;
@@ -81,13 +77,18 @@ int byteBufferGet(ByteBuffer* buffer)
 
 int byteBufferPut(ByteBuffer* buffer, const unsigned char byte)
 {
+#ifdef NULL_CHECK
+    if (buffer == 0)
+    {
+        return BUFFER_ERROR_NULLB;
+    }
+#endif
+
 #ifdef BOUNDS_CHECK
-    if (buffer->count == buffer->length)
+    if (byteBufferCount(buffer) == buffer->length)
     {
         return BUFFER_ERROR_FULL;
     }
-
-    buffer->count++;
 #endif
 
     buffer->data[buffer->tail] = byte;
@@ -106,18 +107,21 @@ int byteBufferCount(ByteBuffer* buffer)
     }
 #endif
 
-#if BUFFER_BOUNDS_CHECK
-    return buffer->count;
-#else
     if (buffer->tail >= buffer->head)
     {
-        return buffer->tail - buffer->head;
+        if (buffer->full == 0)
+        {
+            return buffer->tail - buffer->head;
+        }
+        else
+        {
+            return buffer->length;
+        }
     }
     else
     {
         return buffer->length - buffer->head + buffer->tail;
     }
-#endif  
 }
 
 int byteBufferEmpty(ByteBuffer* buffer)

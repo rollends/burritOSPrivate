@@ -21,11 +21,6 @@ typedef struct
     /// The tail index in memory
     unsigned short tail;
 
-#ifdef BOUNDS_CHECK
-    /// The bounds checking counter
-    unsigned short count;
-#endif
-
     /// The length of the buffer
     unsigned short length;
 
@@ -38,7 +33,7 @@ typedef struct
  *
  * @param   buffer  The buffer to initialize
  * @param   data    A pointer to a block of `length` bytes of memory
- * @param   length  The length of the buffer, must be greater than 1 and less than 2^16
+ * @param   length  The length of the buffer, must be greater than 0 and less than 2^16
  * @return  0 if the buffer is successfully initialized, else an error code
  */
 int byteBufferInit(ByteBuffer* buffer, unsigned char* data, const unsigned short length);
