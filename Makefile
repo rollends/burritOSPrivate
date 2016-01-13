@@ -2,6 +2,10 @@
 # Top level Makefile for building all subdirectories
 #
 
+ifndef TARGET
+    TARGET=embedded
+endif
+
 DIRS = blibc test
 
 .PHONY: all $(DIRS)
@@ -9,8 +13,8 @@ DIRS = blibc test
 all: $(DIRS)
 
 $(DIRS):
-	$(MAKE) -C $@
+	$(MAKE) -C $@ TARGET=$(TARGET)
 
 clean:
-	$(MAKE) -C blibc clean
-	$(MAKE) -C test clean
+	$(MAKE) -C blibc TARGET=$(TARGET) clean
+	$(MAKE) -C test TARGET=$(TARGET) clean

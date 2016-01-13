@@ -5,10 +5,6 @@
 # for a Linux machine with TARGET=desktop. By default,
 # the embedded target is chosen. 
 #
-ifndef TARGET
-    TARGET=embedded
-endif
-
 include ../preprocessor.make
 include $(TARGET).make
 
