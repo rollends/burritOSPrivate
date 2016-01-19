@@ -1,13 +1,24 @@
+ifeq ($(TARGET), pi)
+XCC 	= arm-none-eabi-gcc
+AS 	= arm-none-eabi-as
+LD	= arm-none-eabi-ld
+CP	= arm-none-eabi-objcopy
+DM 	= arm-none-eabi-objdump
+CLFAGS	= -Wall -fCPIC -nostdlib -nostartfiles -ffreestanding
+ASFLAGS = 
+FILES 	= build/main_pi.o build/start.o build/contextSwitch.o
+else
 XCC     = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc
 AS      = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/as
 LD      = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld
-
-CFLAGS  = -c -fPIC -Wall -I. -mcpu=arm920t -msoft-float -DEMBEDDED_BUILD
+CFLAGS  = -fPIC -Wall -I. -mcpu=arm920t -msoft-float
 ASFLAGS = -mcpu=arm920t -mapcs-32
-LDFLAGS = -init main -Map bin/main.map -N -T loadmap.ld -L/u/wbcowan/gnuarm-4.0.2/lib/gcc/arm-elf/4.0.2 -L../lib
-LDLIBS  = -lgcc
+FILES	= build/uart.o build/main.o build/start.o build/contextSwitch.o
+endif
 
-all: directories bin/main.elf
+LDFLAGS = -init main -Map bin/main.map -N -T loadmap.ld
+
+all: directories bin/main.bin bin/main.lst
 
 build/%.s: %.c
 	$(XCC) -S $(CFLAGS) $< -o $@
@@ -18,8 +29,14 @@ build/%.o: build/%.s
 build/%.o: %.s
 	$(AS) $(ASFLAGS) -o $@ $^
 
-bin/main.elf: build/uart.o build/main.o build/start.o build/contextSwitch.o
-	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+bin/main.elf: $(FILES)
+	$(LD) $(LDFLAGS) -o $@ $^
+
+bin/main.bin: bin/main.elf
+	$(CP) $< -O binary $@
+
+bin/main.lst: bin/main.elf
+	$(DM) -D $^ > $@
 
 install: main.elf
 	cp $< /u/cs452/tftp/ARM/tpetrick

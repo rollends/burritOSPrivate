@@ -13,13 +13,15 @@
 @
 enterKernelR:
     msr     cpsr_c, #0xDF           @ Switch to system mode
+    sub     sp, #4                  @ Make space for the pc on the stack
     stmfd   sp!, {r0-r12}           @ Store task registers to task stack
-    mov     r0, sp                  @ Store taks sp
+    mov     r0, sp                  @ Store task sp
     mov     r2, lr                  @ Store task lr
     
     msr     cpsr_c, #0xD3           @ Switch to supervisor mode
     mrs     r1, spsr                @ Retrieve the user process PSR
-    stmfd   r0!, {r1, r2, lr}       @ Save the task PSR, LR and PC to the stack
+    stmfd   r0!, {r1, r2}           @ Save the task PSR and LR to the task stack
+    str     lr, [r0, #60]           @ Store the pc to the task stack
 
     ldmfd   sp!, {r4-r12, pc}       @ Restore the kernel registers
 
@@ -28,6 +30,7 @@ enterKernelR:
 @
 enterKernelT:
     msr     cpsr_c, #0xDF           @ Switch to system mode
+    sub     sp, #4                  @ Make space for the pc on the stack
     stmfd   sp!, {r0-r12}           @ Store task registers to task stack
     mov     r0, sp                  @ Store taks sp
     mov     r2, lr                  @ Store task lr
@@ -35,12 +38,13 @@ enterKernelT:
     msr     cpsr_c, #0xD2           @ Switch to irq mode
     mrs     r1, spsr                @ Retrieve the user process PSR
     stmfd   r0!, {r1, r2, lr}       @ Save the task PSR, LR and PC to the stack
+    str     lr, [r0, #60]           @ Store the pc to the task stack
 
     msr     cpsr_c, #0xD3           @ Switch to supervisor mode
     ldmfd   sp!, {r4-r12, pc}       @ Restore the kernel registers
 
 @
-@ C function:   U32 enterTask(U32* sp)
+@ C function:   U32* enterTask(U32* sp)
 @ 
 @ Enters the task with the stack pointer `sp`.
 @
@@ -53,5 +57,4 @@ enterTask:
 
     msr     cpsr_c, #0xD3               @ Switch to supervisor mode
     msr     spsr, r1                    @ Update the SPSR with the task CPSR
-    ldmed   r0, {r0-r12}                @ Load task registers
-    ldmfd   r0, {pc}^                   @ Enter task
+    ldmfd   r0, {r0-r12, pc}^           @ Load task registers
