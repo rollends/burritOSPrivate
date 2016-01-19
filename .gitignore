@@ -1,6 +1,2 @@
-*.lib
-*.a
-*.elf
-*.map
-*.o
-*.s
+build/
+bin/
