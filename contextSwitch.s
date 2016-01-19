@@ -53,7 +53,7 @@ enterTask:
 
     msr     cpsr_c, #0xDF               @ Switch to system mode
     ldmfd   r0!, {r1, lr}               @ Load task PSR and LR from the task sp
-    sub     sp, r0, #56                 @ Set the task sp
+    add     sp, r0, #56                 @ Set the task sp
 
     msr     cpsr_c, #0xD3               @ Switch to supervisor mode
     msr     spsr, r1                    @ Update the SPSR with the task CPSR

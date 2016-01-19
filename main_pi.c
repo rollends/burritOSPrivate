@@ -233,6 +233,7 @@ int main(U32* pc)
                 {
                     printHex(*(sp + i));
                 }
+                printHex(sp);
 
                 sp = enterTask(sp);
                 
@@ -240,6 +241,7 @@ int main(U32* pc)
                 {
                     printHex(*(sp + i));
                 }
+                printHex(sp);
             }
             else
             {
