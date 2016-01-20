@@ -13,7 +13,7 @@
 @
 enterKernelR:
     msr     cpsr_c, #0xDF           @ Switch to system mode
-    sub     sp, #4                  @ Make space for the pc on the stack
+    sub     sp, sp, #4              @ Make space for the pc on the stack
     stmfd   sp!, {r0-r12}           @ Store task registers to task stack
     mov     r0, sp                  @ Store task sp
     mov     r2, lr                  @ Store task lr
@@ -30,7 +30,7 @@ enterKernelR:
 @
 enterKernelT:
     msr     cpsr_c, #0xDF           @ Switch to system mode
-    sub     sp, #4                  @ Make space for the pc on the stack
+    sub     sp, sp, #4              @ Make space for the pc on the stack
     stmfd   sp!, {r0-r12}           @ Store task registers to task stack
     mov     r0, sp                  @ Store taks sp
     mov     r2, lr                  @ Store task lr

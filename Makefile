@@ -1,52 +1,53 @@
-ifeq ($(TARGET), pi)
-XCC 	= arm-none-eabi-gcc
-AS 	= arm-none-eabi-as
-LD	= arm-none-eabi-ld
-CP	= arm-none-eabi-objcopy
-DM 	= arm-none-eabi-objdump
-CFLAGS	= -Wall -O3 -nostdlib -nostartfiles -ffreestanding
-ASFLAGS = 
-FILES 	= build/main_pi.o build/start.o build/contextSwitch.o
-else
-XCC     = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/gcc
-AS      = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/as
-LD      = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld
-CFLAGS  = -fPIC -Wall -I. -mcpu=arm920t -msoft-float
-ASFLAGS = -mcpu=arm920t -mapcs-32
-FILES	= build/uart.o build/main.o build/start.o build/contextSwitch.o
+OUTDIR	= bin
+BLDDIR	= build
+ASMDIR 	= asm
+SRCDIR 	= source
+INCDIR 	= include
+
+CSOURCE = main.c uart.c
+SSOURCE	= contextSwitch.s start.s
+HSOURCE = ts7200.h uart.h
+
+.DEFAULT_GOAL = all
+
+ifndef TARGET
+    TARGET=ts7200
 endif
 
-LDFLAGS = -init main -Map bin/main.map -N -T loadmap.ld
+include make/preprocessor.make
+include make/$(TARGET).make
 
-all: directories bin/main.bin bin/main.lst
+_HSOURCE = $(addprefix $(INCDIR)/, $(HSOURCE))
 
-build/%.s: %.c
-	$(XCC) -S $(CFLAGS) $< -o $@
+all: directories $(OUTDIR)/$(OUT)
 
-build/%.o: build/%.s
+$(BLDDIR)/%.s: $(SRCDIR)/%.c $(_HSOURCE)
+	$(XCC) -S -I$(INCDIR) $(CFLAGS) $(PRE_FLAGS) $< -o $@
+
+$(BLDDIR)/%.o: $(BLDDIR)/%.s
 	$(AS) $(ASFLAGS) -o $@ $^
 
-build/%.o: %.s
+$(BLDDIR)/%.o: $(ASMDIR)/%.s
 	$(AS) $(ASFLAGS) -o $@ $^
 
-bin/main.elf: $(FILES)
+$(OUTDIR)/%.elf: $(addprefix build/, $(CSOURCE:.c=.o)) $(addprefix build/, $(SSOURCE:.s=.o))
 	$(LD) $(LDFLAGS) -o $@ $^
 
-bin/main.bin: bin/main.elf
+$(OUTDIR)/%.bin: $(OUTDIR)/%.elf
 	$(CP) $< -O binary $@
 
-bin/main.lst: bin/main.elf
+$(OUTDIR)/%.lst: $(OUTDIR)/%.elf
 	$(DM) -D $^ > $@
 
-install: main.elf
-	cp $< /u/cs452/tftp/ARM/tpetrick
+install: directories $(TARGET)_install
 
 directories:
-	mkdir -p build
-	mkdir -p bin
+	mkdir -p $(BLDDIR)
+	mkdir -p $(OUTDIR)
+
 clean:
-	rm -rf build
-	rm -rf bin
+	rm -rf $(BLDDIR)
+	rm -rf $(OUTDIR)
 
 .SUFFIXES:
 .SECONDARY:
