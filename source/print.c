@@ -1,5 +1,6 @@
 #include "print.h"
 #include "uart.h"
+#include "vaList.h"
 
 char x2c(int c)
 {
@@ -30,19 +31,61 @@ int printHex(U32 value)
         uartWriteByte(UART_PORT_2, chl);
     }
 
-    uartWriteByte(UART_PORT_2, '\r');
-    uartWriteByte(UART_PORT_2, '\n');
+    return 0;
+}
+
+int printHexByte(U8 value)
+{
+    uartWriteByte(UART_PORT_2, '0');
+    uartWriteByte(UART_PORT_2, 'x');
+    uartWriteByte(UART_PORT_2, x2c(value / 16));
+    uartWriteByte(UART_PORT_2, x2c(value % 16));
 
     return 0;
 }
 
-int printString(char* str)
+int printString(char* format, ...)
 {
-    while (*str)
+    va_list va;
+    va_start(va, format);
+
+    char ch;
+    while ((ch = *(format++)))
     {
-        uartWriteByte(UART_PORT_2, *str);
-        str++;
+        int ret = 0;
+
+        if (ch != '%')
+        {
+            ret = uartWriteByte(UART_PORT_2, ch);
+        }
+        else
+        {
+            ch = *(format++);
+            switch (ch)
+            {
+                case 'c':
+                    ret = uartWriteByte(UART_PORT_2, va_arg(va, S32));
+                    break;
+
+                case 'x':
+                    ret = printHex(va_arg(va, U32));
+                    break;
+
+                case 'b':
+                    ret = printHexByte(va_arg(va, U8));
+                    break;
+
+                case '%':
+                    ret = uartWriteByte(UART_PORT_2, ch);
+                    break;
+
+                default:
+                    break;
+            }
+        }
     }
 
+    va_end(va);
     return 0;
 }
+

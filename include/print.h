@@ -3,7 +3,6 @@
 
 #include "types.h"
 
-int printHex(U32 value);
-int printString(char* str);
+S32 printString(char* str, ...);
 
 #endif

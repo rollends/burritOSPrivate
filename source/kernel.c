@@ -1,126 +1,91 @@
 #include "print.h"
+#include "queue.h"
 #include "sysCall.h"
 #include "task.h"
 #include "types.h"
 #include "uart.h"
+#include "userTasks.h"
 
 extern U32* enterTask(U32*);
 
-void task1()
+void InitialTask()
 {
-    U32 speed = 1;
-    while (1)
+    U32 priorities[4];
+    priorities[0] = 2;
+    priorities[1] = 2;
+    priorities[2] = 0;
+    priorities[3] = 0;
+    U32 i;
+
+    for (i = 0; i < 4; i++)
     {
-        printString("\r\n");
-
-        int test = 10;
-        while (test-- > 0)
-        {
-            volatile int i;
-            for (i = 0; i < 100000/ speed; i++)
-            {
-                asm volatile("nop");
-            }
-
-            uartWriteByte(UART_PORT_2, 'a');
-
-            for (i = 0; i < 100000/ speed; i++)
-            {
-                asm volatile("nop");
-            }
-
-            uartWriteByte(UART_PORT_2, 'b');
-        }
-
-        printString("\r\n");
-        speed = sysPass();
-        printString("\r\n");
-
-        test = 10;
-        while (test-- > 0)
-        {
-            volatile int i;
-            for (i = 0; i < 50000/ speed; i++)
-            {
-                asm volatile("nop");
-            }
-
-            uartWriteByte(UART_PORT_2, 'c');
-
-            for (i = 0; i < 50000/ speed; i++)
-            {
-                asm volatile("nop");
-            }
-
-            uartWriteByte(UART_PORT_2, 'd');
-        }
-
-        printString("\r\n");
-        speed = sysPass();
+        printString("Created: %b\r\n", sysCreate(priorities[i], &TestTask));
     }
+
+    printString("FirstUserTask: exiting\r\n");
+    sysExit();
 }
 
-int kernelMain(int* pc)
+int kernelMain(U32 pc)
 {
     uartSpeed(UART_PORT_2, UART_SPEED_HI);
     uartConfig(UART_PORT_2, 0, 0, 0);                                                      
 
-    uartWriteByte(UART_PORT_2, 27);
-    uartWriteByte(UART_PORT_2, '[');
-    uartWriteByte(UART_PORT_2, '2');
-    uartWriteByte(UART_PORT_2, 'J');
-    uartWriteByte(UART_PORT_2, '\r');
+    printString("%c[2J\r", 27);
 
-    U32 task_stack[512];
-    task_stack[496] = 0x10;
-    task_stack[497] = 15;
-    task_stack[498] = 0;
-    task_stack[499] = 1;
-    task_stack[500] = 2;
-    task_stack[501] = 3;
-    task_stack[502] = 4;
-    task_stack[503] = 5;
-    task_stack[504] = 6;
-    task_stack[505] = 7;
-    task_stack[506] = 8;
-    task_stack[507] = 9;
-    task_stack[508] = 10;
-    task_stack[509] = 11;
-    task_stack[510] = 12;
-    task_stack[511] = (U32)(&task1) + (U32)(pc);
+    Queue queue;
+    queueInit(&queue);
 
-    U32* sp = &(task_stack[496]);
+    U16 currentId = 1;
+    Tasks tasks;
+    tasks.lastTid = 0;
+
+    taskInit(&tasks, 1, (U32)(&InitialTask) + pc, 0);
 
     while(1)
     {
-        U8 c;
-        if (uartReadByte(UART_PORT_2, &c) >= 0)
-        {
-            if (c == 0x0D)
-            {
-                uartWriteByte(UART_PORT_2, 0x0A);
-            }
+        TaskDescriptor* desc = tasks.descriptors + (currentId - 1);
+        desc->stack = enterTask(desc->stack);
 
-            if (c == 'g')
-            {
-                sp = enterTask(sp);
-                U32 id = *(sp + 2);
-                printString("System Call id: ");
-                printHex(id);
-            }
-            else
-            {
-                if (c == 'q')
+        U32 sysCall = desc->stack[2];
+        U32 arg1 = desc->stack[3];
+        U32 arg2 = desc->stack[4];
+        U32* returnVal = &desc->stack[2];
+
+        switch (sysCall)
+        {
+            case SYS_CALL_CREATE_ID:
+                *returnVal = taskInit(&tasks, arg1, arg2 + pc, currentId);
                 {
-                    break;
+                    int i = queueEnqueue(&queue, arg1, *returnVal);
+                    //printString("Enqueue: %x, %b, %x\r\n", i, *returnVal, arg1);
                 }
-                else
-                {
-                    *(sp + 2) = c - '0';
-                    uartWriteByte(UART_PORT_2, c);
-                }
-            }
+                break;
+           
+            case SYS_CALL_PID_ID:
+                *returnVal = desc->pid.fields.id;
+                continue;
+
+            case SYS_CALL_TID_ID:
+                *returnVal = desc->tid.fields.id;
+                continue;
+
+            case SYS_CALL_PRINT_ID:
+                printString("%x\r\n", arg1);
+                continue;
+
+            default:
+                break;
         }
+
+        if (sysCall != SYS_CALL_EXIT_ID)
+        {
+            int i = queueEnqueue(&queue, desc->priority, currentId);
+            //printString("Enqueue: %x, %b, %x\r\n", i, currentId, desc->priority);
+        }
+
+        int result = queueDequeue(&queue, &currentId);
+        //printString("Dequeue: %x, %b\r\n", result, currentId);
     }
 
     return 0;
