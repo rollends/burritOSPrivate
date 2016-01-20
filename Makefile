@@ -4,7 +4,7 @@ ASMDIR 	= asm
 SRCDIR 	= source
 INCDIR 	= include
 
-CSOURCE = kernel.c uart.c
+CSOURCE = kernel.c task.c uart.c
 SSOURCE	= contextSwitch.s start.s
 HSOURCE = ts7200.h uart.h
 
