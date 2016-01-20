@@ -1,8 +1,8 @@
 #include "memory.h"
+#include "sysCall.h"
 #include "types.h"
 #include "uart.h"
 
-extern U32 sys_call(U32, U32, U32, U32);
 extern U32* enterTask(U32*);
 
 char x2c(int c)
@@ -72,7 +72,7 @@ void task1()
         uartWriteChar(UART_PORT_2, '\r');
         uartWriteChar(UART_PORT_2, '\n');
 
-        speed = sys_call(0, 0, 0, 0);
+        speed = sysExit();
 
         uartWriteChar(UART_PORT_2, '\r');
         uartWriteChar(UART_PORT_2, '\n');
@@ -101,7 +101,7 @@ void task1()
         uartWriteChar(UART_PORT_2, '\r');
         uartWriteChar(UART_PORT_2, '\n');
         
-        speed = sys_call(0, 0, 0, 0);
+        speed = sysExit();
     }
 }
 

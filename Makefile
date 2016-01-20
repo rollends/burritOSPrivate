@@ -19,7 +19,7 @@ include make/$(TARGET).make
 
 _HSOURCE = $(addprefix $(INCDIR)/, $(HSOURCE))
 
-all: directories $(OUTDIR)/$(OUT)
+all: directories $(OUTDIR)/$(OUT) $(OUTDIR)/$(basename $(OUT)).lst
 
 $(BLDDIR)/%.s: $(SRCDIR)/%.c $(_HSOURCE)
 	$(XCC) -S -I$(INCDIR) $(CFLAGS) $(PRE_FLAGS) $< -o $@

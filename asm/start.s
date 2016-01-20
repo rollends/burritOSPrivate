@@ -12,7 +12,7 @@ _start:
 
     ldmfd sp!, {pc}
 
-_vector_table:
+vector_table:
     ldr pc,reset_handler_ref
     ldr pc,undefined_handler_ref
     ldr pc,swi_handler_ref
@@ -32,7 +32,7 @@ _vector_table:
     fiq_handler_ref:        .word hang
 
 vector_load:
-    ldr r1, = _vector_table
+    ldr r1, = vector_table
     add r1, r1, r0
     mov r2, #0
 
@@ -58,9 +58,23 @@ hang:
 swi_handler:
     b enterKernelR
 
+.global __sysCall0
+__sysCall0:
+    swi 0
+    bx lr
 
-.global sys_call
-sys_call:
+.global __sysCall1
+__sysCall1:
+    swi 0
+    bx lr
+
+.global __sysCall2
+__sysCall2:
+    swi 0
+    bx lr
+
+.global __sysCall3
+__sysCall3:
     swi 0
     bx lr
     
