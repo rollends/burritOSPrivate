@@ -4,7 +4,7 @@ AS 	= arm-none-eabi-as
 LD	= arm-none-eabi-ld
 CP	= arm-none-eabi-objcopy
 DM 	= arm-none-eabi-objdump
-CLFAGS	= -Wall -fCPIC -nostdlib -nostartfiles -ffreestanding
+CFLAGS	= -Wall -O3 -nostdlib -nostartfiles -ffreestanding
 ASFLAGS = 
 FILES 	= build/main_pi.o build/start.o build/contextSwitch.o
 else

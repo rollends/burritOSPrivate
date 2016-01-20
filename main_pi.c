@@ -179,7 +179,6 @@ void task1()
 int main(U32* pc)
 {
     unsigned int ra = __ldr(GPFSEL1);
-    unsigned int rx;
 
     ra&=~(7<<18);
     ra|=1<<18;
@@ -187,7 +186,6 @@ int main(U32* pc)
     __str(GPFSEL1, ra);
     __str(GPCLR0,1<<16);
 
-    int* mem = 0;
     uart_init();
 
     uart_putc(27);
@@ -233,7 +231,7 @@ int main(U32* pc)
                 {
                     printHex(*(sp + i));
                 }
-                printHex(sp);
+                printHex((U32)sp);
 
                 sp = enterTask(sp);
                 
@@ -241,7 +239,7 @@ int main(U32* pc)
                 {
                     printHex(*(sp + i));
                 }
-                printHex(sp);
+                printHex((U32)sp);
             }
             else
             {
