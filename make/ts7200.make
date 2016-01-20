@@ -7,7 +7,7 @@ DM 		= /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/objdump
 OUT		= main.elf
 
 CFLAGS  = -fPIC -O3 -Wall -I. -mcpu=arm920t -msoft-float
-LDFLAGS = -init main -Map bin/main.map -N -T make/loadmap.ld
+LDFLAGS = -Map bin/main.map -N -T make/loadmap.ld
 ASFLAGS = -mcpu=arm920t -mapcs-32
 
 ts7200_install: $(OUTDIR)/$(OUT) 

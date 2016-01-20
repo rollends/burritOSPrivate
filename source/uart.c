@@ -1,6 +1,7 @@
+#include "memory.h"
 #include "uart.h"
 
-int uartSpeed(const int uart, const int speed)
+S32 uartSpeed(const U32 uart, const U32 speed)
 {
     volatile int* high = (volatile int*)(uart + UART_LCRM_OFFSET);
     volatile int* low = (volatile int*)(uart + UART_LCRL_OFFSET);
@@ -11,7 +12,7 @@ int uartSpeed(const int uart, const int speed)
     return 0;
 }
 
-int uartConfig(const int uart, const int fifo, const int stp, const int pen)
+S32 uartConfig(const U32 uart, const U32 fifo, const U32 stp, const U32 pen)
 {
     volatile int* config = (volatile int*)(uart + UART_LCRH_OFFSET);
     *config = (fifo ? *config | FEN_MASK : *config & ~FEN_MASK);
@@ -22,7 +23,7 @@ int uartConfig(const int uart, const int fifo, const int stp, const int pen)
     return 0;
 }
 
-int uartWriteChar(const int uart, const char c)
+S32 uartWriteChar(const U32 uart, const S8 c)
 {
     volatile int* flags = (volatile int*)(uart + UART_FLAG_OFFSET);
     volatile int* data = (volatile int*)(uart + UART_DATA_OFFSET);
@@ -36,7 +37,7 @@ int uartWriteChar(const int uart, const char c)
     return 0;
 }
 
-int uartReadChar(const int uart, char* c)
+S32 uartReadChar(const U32 uart, S8* c)
 {
     volatile int* flags = (volatile int*)(uart + UART_FLAG_OFFSET);
     volatile int* data = (volatile int*)(uart + UART_DATA_OFFSET);

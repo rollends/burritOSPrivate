@@ -8,7 +8,7 @@ _start:
     @mov sp,#0x8000000
 
     bl vector_load
-    bl main
+    bl kernelMain
 
     ldmfd sp!, {pc}
 

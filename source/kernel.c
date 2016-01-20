@@ -1,11 +1,6 @@
+#include "memory.h"
+#include "types.h"
 #include "uart.h"
-
-typedef unsigned char   U8;
-typedef signed char     S8;
-typedef unsigned short  U16;
-typedef signed short    S16;
-typedef unsigned int    U32;
-typedef signed int      S32;
 
 extern U32 sys_call(U32, U32, U32, U32);
 extern U32* enterTask(U32*);
@@ -110,7 +105,7 @@ void task1()
     }
 }
 
-int main(int* pc)
+int kernelMain(int* pc)
 {
     uartSpeed(UART_PORT_2, UART_SPEED_HI);
     uartConfig(UART_PORT_2, 0, 0, 0);                                                      
@@ -142,7 +137,7 @@ int main(int* pc)
     U32* sp = &(task_stack[496]);
     while(1)
     {
-        char c;
+        S8 c;
         uartReadChar(UART_PORT_2, &c);
 
         if (c >= 0)
