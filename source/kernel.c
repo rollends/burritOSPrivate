@@ -1,3 +1,4 @@
+#include "print.h"
 #include "sysCall.h"
 #include "task.h"
 #include "types.h"
@@ -5,57 +6,12 @@
 
 extern U32* enterTask(U32*);
 
-char x2c(int c)
-{
-    if (c <= 9)
-        return '0' + c;
-
-    return 'a' + c - 10;
-}
-
-int printHex(U32 value)
-{
-    int byte;
-    char chh, chl;
-    unsigned char *str = (unsigned char*)&value;
-
-    uartWriteByte(UART_PORT_2, '0');
-    uartWriteByte(UART_PORT_2, 'x');
-
-    for (byte = 3; byte >= 0; byte--)
-    {
-        unsigned char c = str[byte];
-        chh = x2c(c / 16);
-        chl = x2c(c % 16);
-
-        uartWriteByte(UART_PORT_2, chh);
-        uartWriteByte(UART_PORT_2, chl);
-    }
-
-    uartWriteByte(UART_PORT_2, '\r');
-    uartWriteByte(UART_PORT_2, '\n');
-
-    return 0;
-}
-
-int printString(char* str)
-{
-    while (*str)
-    {
-        uartWriteByte(UART_PORT_2, *str);
-        str++;
-    }
-
-    return 0;
-}
-
 void task1()
 {
     U32 speed = 1;
     while (1)
     {
-        uartWriteByte(UART_PORT_2, '\r');
-        uartWriteByte(UART_PORT_2, '\n');
+        printString("\r\n");
 
         int test = 10;
         while (test-- > 0)
@@ -76,14 +32,10 @@ void task1()
             uartWriteByte(UART_PORT_2, 'b');
         }
 
-
-        uartWriteByte(UART_PORT_2, '\r');
-        uartWriteByte(UART_PORT_2, '\n');
-
+        printString("\r\n");
         speed = sysPass();
+        printString("\r\n");
 
-        uartWriteByte(UART_PORT_2, '\r');
-        uartWriteByte(UART_PORT_2, '\n');
         test = 10;
         while (test-- > 0)
         {
@@ -103,9 +55,7 @@ void task1()
             uartWriteByte(UART_PORT_2, 'd');
         }
 
-        uartWriteByte(UART_PORT_2, '\r');
-        uartWriteByte(UART_PORT_2, '\n');
-        
+        printString("\r\n");
         speed = sysPass();
     }
 }

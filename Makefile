@@ -4,9 +4,9 @@ ASMDIR 	= asm
 SRCDIR 	= source
 INCDIR 	= include
 
-CSOURCE = kernel.c task.c uart.c
+CSOURCE = kernel.c print.c task.c uart.c
 SSOURCE	= contextSwitch.s start.s
-HSOURCE = ts7200.h uart.h
+HSOURCE = memory.h print.h sysCall.h task.h ts7200.h types.h uart.h
 
 .DEFAULT_GOAL = all
 
