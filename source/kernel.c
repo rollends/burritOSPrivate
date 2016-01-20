@@ -38,6 +38,17 @@ int printHex(U32 value)
     return 0;
 }
 
+int printString(char* str)
+{
+    while (*str)
+    {
+        uartWriteChar(UART_PORT_2, *str);
+        str++;
+    }
+
+    return 0;
+}
+
 void task1()
 {
     U32 speed = 1;
@@ -45,22 +56,19 @@ void task1()
     {
         uartWriteChar(UART_PORT_2, '\r');
         uartWriteChar(UART_PORT_2, '\n');
-        uartWriteChar(UART_PORT_2, speed + '0');
-        uartWriteChar(UART_PORT_2, '\r');
-        uartWriteChar(UART_PORT_2, '\n');
 
         int test = 10;
         while (test-- > 0)
         {
             volatile int i;
-            for (i = 0; i < 100000* speed; i++)
+            for (i = 0; i < 100000/ speed; i++)
             {
                 asm volatile("nop");
             }
 
             uartWriteChar(UART_PORT_2, 'a');
 
-            for (i = 0; i < 100000* speed; i++)
+            for (i = 0; i < 100000/ speed; i++)
             {
                 asm volatile("nop");
             }
@@ -72,25 +80,22 @@ void task1()
         uartWriteChar(UART_PORT_2, '\r');
         uartWriteChar(UART_PORT_2, '\n');
 
-        speed = sysExit();
+        speed = sysPass();
 
-        uartWriteChar(UART_PORT_2, '\r');
-        uartWriteChar(UART_PORT_2, '\n');
-        uartWriteChar(UART_PORT_2, speed + '0');
         uartWriteChar(UART_PORT_2, '\r');
         uartWriteChar(UART_PORT_2, '\n');
         test = 10;
         while (test-- > 0)
         {
             volatile int i;
-            for (i = 0; i < 50000* speed; i++)
+            for (i = 0; i < 50000/ speed; i++)
             {
                 asm volatile("nop");
             }
 
             uartWriteChar(UART_PORT_2, 'c');
 
-            for (i = 0; i < 50000* speed; i++)
+            for (i = 0; i < 50000/ speed; i++)
             {
                 asm volatile("nop");
             }
@@ -101,7 +106,7 @@ void task1()
         uartWriteChar(UART_PORT_2, '\r');
         uartWriteChar(UART_PORT_2, '\n');
         
-        speed = sysExit();
+        speed = sysPass();
     }
 }
 
@@ -135,6 +140,7 @@ int kernelMain(int* pc)
     task_stack[511] = (U32)(&task1) + (U32)(pc);
 
     U32* sp = &(task_stack[496]);
+
     while(1)
     {
         S8 c;
@@ -149,24 +155,13 @@ int kernelMain(int* pc)
 
             if (c == 'g')
             {
-                int i;
-                for (i = 0; i < 16; i++)
-                {
-                    printHex(*(sp + i));
-                }
-                printHex((U32)sp);
-
                 sp = enterTask(sp);
-                
-                for (i = 0; i < 16; i++)
-                {
-                    printHex(*(sp + i));
-                }
-                printHex((U32)sp);
+                U32 id = *(sp + 2);
+                printString("System Call id: ");
+                printHex(id);
             }
             else
             {
-                uartWriteChar(UART_PORT_2, c);
                 if (c == 'q')
                 {
                     break;
@@ -174,6 +169,7 @@ int kernelMain(int* pc)
                 else
                 {
                     *(sp + 2) = c - '0';
+                    uartWriteChar(UART_PORT_2, c);
                 }
             }
         }

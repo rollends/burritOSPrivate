@@ -31,7 +31,7 @@ $(BLDDIR)/%.o: $(ASMDIR)/%.s
 	$(AS) $(ASFLAGS) -o $@ $^
 
 $(OUTDIR)/%.elf: $(addprefix build/, $(CSOURCE:.c=.o)) $(addprefix build/, $(SSOURCE:.s=.o))
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(OUTDIR)/%.bin: $(OUTDIR)/%.elf
 	$(CP) $< -O binary $@

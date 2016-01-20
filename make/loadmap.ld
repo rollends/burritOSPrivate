@@ -11,7 +11,7 @@ SECTIONS
         *(.text)
         *(.got)
         *(.got.plt)
-        *(.rodata)
+        *(.rodata*)
         *(.glue_7)
         *(.glue_7t)
         } >ram
