@@ -17,9 +17,9 @@ S32 uartSpeed(const U32 uart, const U32 speed);
 S32 uartConfig(const U32 uart, const U32 fifo, const U32 stp, const U32 pen);
 
 /// Blocking write to the UART
-S32 uartWriteChar(const U32 uart, const S8 c);
+S32 uartWriteByte(const U32 uart, const U8 c);
 
 /// Blocking read from the UART
-S32 uartReadChar(const U32 uart, S8* c);
+S32 uartReadByte(const U32 uart, U8* c);
 
 #endif

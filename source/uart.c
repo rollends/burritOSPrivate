@@ -23,7 +23,7 @@ S32 uartConfig(const U32 uart, const U32 fifo, const U32 stp, const U32 pen)
     return 0;
 }
 
-S32 uartWriteChar(const U32 uart, const S8 c)
+S32 uartWriteByte(const U32 uart, const U8 c)
 {
     volatile int* flags = (volatile int*)(uart + UART_FLAG_OFFSET);
     volatile int* data = (volatile int*)(uart + UART_DATA_OFFSET);
@@ -37,7 +37,7 @@ S32 uartWriteChar(const U32 uart, const S8 c)
     return 0;
 }
 
-S32 uartReadChar(const U32 uart, S8* c)
+S32 uartReadByte(const U32 uart, U8* c)
 {
     volatile int* flags = (volatile int*)(uart + UART_FLAG_OFFSET);
     volatile int* data = (volatile int*)(uart + UART_DATA_OFFSET);

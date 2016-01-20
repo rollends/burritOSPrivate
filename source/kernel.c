@@ -19,8 +19,8 @@ int printHex(U32 value)
     char chh, chl;
     unsigned char *str = (unsigned char*)&value;
 
-    uartWriteChar(UART_PORT_2, '0');
-    uartWriteChar(UART_PORT_2, 'x');
+    uartWriteByte(UART_PORT_2, '0');
+    uartWriteByte(UART_PORT_2, 'x');
 
     for (byte = 3; byte >= 0; byte--)
     {
@@ -28,12 +28,12 @@ int printHex(U32 value)
         chh = x2c(c / 16);
         chl = x2c(c % 16);
 
-        uartWriteChar(UART_PORT_2, chh);
-        uartWriteChar(UART_PORT_2, chl);
+        uartWriteByte(UART_PORT_2, chh);
+        uartWriteByte(UART_PORT_2, chl);
     }
 
-    uartWriteChar(UART_PORT_2, '\r');
-    uartWriteChar(UART_PORT_2, '\n');
+    uartWriteByte(UART_PORT_2, '\r');
+    uartWriteByte(UART_PORT_2, '\n');
 
     return 0;
 }
@@ -42,7 +42,7 @@ int printString(char* str)
 {
     while (*str)
     {
-        uartWriteChar(UART_PORT_2, *str);
+        uartWriteByte(UART_PORT_2, *str);
         str++;
     }
 
@@ -54,8 +54,8 @@ void task1()
     U32 speed = 1;
     while (1)
     {
-        uartWriteChar(UART_PORT_2, '\r');
-        uartWriteChar(UART_PORT_2, '\n');
+        uartWriteByte(UART_PORT_2, '\r');
+        uartWriteByte(UART_PORT_2, '\n');
 
         int test = 10;
         while (test-- > 0)
@@ -66,24 +66,24 @@ void task1()
                 asm volatile("nop");
             }
 
-            uartWriteChar(UART_PORT_2, 'a');
+            uartWriteByte(UART_PORT_2, 'a');
 
             for (i = 0; i < 100000/ speed; i++)
             {
                 asm volatile("nop");
             }
 
-            uartWriteChar(UART_PORT_2, 'b');
+            uartWriteByte(UART_PORT_2, 'b');
         }
 
 
-        uartWriteChar(UART_PORT_2, '\r');
-        uartWriteChar(UART_PORT_2, '\n');
+        uartWriteByte(UART_PORT_2, '\r');
+        uartWriteByte(UART_PORT_2, '\n');
 
         speed = sysPass();
 
-        uartWriteChar(UART_PORT_2, '\r');
-        uartWriteChar(UART_PORT_2, '\n');
+        uartWriteByte(UART_PORT_2, '\r');
+        uartWriteByte(UART_PORT_2, '\n');
         test = 10;
         while (test-- > 0)
         {
@@ -93,18 +93,18 @@ void task1()
                 asm volatile("nop");
             }
 
-            uartWriteChar(UART_PORT_2, 'c');
+            uartWriteByte(UART_PORT_2, 'c');
 
             for (i = 0; i < 50000/ speed; i++)
             {
                 asm volatile("nop");
             }
 
-            uartWriteChar(UART_PORT_2, 'd');
+            uartWriteByte(UART_PORT_2, 'd');
         }
 
-        uartWriteChar(UART_PORT_2, '\r');
-        uartWriteChar(UART_PORT_2, '\n');
+        uartWriteByte(UART_PORT_2, '\r');
+        uartWriteByte(UART_PORT_2, '\n');
         
         speed = sysPass();
     }
@@ -115,11 +115,11 @@ int kernelMain(int* pc)
     uartSpeed(UART_PORT_2, UART_SPEED_HI);
     uartConfig(UART_PORT_2, 0, 0, 0);                                                      
 
-    uartWriteChar(UART_PORT_2, 27);
-    uartWriteChar(UART_PORT_2, '[');
-    uartWriteChar(UART_PORT_2, '2');
-    uartWriteChar(UART_PORT_2, 'J');
-    uartWriteChar(UART_PORT_2, '\r');
+    uartWriteByte(UART_PORT_2, 27);
+    uartWriteByte(UART_PORT_2, '[');
+    uartWriteByte(UART_PORT_2, '2');
+    uartWriteByte(UART_PORT_2, 'J');
+    uartWriteByte(UART_PORT_2, '\r');
 
     U32 task_stack[512];
     task_stack[496] = 0x10;
@@ -143,14 +143,12 @@ int kernelMain(int* pc)
 
     while(1)
     {
-        S8 c;
-        uartReadChar(UART_PORT_2, &c);
-
-        if (c >= 0)
+        U8 c;
+        if (uartReadByte(UART_PORT_2, &c) >= 0)
         {
             if (c == 0x0D)
             {
-                uartWriteChar(UART_PORT_2, 0x0A);
+                uartWriteByte(UART_PORT_2, 0x0A);
             }
 
             if (c == 'g')
@@ -169,7 +167,7 @@ int kernelMain(int* pc)
                 else
                 {
                     *(sp + 2) = c - '0';
-                    uartWriteChar(UART_PORT_2, c);
+                    uartWriteByte(UART_PORT_2, c);
                 }
             }
         }
