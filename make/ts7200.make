@@ -12,4 +12,4 @@ LDLIBS  = -lgcc
 ASFLAGS = -mcpu=arm920t -mapcs-32
 
 ts7200_install: $(OUTDIR)/$(OUT) 
-	cp $< /u/cs452/tftp/ARM/tpetrick
+	cp $< /u/cs452/tftp/ARM/$(LOGNAME)

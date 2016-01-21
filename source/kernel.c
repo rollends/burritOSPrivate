@@ -33,20 +33,23 @@ int kernelMain(U32 pc)
 
     printString("%c[2J\r", 27);
 
-    Queue queue;
-    queueInit(&queue);
+    Queue 	queue;
+    Tasks 	tasks;
+	TaskID 	activeTaskID;
+    
+	queueInit(&queue);
+	taskInit(&tasks);
 
-    U16 currentId = 1;
-    Tasks tasks;
-    tasks.lastTid = 0;
+	activeTaskID.value = taskAlloc(&tasks, 1, (U32)(&InitialTask) + pc, 0);
 
-    taskInit(&tasks, 1, (U32)(&InitialTask) + pc, 0);
-
-    while(1)
+    do
     {
-        TaskDescriptor* desc = tasks.descriptors + (currentId - 1);
-        desc->stack = enterTask(desc->stack);
+        TaskDescriptor* desc = taskGetDescriptor(&tasks,activeTaskID.value);
+		
+		// Context Switch into User Space Task
+		desc->stack = enterTask(desc->stack);
 
+		// User task made system call.
         U32 sysCall = desc->stack[2];
         U32 arg1 = desc->stack[3];
         U32 arg2 = desc->stack[4];
@@ -55,24 +58,21 @@ int kernelMain(U32 pc)
         switch (sysCall)
         {
             case SYS_CALL_CREATE_ID:
-                *returnVal = taskInit(&tasks, arg1, arg2 + pc, currentId);
-                {
-                    int i = queueEnqueue(&queue, arg1, *returnVal);
-                    //printString("Enqueue: %x, %b, %x\r\n", i, *returnVal, arg1);
-                }
+                *returnVal = taskAlloc(&tasks, arg1, arg2 + pc, activeTaskID.value);
+                queueEnqueue(&queue, arg1, *returnVal);
                 break;
            
             case SYS_CALL_PID_ID:
-                *returnVal = desc->pid.fields.id;
-                continue;
+                *returnVal = desc->pid.value;
+                break;
 
             case SYS_CALL_TID_ID:
-                *returnVal = desc->tid.fields.id;
-                continue;
+                *returnVal = desc->tid.value;
+                break;
 
             case SYS_CALL_PRINT_ID:
                 printString("%x\r\n", arg1);
-                continue;
+                break;
 
             default:
                 break;
@@ -80,13 +80,16 @@ int kernelMain(U32 pc)
 
         if (sysCall != SYS_CALL_EXIT_ID)
         {
-            int i = queueEnqueue(&queue, desc->priority, currentId);
-            //printString("Enqueue: %x, %b, %x\r\n", i, currentId, desc->priority);
+			// User task didn't call exit, reEnqueue
+            queueEnqueue(&queue, desc->priority, activeTaskID.value);
         }
+		else
+		{
+			// User task called sysExit. Free up its PCB.
+			taskFree(&tasks, activeTaskID.value);
+		}
 
-        int result = queueDequeue(&queue, &currentId);
-        //printString("Dequeue: %x, %b\r\n", result, currentId);
-    }
+    } while( queueDequeue( &queue, &activeTaskID ) >= 0 );
 
     return 0;
 }

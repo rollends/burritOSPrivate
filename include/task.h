@@ -55,22 +55,24 @@ typedef struct
 } TaskDescriptor;
 
 
+#define TaskTableLength 5
+#define TaskTableFlagLength (TaskTableLength + 31)/32
+
 typedef struct 
 {
-    TaskDescriptor descriptors[5];
-    U32 lastTid;
-    U32 stackMemory[1024 * 5];
+    TaskDescriptor descriptors[ TaskTableLength ];
+    U32 stackMemory[1024 * TaskTableLength];
+	U32 tableFlag[ TaskTableFlagLength ];
 } Tasks;
 
-/** 
- * Initializes a task descriptor
- *
- * @param   desc    The task descriptor to initialize
- * @param   pid     The parent task id
- * @param   entry   The task entry point address
- *
- * @return  A task id on success, else an error code
- */
-S32 taskInit(Tasks* tasks, U8 priotiy, U32 entry, U16 pid);
+
+S32 taskInit(Tasks* tasks);
+
+S32 taskAlloc(Tasks* tasks, U8 priority, U32 entry, U16 pid);
+
+S32 taskFree(Tasks* table, U16 tid);
+
+TaskDescriptor* taskGetDescriptor(Tasks* tasks, U16 tid);
+
 
 #endif
