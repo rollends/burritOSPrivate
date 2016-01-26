@@ -1,4 +1,5 @@
 #include "kernel/taskTable.h"
+#include "kernel/print.h"
 
 S32 taskTableInit(TaskTable* table)
 {
@@ -29,7 +30,8 @@ S32 taskTableAlloc(TaskTable* table, U8 priority, U32 entry, const TaskID pid)
 
 	TaskDescriptor* desc = &(table->descriptors[index]);
 
-	U32* stack = (U32*)(table->stacks + 1024*(index+1) - 1);
+        U32* tablebase = 0x01000000;
+	U32* stack = (U32*)(tablebase + 1024*(index+1) - 1);
     *(stack) = entry;
     *(stack-15) = 0x10;
     
