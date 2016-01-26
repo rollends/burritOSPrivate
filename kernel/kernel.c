@@ -1,10 +1,10 @@
-#include "print.h"
-#include "queue.h"
-#include "sysCall.h"
-#include "task.h"
-#include "types.h"
-#include "uart.h"
-#include "userTasks.h"
+#include "common/priorityQueue.h"
+#include "common/types.h"
+#include "kernel/print.h"
+#include "kernel/sysCall.h"
+#include "kernel/taskTable.h"
+#include "kernel/uart.h"
+#include "user/userTasks.h"
 
 extern U32* enterTask(U32*);
 
@@ -33,18 +33,21 @@ int kernelMain(U32 pc)
 
     printString("%c[2J\r", 27);
 
-    Queue 	queue;
-    Tasks 	tasks;
+    PriorityQueue 	queue;
+    TaskTable 	tasks;
 	TaskID 	activeTaskID;
+    TaskID nullTaskId;
+    nullTaskId.value = 0;
     
-	queueInit(&queue);
-	taskInit(&tasks);
+    U8 queueData[PQUEUE_MEM_SIZE(64, 3)];
+	priorityQueueInit(&queue, queueData, 64, 3);
 
-	activeTaskID.value = taskAlloc(&tasks, 1, (U32)(&InitialTask) + pc, 0);
+	taskTableInit(&tasks);
+	activeTaskID.value = taskTableAlloc(&tasks, 1, (U32)(&InitialTask) + pc, nullTaskId);
 
     do
     {
-        TaskDescriptor* desc = taskGetDescriptor(&tasks,activeTaskID.value);
+        TaskDescriptor* desc = taskGetDescriptor(&tasks, activeTaskID);
 		
 		// Context Switch into User Space Task
 		desc->stack = enterTask(desc->stack);
@@ -58,8 +61,8 @@ int kernelMain(U32 pc)
         switch (sysCall)
         {
             case SYS_CALL_CREATE_ID:
-                *returnVal = taskAlloc(&tasks, arg1, arg2 + pc, activeTaskID.value);
-                queueEnqueue(&queue, arg1, *returnVal);
+                *returnVal = taskTableAlloc(&tasks, arg1, arg2 + pc, activeTaskID);
+                priorityQueuePush(&queue, arg1, *returnVal);
                 break;
            
             case SYS_CALL_PID_ID:
@@ -81,15 +84,15 @@ int kernelMain(U32 pc)
         if (sysCall != SYS_CALL_EXIT_ID)
         {
 			// User task didn't call exit, reEnqueue
-            queueEnqueue(&queue, desc->priority, activeTaskID.value);
+            priorityQueuePush(&queue, desc->priority, activeTaskID.value);
         }
 		else
 		{
 			// User task called sysExit. Free up its PCB.
-			taskFree(&tasks, activeTaskID.value);
+			taskTableFree(&tasks, activeTaskID);
 		}
 
-    } while( queueDequeue( &queue, &activeTaskID ) >= 0 );
+    } while (priorityQueuePop( &queue, &activeTaskID.value ) >= 0);
 
     return 0;
 }

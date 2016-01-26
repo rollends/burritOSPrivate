@@ -1,6 +1,6 @@
-#include "print.h"
-#include "uart.h"
-#include "vaList.h"
+#include "common/vaList.h"
+#include "kernel/print.h"
+#include "kernel/uart.h"
 
 char x2c(int c)
 {

@@ -1,12 +1,5 @@
 OUTDIR	= bin
 BLDDIR	= build
-ASMDIR 	= asm
-SRCDIR 	= source
-INCDIR 	= include
-
-CSOURCE = kernel.c print.c queue.c task.c uart.c userTasks.c
-SSOURCE	= contextSwitch.s start.s
-HSOURCE = memory.h print.h queue.h sysCall.h task.h ts7200.h types.h uart.h userTasks.h
 
 .DEFAULT_GOAL = all
 
@@ -17,20 +10,29 @@ endif
 include make/preprocessor.make
 include make/$(TARGET).make
 
-_HSOURCE = $(addprefix $(INCDIR)/, $(HSOURCE))
+CSOURCE := $(shell find common kernel user -type f -name *.c)
+HSOURCE := $(shell find common kernel user -type f -name *.h)
+SSOURCE := $(shell find common kernel user -type f -name *.s)
 
-all: directories $(OUTDIR)/$(OUT) $(OUTDIR)/$(basename $(OUT)).lst
+_OBJS = $(addprefix $(BLDDIR)/, $(CSOURCE:.c=.o))
+_OBJS += $(addprefix $(BLDDIR)/, $(SSOURCE:.s=.o))
+_OBJDIRS = $(dir $(_OBJS))
 
-$(BLDDIR)/%.s: $(SRCDIR)/%.c $(_HSOURCE)
-	$(XCC) -S -I$(INCDIR) $(CFLAGS) $(PRE_FLAGS) $< -o $@
+_OUT = $(OUTDIR)/$(OUT)
+_OUT += $(OUTDIR)/$(basename $(OUT)).lst
+
+all: directories $(_OUT)  
+
+$(BLDDIR)/%.s: %.c $(HSOURCE)
+	$(XCC) -S -I./ $(CFLAGS) $(PREFLAGS) $< -o $@
 
 $(BLDDIR)/%.o: $(BLDDIR)/%.s
 	$(AS) $(ASFLAGS) -o $@ $^
 
-$(BLDDIR)/%.o: $(ASMDIR)/%.s
+$(BLDDIR)/%.o: %.s
 	$(AS) $(ASFLAGS) -o $@ $^
 
-$(OUTDIR)/%.elf: $(addprefix build/, $(CSOURCE:.c=.o)) $(addprefix build/, $(SSOURCE:.s=.o))
+$(OUTDIR)/%.elf: $(_OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 
 $(OUTDIR)/%.bin: $(OUTDIR)/%.elf
@@ -44,6 +46,7 @@ install: directories $(TARGET)_install
 directories:
 	mkdir -p $(BLDDIR)
 	mkdir -p $(OUTDIR)
+	mkdir -p $(_OBJDIRS)
 
 clean:
 	rm -rf $(BLDDIR)
@@ -51,4 +54,4 @@ clean:
 
 .SUFFIXES:
 .SECONDARY:
-.PHONY: clean directories
+.PHONY: clean directories install

@@ -1,7 +1,7 @@
 #ifndef SYS_CALL_H
 #define SYS_CALL_H
 
-#include "types.h"
+#include "common/types.h"
 
 #define SYS_CALL_EXIT_ID    0
 #define SYS_CALL_PASS_ID    1

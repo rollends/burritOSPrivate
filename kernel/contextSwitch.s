@@ -25,24 +25,6 @@ enterKernelR:
 
     ldmfd   sp!, {r4-r12, pc}       @ Restore the kernel registers
 
-@ 
-@ Returns control from a task to the kernel via an interrupt.
-@
-enterKernelT:
-    msr     cpsr_c, #0xDF           @ Switch to system mode
-    sub     sp, sp, #4              @ Make space for the pc on the stack
-    stmfd   sp!, {r0-r12}           @ Store task registers to task stack
-    mov     r0, sp                  @ Store taks sp
-    mov     r2, lr                  @ Store task lr
-    
-    msr     cpsr_c, #0xD2           @ Switch to irq mode
-    mrs     r1, spsr                @ Retrieve the user process PSR
-    stmfd   r0!, {r1, r2, lr}       @ Save the task PSR, LR and PC to the stack
-    str     lr, [r0, #60]           @ Store the pc to the task stack
-
-    msr     cpsr_c, #0xD3           @ Switch to supervisor mode
-    ldmfd   sp!, {r4-r12, pc}       @ Restore the kernel registers
-
 @
 @ C function:   U32* enterTask(U32* sp)
 @ 

@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "types.h"
+#include "common/types.h"
 
 static inline void __str(U32 dst, U32 src)
 {

@@ -1,7 +1,5 @@
-#ifndef TASK_H
-#define TASK_H
-
-#include "types.h"
+#ifndef TASK_DESCRIPTOR_H
+#define TASK_DESCRIPTOR_H
 
 /**
  * Defines a  TaskID type that includes both the task id and a
@@ -53,26 +51,5 @@ typedef struct
     /// The task priority
     U8 priority;
 } TaskDescriptor;
-
-
-#define TaskTableLength 5
-#define TaskTableFlagLength (TaskTableLength + 31)/32
-
-typedef struct 
-{
-    TaskDescriptor descriptors[ TaskTableLength ];
-    U32 stackMemory[1024 * TaskTableLength];
-	U32 tableFlag[ TaskTableFlagLength ];
-} Tasks;
-
-
-S32 taskInit(Tasks* tasks);
-
-S32 taskAlloc(Tasks* tasks, U8 priority, U32 entry, U16 pid);
-
-S32 taskFree(Tasks* table, U16 tid);
-
-TaskDescriptor* taskGetDescriptor(Tasks* tasks, U16 tid);
-
 
 #endif

@@ -1,8 +1,8 @@
 #ifndef UART_H
 #define UART_H
 
-#include "ts7200.h"
-#include "types.h"
+#include "common/types.h"
+#include "kernel/ts7200.h"
 
 #define UART_PORT_1 UART1_BASE
 #define UART_PORT_2 UART2_BASE

@@ -1,6 +1,6 @@
-#include "print.h"
-#include "sysCall.h"
-#include "userTasks.h"
+#include "kernel/print.h"
+#include "kernel/sysCall.h"
+#include "user/userTasks.h"
 
 void TestTask()
 {

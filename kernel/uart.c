@@ -1,5 +1,5 @@
-#include "memory.h"
-#include "uart.h"
+#include "common/memory.h"
+#include "kernel/uart.h"
 
 S32 uartSpeed(const U32 uart, const U32 speed)
 {

@@ -1,7 +1,7 @@
 #ifndef PRINT_H
 #define PRINT_H
 
-#include "types.h"
+#include "common/types.h"
 
 S32 printString(char* str, ...);
 
