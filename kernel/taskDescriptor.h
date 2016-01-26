@@ -1,6 +1,8 @@
 #ifndef TASK_DESCRIPTOR_H
 #define TASK_DESCRIPTOR_H
 
+#define VAL_TO_ID(val)  (TaskID)((U16)(val))
+
 /**
  * Defines a  TaskID type that includes both the task id and a
  * generation value for identifying whether a task id has expired

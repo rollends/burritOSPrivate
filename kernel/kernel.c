@@ -36,15 +36,12 @@ int kernelMain(U32 pc)
     PriorityQueue 	queue;
     TaskTable 	tasks;
 	TaskID 	activeTaskID;
-    TaskID nullTaskId;
-    nullTaskId.value = 0;
-
     U8 queueData[PQUEUE_MEM_SIZE(64, 3)];
 	priorityQueueInit(&queue, queueData, 64, 3);
 
 	taskTableInit(&tasks);
-	activeTaskID.value = taskTableAlloc(&tasks, 1, (U32)(&InitialTask) + pc, nullTaskId);
-
+	activeTaskID.value = taskTableAlloc(&tasks, 1, (U32)(&InitialTask) + pc, VAL_TO_ID(0));
+    
     do
     {
         TaskDescriptor* desc = taskGetDescriptor(&tasks, activeTaskID);
