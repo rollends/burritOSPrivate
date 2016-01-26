@@ -34,6 +34,7 @@ S32 priorityQueuePop(PriorityQueue* pqueue, U16* dest)
     U8 priority;
     QueueU16* queue = pqueue->queues;
 
+    // Find the first empty queue
     for (priority = 0; priority < pqueue->count; priority++)
     {
         if (queue->count)
