@@ -38,7 +38,7 @@ int kernelMain(U32 pc)
 	TaskID 	activeTaskID;
     TaskID nullTaskId;
     nullTaskId.value = 0;
-    
+
     U8 queueData[PQUEUE_MEM_SIZE(64, 3)];
 	priorityQueueInit(&queue, queueData, 64, 3);
 

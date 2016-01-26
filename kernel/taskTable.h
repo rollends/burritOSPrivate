@@ -10,6 +10,7 @@
 typedef struct
 {
     TaskDescriptor descriptors[TASK_COUNT];
+    U32 stacks[TASK_COUNT];
     U8 allocationTable[TASK_COUNT];
     QueueU8 allocationQueue;
 } TaskTable;
