@@ -1,6 +1,9 @@
 #include "common/priorityQueue.h"
 
-S32 priorityQueueInit(PriorityQueue* pqueue, U8* data, const U8 length, const U8 count)
+S32 priorityQueueInit(PriorityQueue* pqueue,
+                      U8* data,
+                      const U8 length,
+                      const U8 count)
 {
     if (data == 0)
     {

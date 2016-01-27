@@ -1,0 +1,26 @@
+{
+	"folders":
+	[
+		{
+			"follow_symlinks": true,
+			"path": ".",
+            "folder_exclude_patterns": ["build", "doc"],
+            "file_exclude_patterns" : ["bin/main.elf"],
+		},
+	],
+    "settings":
+    {
+        "rulers":[80],
+        "tab_size": 4,
+        "translate_tabs_to_spaces": true
+    },
+    "build_systems":
+    [
+        {
+            "name": "Make - Install",
+            "shell": true,
+            "working_dir": "${project_path}",
+            "cmd": ["make -j8 clean; make -j8"],
+        }
+    ]
+}

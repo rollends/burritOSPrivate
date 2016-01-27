@@ -26,7 +26,7 @@ S32 uartConfig(const U32 uart, const U32 fifo, const U32 stp, const U32 pen)
     return 0;
 }
 
-S32 uartWriteByte(const U32 uart, const U8 c)
+S32 uartWriteByte(const U32 uart, const U8 byte)
 {
     RWRegister flags = (RWRegister)(uart + UART_FLAG_OFFSET);
     RWRegister data = (RWRegister)(uart + UART_DATA_OFFSET);
@@ -35,12 +35,12 @@ S32 uartWriteByte(const U32 uart, const U8 c)
     {
     }
 
-    __strb(data, c);
+    __strb(data, byte);
 
     return 0;
 }
 
-S32 uartReadByte(const U32 uart, U8* c)
+S32 uartReadByte(const U32 uart, U8* byte)
 {
     RWRegister flags = (RWRegister)(uart + UART_FLAG_OFFSET);
     RWRegister data = (RWRegister)(uart + UART_DATA_OFFSET);
@@ -49,7 +49,7 @@ S32 uartReadByte(const U32 uart, U8* c)
     {
     }
 
-    *c = *data;
+    *byte = *data;
 
     return 0;
 }
