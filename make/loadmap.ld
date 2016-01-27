@@ -5,7 +5,11 @@ MEMORY
 
 SECTIONS
 {
-    init : { *(.init*) } > ram
+    init :
+    {
+        *(.init*)
+        *(.vector*)
+    } > ram
     text : /* The actual instructions. */
     {
         *(.text)
@@ -14,7 +18,7 @@ SECTIONS
         *(.rodata*)
         *(.glue_7)
         *(.glue_7t)
-        } >ram
+    } >ram
 
     data : /* Initialized data. */
     {

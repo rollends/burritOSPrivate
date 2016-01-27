@@ -1,13 +1,26 @@
 #include "common/types.h"
+
 #include "kernel/kernelData.h"
 #include "kernel/print.h"
 #include "kernel/sysCall.h"
-#include "kernel/print.h"
 #include "kernel/uart.h"
 
 #include "user/InitialTask.h"
 
 static KernelData kernel;
+
+U32* kernelBoostrap(U32 pc)
+{
+    uartSpeed(UART_PORT_2, UART_SPEED_HI);
+    uartConfig(UART_PORT_2, 0, 0, 0);
+    printString("%c[2J\r", 27);
+
+    kernelDataInit(&kernel, pc);
+    U16 taskID = taskTableAlloc(&kernel.tasks, 1, (U32)(&InitialTask) + pc, VAL_TO_ID(0));
+    
+    kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));
+    return kernel.activeTask->stack;
+}
 
 U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
 {
@@ -68,21 +81,4 @@ U32* kernelSchedule(U32* sp)
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, tid);
 
     return kernel.activeTask->stack;
-}
-
-extern U32* kernelStart(U32*);
-
-U32 kernelMain(U32 pc)
-{
-    uartSpeed(UART_PORT_2, UART_SPEED_HI);
-    uartConfig(UART_PORT_2, 0, 0, 0);
-    printString("%c[2J\r", 27);
-
-    kernelDataInit(&kernel, pc);
-	U16 taskID = taskTableAlloc(&kernel.tasks, 1, (U32)(&InitialTask) + pc, VAL_TO_ID(0));
-    
-    kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));
-    kernelStart(kernel.activeTask->stack);
-
-    return 0;
 }

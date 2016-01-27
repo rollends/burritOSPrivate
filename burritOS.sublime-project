@@ -5,7 +5,6 @@
 			"follow_symlinks": true,
 			"path": ".",
             "folder_exclude_patterns": ["build", "doc"],
-            "file_exclude_patterns" : ["bin/main.elf"],
 		},
 	],
     "settings":

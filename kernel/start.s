@@ -1,80 +1,49 @@
 .section .init
 .global _start
+.global _systemCall
+
 _start:
-    sub r0, pc, #8
-    stmfd sp!, {lr}
+    sub r0, pc, #8                  @ Offset the PC by 8 to account for pipeline
+    stmfd sp!, {lr}                 @ Store the LR for when we exit the kernel 
 
-    msr cpsr_c, #0xD3
-    @mov sp,#0x8000000
+    msr cpsr_c, #0xD3               @ Disable interupts
 
-    bl vector_load
-    bl kernelMain
+    bl _vectorLoad                  @ Load the vector table
+    bl kernelBoostrap               @ Boostrap the kernel
 
-    ldmfd sp!, {pc}
+enterTask:                          @ Enter a user task with an sp in r0
+    msr     cpsr_c, #0xDF           @ Switch to system mode
+    ldmfd   r0!, {r1, lr}           @ Load task PSR and LR from the task sp
+    add     sp, r0, #44             @ Set the task sp
 
-vector_table:
-    ldr pc,reset_handler_ref
-    ldr pc,undefined_handler_ref
-    ldr pc,swi_handler_ref
-    ldr pc,prefetch_handler_ref
-    ldr pc,data_handler_ref
-    ldr pc,unused_handler_ref
-    ldr pc,irq_handler_ref
-    ldr pc,fiq_handler_ref
+    msr     cpsr_c, #0xD3           @ Switch to supervisor mode
+    msr     spsr, r1                @ Update the SPSR with the task CPSR
+    ldmfd   r0, {r0, r4-r12, pc}^   @ Load task registers & enter the task
 
-    reset_handler_ref:      .word _start
-    undefined_handler_ref:  .word hang
-    swi_handler_ref:        .word swi_handler
-    prefetch_handler_ref:   .word hang
-    data_handler_ref:       .word hang
-    unused_handler_ref:     .word hang
-    irq_handler_ref:        .word hang
-    fiq_handler_ref:        .word hang
+_systemCall:                        @ Called when an SWI occurs
+    msr     cpsr_c, #0xDF           @ Switch to system mode
 
-vector_load:
-    ldr r1, = vector_table
-    add r1, r1, r0
-    mov r2, #0
+    stmfd   sp!, {lr}               @ Stack the LR
+    bl kernelSystemCall             @ Branch to the system call
+    ldmfd   sp, {lr}                @ Restore the LR
 
-    ldmia r1!,{r3,r4,r5,r6,r7,r8,r9,r10}
-    stmia r2!,{r3,r4,r5,r6,r7,r8,r9,r10}
-    ldmia r1,{r3,r4,r5,r6,r7,r8,r9,r10}
+    @ The sp above does not use writeback because we're making space to store
+    @ the pc. We store the PC later, but need to leave a spot on the stack for
+    @ it, and thus simply don't use writeback when popping the lr.
 
-    add r3, r3, r0
-    add r4, r4, r0
-    add r5, r5, r0
-    add r6, r6, r0
-    add r7, r7, r0
-    add r8, r8, r0
-    add r9, r9, r0
-    add r10, r10, r0
-
-    stmia r2,{r3,r4,r5,r6,r7,r8,r9,r10}
-    bx lr
-
-hang:
-    b hang
-
-swi_handler:
-    b systemCall
-
-.global __sysCall0
-__sysCall0:
-    swi 0
-    bx lr
-
-.global __sysCall1
-__sysCall1:
-    swi 0
-    bx lr
-
-.global __sysCall2
-__sysCall2:
-    swi 0
-    bx lr
-
-.global __sysCall3
-__sysCall3:
-    swi 0
-    bx lr
+    stmfd   sp!, {r0, r4-r12}       @ Store task registers to task stack
+    mov     r0, sp                  @ Store task sp
+    mov     r2, lr                  @ Store task lr
     
+    msr     cpsr_c, #0xD3           @ Switch to supervisor mode
+    mrs     r1, spsr                @ Retrieve the user process PSR
+    stmfd   r0!, {r1, r2}           @ Save the task PSR and LR to the task stack
+    str     lr, [r0, #48]           @ Store the pc to the task stack
+
+    bl kernelSchedule               @ Schedule next process and update the sp
+
+    cmp r0, #0                      @ Check if the kernel should exit
+    bne enterTask                   @ Enter next task
+
+kernelEnd:                          @ Exists the kernel
+    ldmfd sp!, {pc}                 @ Load the LR into PC to return to redboot
