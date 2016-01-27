@@ -1,6 +1,6 @@
 #include "common/priorityQueue.h"
 
-S32 priorityQueueInit(PriorityQueue* pqueue,
+S32 priorityQueueInit(PriorityQueue* queue,
                       U8* data,
                       const U8 length,
                       const U8 count)
@@ -10,42 +10,42 @@ S32 priorityQueueInit(PriorityQueue* pqueue,
         return -1;
     }
     
-    pqueue->count = count;
+    queue->count = count;
 
     // Set the memory for the queue structures
-    pqueue->queues = (QueueU16*)(data);
+    queue->queues = (QueueU16*)(data);
     data += (sizeof(QueueU16) * count);
 
     // Initialize the queues
     U32 i;
     for(i = 0; i < count; i++)
     {
-        queueU16Init(pqueue->queues + i, (U16*)data, length);
+        queueU16Init(queue->queues + i, (U16*)data, length);
         data += sizeof(U16)*length;
     }
 
     return 0;
 }
 
-S32 priorityQueuePush(PriorityQueue* pqueue, U8 priority, U16 value)
+S32 priorityQueuePush(PriorityQueue* queue, const U8 priority, const U16 value)
 {
-    return queueU16Push(pqueue->queues + priority, value);
+    return queueU16Push(queue->queues + priority, value);
 }
 
-S32 priorityQueuePop(PriorityQueue* pqueue, U16* dest)
+S32 priorityQueuePop(PriorityQueue* queue, U16* dest)
 {
     U8 priority;
-    QueueU16* queue = pqueue->queues;
+    QueueU16* pqueue = queue->queues;
 
     // Find the first empty queue
-    for (priority = 0; priority < pqueue->count; priority++)
+    for (priority = 0; priority < queue->count; priority++)
     {
-        if (queue->count)
+        if (pqueue->count)
         {
-            return queueU16Pop(queue, dest);
+            return queueU16Pop(pqueue, dest);
         }
         
-        queue++;
+        pqueue++;
     }
 
     return -1;

@@ -41,7 +41,10 @@ S32 taskTableInit(TaskTable* table);
  *
  * @return  0 on success, else an error code
  */
-S32 taskTableAlloc(TaskTable* table, U8 priority, U32 entry, const TaskID pid);
+S32 taskTableAlloc(TaskTable* table,
+                   const U8 priority,
+                   const U32 entry,
+                   const TaskID pid);
 
 /**
  * Frees a task descriptor

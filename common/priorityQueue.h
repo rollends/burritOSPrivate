@@ -23,14 +23,14 @@ typedef struct
 /**
  * Initializes a priority queue
  *
- * @param   pqueue  The priority queue to initialize
+ * @param   queue   The priority queue to initialize
  * @param   data    The memory to use for the queue structures and their data
  * @param   length  The length of each priority queue
  * @param   count   The number of priorities
  *
  * @return  0 on success, else an error code
  */
-S32 priorityQueueInit(PriorityQueue* pqueue,
+S32 priorityQueueInit(PriorityQueue* queue,
                       U8* data,
                       const U8 length,
                       const U8 count);
@@ -38,22 +38,22 @@ S32 priorityQueueInit(PriorityQueue* pqueue,
 /**
  * Appends a value onto the queue at a given priority
  *
- * @param   pqueue      The priority queue to append to
+ * @param   queue       The priority queue to append to
  * @param   priority    The priority to add the value at
  * @param   value       The value to add
  *
  * @return  0 on success, else an error code
  */
-S32 priorityQueuePush(PriorityQueue* pqueue, U8 priority, const U16 value);
+S32 priorityQueuePush(PriorityQueue* queue, const U8 priority, const U16 value);
 
 /**
  * Removes the first element in the queue
  *
- * @param   pqueue      The priority queue to remove from
+ * @param   queue       The priority queue to remove from
  * @param   value       The location to write the removed value
  *
  * @return  0 on success, else an error code
  */
-S32 priorityQueuePop(PriorityQueue* pqueue, U16* dest);
+S32 priorityQueuePop(PriorityQueue* queue, U16* dest);
 
 #endif
