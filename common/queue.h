@@ -52,7 +52,7 @@ typedef struct
  *
  * @param   queue   The queue to initialize
  * @param   data    The backing data pointer of `length` bytes
- * @param   length  The length of the queue
+ * @param   length  The length of the queue, must be a power of 2
  *
  * @return  0 on success, else an error code
  */
@@ -85,7 +85,7 @@ S32 queueU8Pop(QueueU8* queue, U8* value);
  *
  * @param   queue   The queue to initialize
  * @param   data    The backing data pointer of `length` bytes
- * @param   length  The length of the queue
+ * @param   length  The length of the queue, must be a power of 2
  *
  * @return  0 on success, else an error code
  */

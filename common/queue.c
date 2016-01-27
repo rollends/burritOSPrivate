@@ -22,7 +22,7 @@ S32 queueU8Push(QueueU8* queue, const U8 value)
     }
     
     queue->data[queue->tail] = value;
-    queue->tail = (queue->tail + 1) % queue->length;
+    queue->tail = (queue->tail + 1) & (queue->length-1);
     queue->count++;
 
     return 0;
@@ -37,7 +37,7 @@ S32 queueU8Pop(QueueU8* queue, U8* value)
 
     queue->count--;
     *value = queue->data[queue->head];
-    queue->head = (queue->head + 1) % queue->length;
+    queue->head = (queue->head + 1) & (queue->length-1);
 
     return 0;
 }
@@ -64,7 +64,7 @@ S32 queueU16Push(QueueU16* queue, const U16 value)
     }
     
     queue->data[queue->tail] = value;
-    queue->tail = (queue->tail + 1) % queue->length;
+    queue->tail = (queue->tail + 1) & (queue->length-1);
     queue->count++;
 
     return 0;
@@ -79,7 +79,7 @@ S32 queueU16Pop(QueueU16* queue, U16* value)
 
     queue->count--;
     *value = queue->data[queue->head];
-    queue->head = (queue->head + 1) % queue->length;
+    queue->head = (queue->head + 1) & (queue->length-1);
 
     return 0;
 }
