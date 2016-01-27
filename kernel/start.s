@@ -56,7 +56,7 @@ hang:
     b hang
 
 swi_handler:
-    b enterKernelR
+    b systemCall
 
 .global __sysCall0
 __sysCall0:

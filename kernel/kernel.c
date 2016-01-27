@@ -9,7 +9,7 @@
 
 static KernelData kernel;
 
-U32 systemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
+U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
 {
     TaskDescriptor* desc = kernel.activeTask;
 
@@ -45,7 +45,7 @@ U32 systemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
     return 0;
 }
 
-U32* systemSchedule(U32 sp)
+U32* kernelSchedule(U32 sp)
 {
     TaskDescriptor* desc = kernel.activeTask;
     TaskID tid = desc->tid;
@@ -70,7 +70,7 @@ U32* systemSchedule(U32 sp)
     return kernel.activeTask->stack;
 }
 
-extern U32* enterTask(U32*);
+extern U32* kernelStart(U32*);
 
 U32 kernelMain(U32 pc)
 {
@@ -82,7 +82,7 @@ U32 kernelMain(U32 pc)
 	U16 taskID = taskTableAlloc(&kernel.tasks, 1, (U32)(&InitialTask) + pc, VAL_TO_ID(0));
     
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));
-    enterTask(kernel.activeTask->stack);
+    kernelStart(kernel.activeTask->stack);
 
     return 0;
 }
