@@ -45,11 +45,11 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
     return 0;
 }
 
-U32* kernelSchedule(U32 sp)
+U32* kernelSchedule(U32* sp)
 {
     TaskDescriptor* desc = kernel.activeTask;
     TaskID tid = desc->tid;
-    desc->stack = (U32*)(sp);
+    desc->stack = sp;
 
     if (desc->state == eReady)
     {
