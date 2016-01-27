@@ -5,7 +5,7 @@
 kernelStart:                        @ Called after boostrapping
     stmfd   sp!, {r4-r12, lr}       @ Stack the kernel registers
 
-enterTaskInner:                     @ Enters a user task with an sp in r0
+enterTask:                          @ Enters a user task with an sp in r0
     msr     cpsr_c, #0xDF           @ Switch to system mode
     ldmfd   r0!, {r1, lr}           @ Load task PSR and LR from the task sp
     add     sp, r0, #44             @ Set the task sp
@@ -37,7 +37,7 @@ systemCall:                         @ Called when an SWI occurs
     bl kernelSchedule               @ Schedule next process and update the sp
 
     cmp r0, #0                      @ Check if the kernel should exit
-    bne enterTaskInner              @ Enter next task
+    bne enterTask                   @ Enter next task
 
 kernelEnd:                          @ Returns to kernel main and exits
     ldmfd   sp!, {r4-r12, pc}       @ Restore the kernel registers
