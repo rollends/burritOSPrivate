@@ -33,9 +33,9 @@ S32 taskTableAlloc(TaskTable* table, U8 priority, U32 entry, const TaskID pid)
     U32* tablebase = 0x01000000;
     U32* stack = (U32*)(tablebase + 1024*(index+1) - 1);
     *(stack) = entry;
-    *(stack-15) = 0x10;
+    *(stack-12) = 0x10;
     
-    desc->stack = stack - 15;
+    desc->stack = stack - 12;
     desc->state = eReady;
     desc->pid = pid;
     desc->priority = priority;
@@ -62,7 +62,6 @@ S32 taskTableFree(TaskTable* table, const TaskID tid)
 
     return 0;
 }
-
 
 TaskDescriptor* taskGetDescriptor(TaskTable* table, const TaskID tid)
 {

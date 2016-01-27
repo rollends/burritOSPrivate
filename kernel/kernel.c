@@ -1,79 +1,88 @@
-#include "common/priorityQueue.h"
 #include "common/types.h"
+#include "kernel/kernelData.h"
 #include "kernel/print.h"
 #include "kernel/sysCall.h"
-#include "kernel/taskTable.h"
+#include "kernel/print.h"
 #include "kernel/uart.h"
 
 #include "user/InitialTask.h"
-#include "user/TestTask.h"
+
+static KernelData kernel;
+
+U32 systemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
+{
+    TaskDescriptor* desc = kernel.activeTask;
+
+    switch (id)
+    {
+        case SYS_CALL_CREATE_ID:
+        {
+            U16 result = taskTableAlloc(&kernel.tasks, arg0, arg1 + kernel.baseAddress, desc->tid);
+            priorityQueuePush(&kernel.queue, arg0, result);
+            return result;
+        }
+       
+        case SYS_CALL_PID_ID:
+        {
+            return desc->pid.value;
+        }
+
+        case SYS_CALL_TID_ID:
+        {
+            return desc->tid.value;
+        }
+
+        case SYS_CALL_EXIT_ID:
+        {
+            desc->state = eZombie;
+            break;
+        }
+
+        default:
+            break;
+    }
+
+    return 0;
+}
+
+U32* systemSchedule(U32 sp)
+{
+    TaskDescriptor* desc = kernel.activeTask;
+    TaskID tid = desc->tid;
+    desc->stack = (U32*)(sp);
+
+    if (desc->state == eReady)
+    {
+        priorityQueuePush(&kernel.queue, kernel.activeTask->priority, tid.value);
+    }
+    else if (desc->state == eZombie)
+    {
+        taskTableFree(&kernel.tasks, tid);
+    }
+
+    if (priorityQueuePop(&kernel.queue, &(tid.value)) != 0)
+    {
+        return 0;
+    }
+
+    kernel.activeTask = taskGetDescriptor(&kernel.tasks, tid);
+
+    return kernel.activeTask->stack;
+}
 
 extern U32* enterTask(U32*);
 
-int kernelMain(U32 pc)
+U32 kernelMain(U32 pc)
 {
     uartSpeed(UART_PORT_2, UART_SPEED_HI);
-    uartConfig(UART_PORT_2, 0, 0, 0);                                                      
-
+    uartConfig(UART_PORT_2, 0, 0, 0);
     printString("%c[2J\r", 27);
 
-    PriorityQueue 	queue;
-    TaskTable 	tasks;
-	TaskID 	activeTaskID;
-    U8 queueData[PQUEUE_MEM_SIZE(64, 3)];
-	priorityQueueInit(&queue, queueData, 64, 3);
-
-	taskTableInit(&tasks);
-	activeTaskID.value = taskTableAlloc(&tasks, 1, (U32)(&InitialTask) + pc, VAL_TO_ID(0));
+    kernelDataInit(&kernel, pc);
+	U16 taskID = taskTableAlloc(&kernel.tasks, 1, (U32)(&InitialTask) + pc, VAL_TO_ID(0));
     
-    do
-    {
-        TaskDescriptor* desc = taskGetDescriptor(&tasks, activeTaskID);
-		
-		// Context Switch into User Space Task
-		desc->stack = enterTask(desc->stack);
-
-		// User task made system call.
-        U32 sysCall = desc->stack[2];
-        U32 arg1 = desc->stack[3];
-        U32 arg2 = desc->stack[4];
-        U32* returnVal = &desc->stack[2];
-
-        switch (sysCall)
-        {
-            case SYS_CALL_CREATE_ID:
-                *returnVal = taskTableAlloc(&tasks, arg1, arg2 + pc, activeTaskID);
-                priorityQueuePush(&queue, arg1, *returnVal);
-                break;
-           
-            case SYS_CALL_PID_ID:
-                *returnVal = desc->pid.value;
-                break;
-
-            case SYS_CALL_TID_ID:
-                *returnVal = desc->tid.value;
-                break;
-
-            case SYS_CALL_PRINT_ID:
-                printString("%x\r\n", arg1);
-                break;
-
-            default:
-                break;
-        }
-
-        if (sysCall != SYS_CALL_EXIT_ID)
-        {
-			// User task didn't call exit, reEnqueue
-            priorityQueuePush(&queue, desc->priority, activeTaskID.value);
-        }
-		else
-		{
-			// User task called sysExit. Free up its PCB.
-			taskTableFree(&tasks, activeTaskID);
-		}
-
-    } while (priorityQueuePop( &queue, &activeTaskID.value ) >= 0);
+    kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));
+    enterTask(kernel.activeTask->stack);
 
     return 0;
 }
