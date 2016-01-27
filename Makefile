@@ -52,6 +52,14 @@ clean:
 	rm -rf $(BLDDIR)
 	rm -rf $(OUTDIR)
 
+clean_doc:
+	rm -rf doc
+
+doc:
+	doxygen doxygen.cfg
+	$(MAKE) -C doc/latex
+	cp doc/latex/refman.pdf doc/doc.pdf
+
 .SUFFIXES:
 .SECONDARY:
-.PHONY: clean directories install
+.PHONY: clean clean_doc directories doc install
