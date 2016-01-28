@@ -7,6 +7,8 @@
 #define     MESSAGE_NAMESERVER_WHOIS            1
 #define     MESSAGE_NAMESERVER_REGISTER         2
 #define     MESSAGE_NAMESERVER_RESPONSE         3
+#define     MESSAGE_RPS                         4
+#define     MESSAGE_RANDOM_BYTE                 5
 
 /**
  * Message holder struct that includes the message type and a union of 
@@ -35,6 +37,22 @@ typedef struct
         {
             U16         id;
         } NameserverResponse;
+
+        /**
+         * Rock paper scissors message body
+         */  
+        struct
+        {
+            U8          rpsType;
+        } RPSMessage;
+
+        /**
+         * PRNG seed initialization message
+         */
+        struct
+        {
+            U8          seed;
+        } RandomSeed;
     } message;
 } MessageEnvelope;
 

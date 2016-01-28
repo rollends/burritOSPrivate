@@ -15,6 +15,14 @@ S32 messageCopy(MessageEnvelope* dst, MessageEnvelope const * src)
             dst->message.NameserverResponse = src->message.NameserverResponse;
             break;
 
+        case MESSAGE_RPS:
+            dst->message.RPSMessage = src->message.RPSMessage;
+            break;
+ 
+        case MESSAGE_RANDOM_BYTE:
+            dst->message.RandomSeed = src->message.RandomSeed;
+            break;
+
         default:
             returnVal = -1;
             break;

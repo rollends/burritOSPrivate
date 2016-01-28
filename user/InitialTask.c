@@ -1,36 +1,31 @@
+#include "common/random.h"
+
 #include "kernel/message.h"
 #include "kernel/print.h"
 #include "kernel/sysCall.h"
 
+#include "user/Nameserver.h"
+#include "user/RPSServer.h"
 #include "user/TestTask.h"
 
 void InitialTask()
 {
-    U32 priorities[4];
-    priorities[0] = 2;
-    priorities[1] = 2;
-    priorities[2] = 0;
-    priorities[3] = 0;
     U32 i;
+    U8 seed = 11;
 
-    for (i = 0; i < 4; i++)
-    {
-        printString("Created: %b\r\n", sysCreate(priorities[i], &TestTask));
-    }
+    sysCreate(0, &Nameserver);
+    sysCreate(2, &RPSServer);
+    
+    nsRegister(God);
 
-    for(i = 0; i < 4; i++)
+    for (i = 0; i < 10; i++)
     {
-        MessageEnvelope env;
-        U16 id;
+        U16 id = sysCreate(1, &TestTask);
         
-        sysReceive(&id, &env);
-
-        printString("FirstUserTask: received message from %x with data %x\r\n",
-                    id,
-                    env.message.NameserverRequest.name);
-        env.message.NameserverRequest.name = 0x66;
-
-        sysReply(id, &env);
+        MessageEnvelope envelope;
+        envelope.type = MESSAGE_RANDOM_BYTE;
+        envelope.message.RandomSeed.seed = nextRandU8(&seed);
+        sysSend(id, &envelope, &envelope);
     }
 
     printString("FirstUserTask: exiting\r\n");
