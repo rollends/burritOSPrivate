@@ -3,6 +3,8 @@
 
 #define VAL_TO_ID(val)  (TaskID)((U16)(val))
 
+#include "common/queue.h"
+
 /**
  * Defines a  TaskID type that includes both the task id and a
  * generation value for identifying whether a task id has expired
@@ -30,6 +32,9 @@ typedef enum
     eZombie,
     eReady,
     eActive,
+    eSendBlocked,
+    eReceiveBlocked,
+    eReplyBlocked,
 } TaskState;
 
 /**
@@ -38,6 +43,9 @@ typedef enum
  */
 typedef struct
 {
+    /// The send queue for the task
+    QueueU16 sendQueue;
+
     /// A pointer to the last element in the task's stack
     U32* stack;
 

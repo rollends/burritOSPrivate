@@ -4,7 +4,7 @@ LD		= arm-none-eabi-ld
 CP		= arm-none-eabi-objcopy
 DM		= arm-none-eabi-objdump
 
-OUT		= k1.bin
+OUT		= k2.bin
 
 CFLAGS	= -Wall -O3 -nostdlib -nostartfiles -ffreestanding
 LDFLAGS = -Map bin/main.map -N -T make/loadmap.ld

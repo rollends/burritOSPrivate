@@ -43,6 +43,10 @@ S32 taskTableAlloc(TaskTable* table,
     desc->pid = pid;
     desc->priority = priority;
 
+    queueU16Init(&desc->sendQueue,
+                 table->sendQueueTable + index*SEND_QUEUE_LENGTH,
+                 SEND_QUEUE_LENGTH);
+
     return desc->tid.value;
 }
 
