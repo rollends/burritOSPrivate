@@ -3,7 +3,9 @@
 #include "kernel/message.h"
 #include "kernel/print.h"
 #include "kernel/sysCall.h"
+#include "kernel/timing.h"
 
+#include "user/MessageTimingTask.h"
 #include "user/Nameserver.h"
 #include "user/RPSServer.h"
 #include "user/TestTask.h"
@@ -14,6 +16,23 @@ void InitialTask()
     U8 seed = 11;
 
     sysCreate(0, &Nameserver);
+
+    {
+        U16 timingId = sysCreate(2, &MessageTimingTask);
+        TimerState state;
+
+        timerStart(&state);
+        MessageEnvelope env;
+        env.type = MESSAGE_RANDOM_BYTE;
+        for(i = 0; i < 100; ++i)
+        {
+            sysSend( timingId, &env, &env );
+        }
+        printString("Timed basic message at %x\r\n", timerEnd( &state ) );
+        env.type = 0;
+        sysSend(timingId, &env, &env);
+    }
+
     sysCreate(2, &RPSServer);
     
     nsRegister(God);

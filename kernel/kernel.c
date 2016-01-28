@@ -15,6 +15,7 @@ U32* kernelBoostrap(U32 pc)
     uartSpeed(UART_PORT_2, UART_SPEED_HI);
     uartConfig(UART_PORT_2, 0, 0, 0);
     printString("%c[2J\r", 27);
+    timerInit(); 
 
     kernelDataInit(&kernel, pc);
     U16 taskID = taskTableAlloc(&kernel.tasks, 1, (U32)(&InitialTask) + pc, VAL_TO_ID(0));
