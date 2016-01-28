@@ -36,9 +36,9 @@ S32 taskTableAlloc(TaskTable* table,
     U32* tablebase = (U32*)(0x01000000);
     U32* stack = (U32*)(tablebase + 1024*(index+1) - 1);
     *(stack) = entry;
-    *(stack-12) = 0x10;
+    *(stack-15) = 0x10;
     
-    desc->stack = stack - 12;
+    desc->stack = stack - 15;
     desc->state = eReady;
     desc->pid = pid;
     desc->priority = priority;
