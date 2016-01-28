@@ -40,14 +40,14 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
         {
             TaskDescriptor* receiver =
                 taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
+
             if (receiver->state == eSendBlocked)
             {
-                U16* pTid = (U16*)receiver->stack[3];
-                MessageEnvelope* pMsg = (MessageEnvelope*)receiver->stack[4];
-                S32* pReturn = (S32*)&receiver->stack[2];
+                S32 result = messageCopy((MessageEnvelope*)TASK_ARG_1(receiver),
+                                         (MessageEnvelope const *)arg1);
 
-                *pTid = desc->tid.value;
-                *pReturn = messageCopy(pMsg, (MessageEnvelope const *)arg1);
+                *((U16*)TASK_ARG_0(receiver)) = desc->tid.value;
+                TASK_RETURN(receiver) = result;
 
                 desc->state = eReplyBlocked;
                 receiver->state = eReady;
@@ -55,7 +55,7 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
                 priorityQueuePush(&kernel.queue,
                                   receiver->priority,
                                   receiver->tid.value);
-                return *pReturn;
+                return result;
             }
             else
             {
@@ -75,11 +75,9 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
                 TaskDescriptor* sender =
                     taskGetDescriptor(&kernel.tasks, VAL_TO_ID(senderId));
                 
-                U16* pTid = (U16*)arg0;
-                MessageEnvelope* pMsg = (MessageEnvelope*)arg1;
-
-                *pTid = senderId;
-                messageCopy(pMsg, (MessageEnvelope const *)sender->stack[4]);
+                *((U16*)arg0) = senderId;
+                messageCopy((MessageEnvelope*)arg1,
+                            (MessageEnvelope const *)TASK_ARG_1(sender));
 
                 sender->state = eReplyBlocked;
                 desc->state = eReady;
@@ -97,17 +95,15 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
             TaskDescriptor* replyTo =
                 taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
             
-            MessageEnvelope const * pFromMsg = (MessageEnvelope const *)arg1;
-            MessageEnvelope* pMsg = (MessageEnvelope*)replyTo->stack[5];
-            S32* pReturn = (S32*)&replyTo->stack[2];
-
-            *pReturn = messageCopy(pMsg, pFromMsg);
+            S32 result = messageCopy((MessageEnvelope*)TASK_ARG_2(replyTo),
+                                     (MessageEnvelope const *)arg1);
+            TASK_RETURN(replyTo) = result;
 
             replyTo->state = eReady;
             priorityQueuePush(&kernel.queue,
                               replyTo->priority,
                               replyTo->tid.value);
-            return *pReturn;
+            return result;
         }
        
         case SYS_CALL_PID_ID:
@@ -154,6 +150,5 @@ U32* kernelSchedule(U32* sp)
     }
 
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, tid);
-
     return kernel.activeTask->stack;
 }
