@@ -18,7 +18,7 @@ void InitialTask()
     
     nsRegister(God);
 
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < 2; i++)
     {
         U16 id = sysCreate(1, &TestTask);
         

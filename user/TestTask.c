@@ -17,7 +17,7 @@ void TestTask()
     nsWhoIs( RPS, &rps );
     
     U8 seed = receiveSeed();
-    U8 maxPlays = 1 + (nextRandU8( &seed ) % 100);
+    U8 maxPlays = 1 + (nextRandU8( &seed ) % 10);
     TaskID meId;
     meId.value = sysTid();
 
