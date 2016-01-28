@@ -17,7 +17,8 @@ It can then be run by issuing the `go` command.
 
 The expected output is:
 
-```Created: 0x02                                                               
+```
+Created: 0x02                                                               
 Created: 0x03
 Tid: 0x04   Pid: 0x01
 Tid: 0x04   Pid: 0x01
