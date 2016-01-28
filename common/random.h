@@ -4,7 +4,9 @@
 #include "common/types.h"
 
 /**
- * Generates a pseudo andom byte
+ * Generates a pseudo random byte
+ * Note that the the 'previous value' passed in is modified and will be equal
+ * to the return value.
  *
  * @param   value   A pointer to the previous byte / seed for the next byte
  *

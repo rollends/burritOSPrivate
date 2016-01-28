@@ -23,7 +23,7 @@ typedef struct
     union
     {
         /**
-         * Struct for requests sent to a name server
+         * Byte-sized Message (yum!)
          */
         struct
         {
@@ -31,7 +31,7 @@ typedef struct
         } MessageU8;
 
         /**
-         * Struct for responses from the name server
+         * Half-word Message
          */
         struct
         {
