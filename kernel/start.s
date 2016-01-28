@@ -6,6 +6,10 @@ _start:
     sub     r0, pc, #8              @ Store off the PC
     msr     cpsr_c, #0xD3           @ Disable interupts
 
+    mrc     p15, 0, r1, c1, c1, 0   @ read cache config
+    orr     r1, r1, #0x1000
+    mcr     p15, 0, r1, c1, c1, 0
+
     stmfd   sp!, {lr}               @ Store the LR for when we exit the kernel 
 
     bl      _vectorLoad             @ Load the vector table
