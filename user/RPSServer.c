@@ -36,7 +36,7 @@ void RPSServer()
         for(i = 0; i < 2; ++i)
         {
             queueU16Pop( &playerQueue, &players[i].value );
-            env.message.RPSMessage.rpsType = BeginPlay;
+            env.message.MessageU8.body = BeginPlay;
             sysReply( players[i].value, &env );
         }
         
@@ -71,7 +71,7 @@ void RPSServer()
 
             for(i = 0; i < 2; ++i)
             {
-                env.message.RPSMessage.rpsType = gamePlay[i];
+                env.message.MessageU8.body = gamePlay[i];
                 sysReply( players[i].value, &env );
             }
 
@@ -99,7 +99,7 @@ static void getTwoPlayers( QueueU16* playerQueue )
         {
             sysReply( id.value, &env );
         }
-        else if( env.message.RPSMessage.rpsType == Signup )
+        else if( env.message.MessageU8.body == Signup )
         {
             queueU16Push( playerQueue, id.value );
         }
@@ -131,7 +131,7 @@ static void getPlayerMoves( TaskID* players, QueueU16* playerQueue, RPSMessageTy
         }
         else
         {
-            if( env.message.RPSMessage.rpsType == Signup )
+            if( env.message.MessageU8.body == Signup )
             {
                 queueU16Push( playerQueue, id.value );
             }
@@ -142,7 +142,7 @@ static void getPlayerMoves( TaskID* players, QueueU16* playerQueue, RPSMessageTy
             continue;
         }
     
-        plays[playerIndex] = env.message.RPSMessage.rpsType;
+        plays[playerIndex] = env.message.MessageU8.body;
         numPlays++;     
     }
 }

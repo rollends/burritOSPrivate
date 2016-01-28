@@ -8,7 +8,7 @@ S32 nsRegister( TaskName name )
 {
     MessageEnvelope envelope;
     envelope.type = MESSAGE_NAMESERVER_REGISTER;
-    envelope.message.NameserverRequest.name = name;
+    envelope.message.MessageU8.body = name;
     return sysSend(2, &envelope, &envelope);
 }
 
@@ -16,14 +16,14 @@ S32 nsWhoIs( TaskName name, TaskID* sid )
 {
     MessageEnvelope envelope;
     envelope.type = MESSAGE_NAMESERVER_WHOIS;
-    envelope.message.NameserverRequest.name = name; 
+    envelope.message.MessageU8.body = name; 
     sysSend( 2, &envelope, &envelope );
 
     switch( envelope.type )
     {
     case MESSAGE_NAMESERVER_RESPONSE:
     {
-        sid->value = envelope.message.NameserverResponse.id;
+        sid->value = envelope.message.MessageU16.body;
         return 0;
     }
     default:
@@ -57,14 +57,14 @@ void Nameserver()
                 switch( envelope.type )
                 {
                 case MESSAGE_NAMESERVER_REGISTER:
-                    nameTable[envelope.message.NameserverRequest.name] = fTid.value;
-                    envelope.message.NameserverResponse.id = fTid.value;
+                    nameTable[envelope.message.MessageU8.body] = fTid.value;
+                    envelope.message.MessageU16.body = fTid.value;
                     gotRegistered = 1;
                     break;
 
                 case MESSAGE_NAMESERVER_WHOIS:
                     queueU16Push( &whoIsClients, fTid.value );
-                    queueU8Push( &whoIsRequests, envelope.message.NameserverRequest.name );
+                    queueU8Push( &whoIsRequests, envelope.message.MessageU16.body );
                     break;
                 }
             }
@@ -83,7 +83,7 @@ void Nameserver()
             queueU8Pop( &whoIsRequests, &nameVal );
             name = nameVal;
 
-            envelope.message.NameserverResponse.id = nameTable[name];
+            envelope.message.MessageU16.body = nameTable[name];
             envelope.type = MESSAGE_NAMESERVER_RESPONSE;
             sysReply( id, &envelope );
         }
@@ -96,12 +96,12 @@ void Nameserver()
         switch( envelope.type )
         {
         case MESSAGE_NAMESERVER_REGISTER:
-            nameTable[envelope.message.NameserverRequest.name] = fTid.value;
-            envelope.message.NameserverResponse.id = fTid.value;
+            nameTable[envelope.message.MessageU8.body] = fTid.value;
+            envelope.message.MessageU16.body = fTid.value;
             break;
 
         case MESSAGE_NAMESERVER_WHOIS:
-            envelope.message.NameserverResponse.id = nameTable[ envelope.message.NameserverRequest.name ];
+            envelope.message.MessageU16.body = nameTable[ envelope.message.MessageU8.body ];
             break;
 
         default:

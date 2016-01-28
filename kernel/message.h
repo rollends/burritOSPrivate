@@ -27,32 +27,16 @@ typedef struct
          */
         struct
         {
-            U8          name;
-        } NameserverRequest;
+            U8          body;
+        } MessageU8;
 
         /**
          * Struct for responses from the name server
          */
         struct
         {
-            U16         id;
-        } NameserverResponse;
-
-        /**
-         * Rock paper scissors message body
-         */  
-        struct
-        {
-            U8          rpsType;
-        } RPSMessage;
-
-        /**
-         * PRNG seed initialization message
-         */
-        struct
-        {
-            U8          seed;
-        } RandomSeed;
+            U16         body;
+        } MessageU16;
     } message;
 } MessageEnvelope;
 

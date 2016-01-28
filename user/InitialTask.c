@@ -24,7 +24,7 @@ void InitialTask()
         
         MessageEnvelope envelope;
         envelope.type = MESSAGE_RANDOM_BYTE;
-        envelope.message.RandomSeed.seed = nextRandU8(&seed);
+        envelope.message.MessageU8.body = nextRandU8(&seed);
         sysSend(id, &envelope, &envelope);
     }
 

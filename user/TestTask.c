@@ -43,7 +43,7 @@ static void gameSignup( TaskID sid )
 {
     MessageEnvelope env;
     env.type = MESSAGE_RPS;
-    env.message.RPSMessage.rpsType = Signup;
+    env.message.MessageU8.body = Signup;
     sysSend( sid.value, &env, &env );
 }
 
@@ -51,7 +51,7 @@ static void gameQuit( TaskID sid )
 {
     MessageEnvelope env;
     env.type = MESSAGE_RPS;
-    env.message.RPSMessage.rpsType = Quit;
+    env.message.MessageU8.body = Quit;
     sysSend( sid.value, &env, &env );
 }
 
@@ -59,7 +59,7 @@ static U8 gamePlay( TaskID me, TaskID sid, RPSMessageType move )
 {
     MessageEnvelope env;
     env.type = MESSAGE_RPS;
-    env.message.RPSMessage.rpsType = move;
+    env.message.MessageU8.body = move;
 
     sysSend( sid.value, &env, &env );
 
@@ -79,7 +79,7 @@ static U8 gamePlay( TaskID me, TaskID sid, RPSMessageType move )
         break;
     }
 
-    switch( env.message.RPSMessage.rpsType )
+    switch( env.message.MessageU8.body )
     {
     case PlayerWon:
         printString( "I won!\r\n" );
@@ -110,5 +110,5 @@ static U8 receiveSeed( )
         sysReply( id.value, &env );
     } while( id.value != pid.value );
 
-    return env.message.RandomSeed.seed;
+    return env.message.MessageU8.body;
 }
