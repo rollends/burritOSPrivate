@@ -55,6 +55,8 @@ clean:
 clean_doc:
 	rm -rf doc
 
+clean_all: clean_doc clean
+
 doc:
 	doxygen doxygen.cfg
 	$(MAKE) -C doc/latex
@@ -62,4 +64,4 @@ doc:
 
 .SUFFIXES:
 .SECONDARY:
-.PHONY: clean clean_doc directories doc install
+.PHONY: clean clean_all clean_doc directories doc install
