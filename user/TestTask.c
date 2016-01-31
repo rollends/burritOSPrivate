@@ -20,7 +20,7 @@ void TestTask()
     nsWhoIs( RPS, &rps );
     
     U8 seed = receiveSeed();
-    U8 maxPlays = 1 + (nextRandU8( &seed ) % 10);
+    U8 maxPlays = 1 + (nextRandU8( &seed ) & 7);
     TaskID meId;
     meId.value = sysTid();
 
@@ -29,7 +29,9 @@ void TestTask()
     gameSignup( rps );
     while( maxPlays-- > 0 )
     {
-        U8 r3 = ( nextRandU8( &seed ) % 3 );
+        volatile U8 r3 = ( nextRandU8( &seed ) );
+		r3 -= 3 * (r3 / 3);
+
         RPSMessageType move = PlayRock + r3;
         if( gamePlay( meId, rps, move ) )
         {

@@ -13,13 +13,39 @@
 #include "user/RPSServer.h"
 #include "user/TestTask.h"
 
+static void TimingTask();
+
 void InitialTask()
 {
     U32 i;
     U8 seed = 11;
 
-    //sysCreate(0, &Nameserver);
+#ifdef TIME_MESSAGE_PASSING
+	sysCreate(0, &TimingTask);
+#else 
+	sysCreate(0, &Nameserver);
+    sysCreate(2, &RPSServer);
+    
+    nsRegister(God);
 
+	// Create RPS Players
+    for (i = 0; i < 6; i++)
+    {
+        U16 id = sysCreate(1, &TestTask);
+        
+        MessageEnvelope envelope;
+        envelope.type = MESSAGE_RANDOM_BYTE;
+        envelope.message.MessageU8.body = nextRandU8(&seed);
+        sysSend(id, &envelope, &envelope);
+    }
+#endif
+    printString("FirstUserTask: exiting\r\n");
+	sysExit();
+}
+
+static void TimingTask()
+{
+	U8 i = 0;
     {
         U16 timingId = sysCreate(0, &MessageTimingTask);
         TimerState state;
@@ -95,21 +121,5 @@ void InitialTask()
         env.type = 0;
         sysSend(timingId, &env, &env);
     }
-
-    /*sysCreate(2, &RPSServer);
-    
-    nsRegister(God);
-
-    for (i = 0; i < 2; i++)
-    {
-        U16 id = sysCreate(1, &TestTask);
-        
-        MessageEnvelope envelope;
-        envelope.type = MESSAGE_RANDOM_BYTE;
-        envelope.message.MessageU8.body = nextRandU8(&seed);
-        sysSend(id, &envelope, &envelope);
-    }
-
-    printString("FirstUserTask: exiting\r\n");*/
-    sysExit();
+	sysExit();
 }
