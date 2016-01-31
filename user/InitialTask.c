@@ -24,7 +24,7 @@ void InitialTask()
 	sysCreate(0, &TimingTask);
 #else 
 	sysCreate(0, &Nameserver);
-    sysCreate(2, &RPSServer);
+    sysCreate(0, &RPSServer);
     
     nsRegister(God);
 

@@ -1,0 +1,70 @@
+0x04: Playing max of 0x06.
+0x05: Playing max of 0x05.
+
+
+0x04: Made move scissors and We tied...
+0x05: Made move scissors and We tied...
+
+
+0x04: Made move scissors and We tied...
+0x05: Made move scissors and We tied...
+
+
+0x04: Made move scissors and I won!
+0x05: Made move paper and I lost :'(....
+
+
+0x06: Playing max of 0x08.
+0x04: Made move paper and I won!
+0x05: Made move rock and I lost :'(....
+
+
+0x04: Made move rock and I won!
+0x05: Made move scissors and I lost :'(....
+
+
+0x04: Made move scissors and My opponent ditched me :P. I'm just too pro ;). I'll stop playing now.
+0x07: Playing max of 0x07.
+
+
+0x06: Made move scissors and I won!
+0x07: Made move paper and I lost :'(....
+
+
+0x06: Made move paper and I won!
+0x07: Made move rock and I lost :'(....
+
+
+0x06: Made move rock and I won!
+0x07: Made move scissors and I lost :'(....
+
+
+0x08: Playing max of 0x02.
+0x06: Made move scissors and We tied...
+0x07: Made move scissors and We tied...
+
+
+0x06: Made move scissors and I lost :'(....
+0x07: Made move rock and I won!
+
+
+0x06: Made move rock and I won!
+0x07: Made move scissors and I lost :'(....
+
+
+0x06: Made move scissors and We tied...
+0x07: Made move scissors and We tied...
+
+
+FirstUserTask: exiting
+0x06: Made move scissors and My opponent ditched me :P. I'm just too pro ;). I'll stop playing now.
+0x09: Playing max of 0x01.
+
+
+0x08: Made move rock and I won!
+0x09: Made move scissors and I lost :'(....
+
+
+0x08: Made move scissors and My opponent ditched me :P. I'm just too pro ;). I'll stop playing now.
+
+Program completed with status 0
