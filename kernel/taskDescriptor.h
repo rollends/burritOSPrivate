@@ -9,6 +9,7 @@
 #define TASK_ARG_2(desc) desc->stack[5]
 
 #include "common/queue.h"
+#include "kernel/config.h"
 
 /**
  * Defines a  TaskID type that includes both the task id and a
@@ -51,6 +52,12 @@ typedef struct
     /// A pointer to the last element in the task's stack
     U32* stack;
 
+    /// The current state of the task
+    TaskState state;
+
+    /// The task priority
+    U32 priority;
+    
     /// The task id
     TaskID tid;
 
@@ -59,12 +66,6 @@ typedef struct
 
     /// The send queue for the task
     QueueU16 sendQueue;
-
-    /// The current state of the task
-    TaskState state;
-
-    /// The task priority
-    U8 priority;
 } TaskDescriptor;
 
 #endif

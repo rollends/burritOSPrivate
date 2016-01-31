@@ -4,7 +4,7 @@
 #include "common/types.h"
 #include "common/queue.h"
 
-#include "kernel/taskTable.h"
+#include "kernel/config.h"
 
 /**
  * Defines a priority queue structure

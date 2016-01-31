@@ -3,11 +3,9 @@
 
 #include "common/queue.h"
 #include "common/types.h"
-#include "kernel/taskDescriptor.h"
 
-#define TASK_COUNT  64
-#define PRIORITY_COUNT 3
-#define SEND_QUEUE_LENGTH 8
+#include "kernel/config.h"
+#include "kernel/taskDescriptor.h"
 
 /**
  * Table for storing task state, i.e. task descriptors and the allocation queue
@@ -23,7 +21,7 @@ typedef struct
     /// Backing data for the descriptor queue
     U8 allocationTable[TASK_COUNT];
 
-    /// Backing data for the descriptor send queues
+    /// Backing data for the send queue
     U16 sendQueueTable[TASK_COUNT*SEND_QUEUE_LENGTH];
 } TaskTable;
 
