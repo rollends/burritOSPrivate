@@ -1,7 +1,10 @@
 #include "common/random.h"
+
 #include "kernel/message.h"
 #include "kernel/print.h"
 #include "kernel/sysCall.h"
+
+#include "user/messageTypes.h"
 #include "user/Nameserver.h"
 #include "user/TestTask.h"
 #include "user/RPSServer.h"

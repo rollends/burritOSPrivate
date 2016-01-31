@@ -3,13 +3,6 @@
 
 #include "common/types.h"
 
-#define     MESSAGE_NULL                        0
-#define     MESSAGE_NAMESERVER_WHOIS            1
-#define     MESSAGE_NAMESERVER_REGISTER         2
-#define     MESSAGE_NAMESERVER_RESPONSE         3
-#define     MESSAGE_RPS                         4
-#define     MESSAGE_RANDOM_BYTE                 5
-
 /**
  * Message holder struct that includes the message type and a union of 
  * possible message types
@@ -37,6 +30,22 @@ typedef struct
         {
             U16         body;
         } MessageU16;
+
+        /**
+         * Word Message
+         */
+        struct
+        {
+            U32         body;
+        } MessageU32;
+
+        /**
+         * Arbitrary sized Message
+         */
+        struct
+        {
+            U32*        body;
+        } MessageArbitrary;
     } message;
 } MessageEnvelope;
 

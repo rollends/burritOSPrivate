@@ -1,0 +1,40 @@
+O2 on
+    I-cache on
+        1 word
+            rf  60c
+            sf  686
+        16 word
+            rf  6fe
+            sf  77a
+
+    I-cache off
+        1 word
+            rf  1403
+            sf  15c0
+        16 word
+            rf  16e8
+            sf  189e
+
+O2 off
+    I-cache on
+        1 word
+            rf  d37
+            sf  e93
+        16 word
+            rf  e4d
+            sf  fbc
+    I-cache off
+        1 word
+            rf  25ad
+            sf  29f1
+        16 word
+            rf  28f9
+            sf  2d2e
+
+I-cache on, D-cache on, O2 on
+    1 word
+        rf  17f
+        sf  19a
+    16 word
+        rf  1ce
+        sf  1eb

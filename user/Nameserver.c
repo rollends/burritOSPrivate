@@ -1,8 +1,11 @@
+#include "common/queue.h"
 #include "common/types.h"
+
 #include "kernel/message.h"
 #include "kernel/sysCall.h"
+
+#include "user/messageTypes.h"
 #include "user/Nameserver.h"
-#include "common/queue.h"
 
 S32 nsRegister( TaskName name )
 {

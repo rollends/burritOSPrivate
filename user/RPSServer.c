@@ -2,13 +2,13 @@
 #include "common/queue.h"
 
 #include "kernel/message.h"
+#include "kernel/print.h"
 #include "kernel/sysCall.h"
 #include "kernel/uart.h"
 
+#include "user/messageTypes.h"
 #include "user/RPSServer.h"
 #include "user/Nameserver.h"
-
-#include "kernel/print.h"
 
 static void getTwoPlayers( QueueU16* playerQueue );
 static void getPlayerMoves( TaskID* players, 
