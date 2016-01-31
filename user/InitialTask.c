@@ -21,7 +21,7 @@ void InitialTask()
     U8 seed = 11;
 
 #ifdef TIME_MESSAGE_PASSING
-	sysCreate(0, &TimingTask);
+	TimingTask();
 #else 
 	sysCreate(0, &Nameserver);
     sysCreate(0, &RPSServer);
