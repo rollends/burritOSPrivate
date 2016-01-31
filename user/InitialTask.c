@@ -3,7 +3,7 @@
 #include "kernel/message.h"
 #include "kernel/print.h"
 #include "kernel/sysCall.h"
-#include "kernel/timing.h"
+#include "kernel/timer.h"
 
 #include "user/MessageTimingTask.h"
 #include "user/Nameserver.h"

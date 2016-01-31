@@ -48,6 +48,11 @@ typedef struct
  *
  * @return  0 on success, else an error code
  */
-S32 messageCopy(MessageEnvelope* dst, MessageEnvelope const * src);
+static inline S32 messageCopy(MessageEnvelope* dst, MessageEnvelope const * src)
+{
+    dst->type = src->type;
+    dst->message = src->message;
+    return 0;
+}
 
 #endif

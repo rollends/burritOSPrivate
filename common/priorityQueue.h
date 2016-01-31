@@ -4,36 +4,31 @@
 #include "common/types.h"
 #include "common/queue.h"
 
-#define PQUEUE_MEM_SIZE(length, count) \
-                ((sizeof(QueueU16) + QUEUE_MEM_SIZE(length, U16))*count)
+#include "kernel/taskTable.h"
 
 /**
- * Defines a priority queue structure, consisting of a collection of QueueU16 
- * instances and a priority count.
+ * Defines a priority queue structure
  */
 typedef struct
 {
-    /// Array of `count` QueueU16 instances, one for each priority
-    QueueU16* queues;
+    /// The backing data for the priority queue
+    U16 data[TASK_COUNT*PRIORITY_COUNT];
 
-    /// The number of priorities in the oqueue
-    U8 count;
+    /// The head indices for the queues
+    U32 head[PRIORITY_COUNT];
+
+    /// The tail indices for the queues
+    U32 tail[PRIORITY_COUNT];
 } PriorityQueue;
 
 /**
  * Initializes a priority queue
  *
  * @param   queue   The priority queue to initialize
- * @param   data    The memory to use for the queue structures and their data
- * @param   length  The length of each priority queue
- * @param   count   The number of priorities
  *
  * @return  0 on success, else an error code
  */
-S32 priorityQueueInit(PriorityQueue* queue,
-                      U8* data,
-                      const U8 length,
-                      const U8 count);
+S32 priorityQueueInit(PriorityQueue* queue);
 
 /**
  * Appends a value onto the queue at a given priority
@@ -55,5 +50,18 @@ S32 priorityQueuePush(PriorityQueue* queue, const U8 priority, const U16 value);
  * @return  0 on success, else an error code
  */
 S32 priorityQueuePop(PriorityQueue* queue, U16* dest);
+
+/**
+ * Performs a combined push and pop operation that minimizes the amount of 
+ * queue access needed. If the pushed and popped value are the same, the 
+ * function returns out early.
+ *
+ * @param   queue       The priority queue to push and pop from
+ * @param   priority    The priority level to push/pop to
+ * @param   value       The location of the value to read and write
+ *
+ * @return  0 on success, else an error code
+ */
+S32 priorityQueuePushPop(PriorityQueue* queue, const U8 priority, U16* value);
 
 #endif

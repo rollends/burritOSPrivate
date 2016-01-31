@@ -48,20 +48,20 @@ typedef enum
  */
 typedef struct
 {
-    /// The send queue for the task
-    QueueU16 sendQueue;
-
     /// A pointer to the last element in the task's stack
     U32* stack;
-
-    /// The current state of the task
-    TaskState state;
 
     /// The task id
     TaskID tid;
 
     /// The parent's task id
     TaskID pid;
+
+    /// The send queue for the task
+    QueueU16 sendQueue;
+
+    /// The current state of the task
+    TaskState state;
 
     /// The task priority
     U8 priority;

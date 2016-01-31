@@ -6,6 +6,7 @@
 #include "kernel/taskDescriptor.h"
 
 #define TASK_COUNT  64
+#define PRIORITY_COUNT 3
 #define SEND_QUEUE_LENGTH 8
 
 /**
@@ -66,8 +67,12 @@ S32 taskTableFree(TaskTable* table, const TaskID tid);
  * @param   table       The table to get the descriptor
  * @param   tid         The task id
  *
- * @return  0 on success, else an error code
+ * @return  A TaskDescriptor pointer
  */
-TaskDescriptor* taskGetDescriptor(TaskTable* table, const TaskID tid);
+static inline TaskDescriptor* taskGetDescriptor(TaskTable* table,
+                                                const TaskID tid)
+{
+    return &(table->descriptors[tid.fields.id - 1]);
+}
 
 #endif
