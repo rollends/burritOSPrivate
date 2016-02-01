@@ -1,0 +1,16 @@
+4 bytes	off	yes	off	tpetrick + rsdsouza	211.358
+64 bytes	off	yes	off	tpetrick + rsdsouza	227.677
+4 bytes	on	yes	off	tpetrick + rsdsouza	16.063
+64 bytes	on	yes	off	tpetrick + rsdsouza	17.756
+4 bytes	off	no	off	tpetrick + rsdsouza	189.862
+64 bytes	off	no	off	tpetrick + rsdsouza	206.476
+4 bytes	on	no	off	tpetrick + rsdsouza	14.154
+64 bytes	on	no	off	tpetrick + rsdsouza	15.787
+4 bytes	off	yes	on	tpetrick + rsdsouza	109.606
+64 bytes	off	yes	on	tpetrick + rsdsouza	124.055
+4 bytes	on	yes	on	tpetrick + rsdsouza	8.071
+64 bytes	on	yes	on	tpetrick + rsdsouza	9.665
+4 bytes	off	no	on	tpetrick + rsdsouza	100.846
+64 bytes	off	no	on	tpetrick + rsdsouza	115.433
+4 bytes	on	no	on	tpetrick + rsdsouza 	7.539
+64 bytes	on	no	on	tpetrick + rsdsouza	9.094
