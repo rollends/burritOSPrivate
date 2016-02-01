@@ -1,6 +1,14 @@
 All data in microseconds
 
 O2 on
+    D-cache on I-cache on
+        1 word
+            rf  7.539
+            sf  8.071
+        16 word
+            rf  9.094
+            sf  9.665
+
     I-cache on
         1 word
             rf  30.472
@@ -18,6 +26,14 @@ O2 on
             sf  124.055
 
 O2 off
+    D-cache on I-cache on
+        1 word
+            rf  14.154
+            sf  16.063
+        16 word
+            rf  15.787
+            sf  17.756
+
     I-cache on
         1 word
             rf  66.593
@@ -25,6 +41,7 @@ O2 off
         16 word
             rf  72.067
             sf  79.291
+
     I-cache off
         1 word
             rf  189.862
@@ -32,11 +49,3 @@ O2 off
         16 word
             rf  206.476
             sf  227.677
-
-I-cache on, D-cache on, O2 on
-    1 word
-        rf  7.539
-        sf  8.071
-    16 word
-        rf  9.094
-        sf  9.665
