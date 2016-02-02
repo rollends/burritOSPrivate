@@ -19,6 +19,9 @@ typedef struct
 
     /// The tail indices for the queues
     U32 tail[PRIORITY_COUNT];
+
+	/// The Priority Queue Non-Empty Flags
+	U32 isNonEmpty;
 } PriorityQueue;
 
 /**
