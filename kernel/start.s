@@ -14,8 +14,8 @@ _start:
     msr     cpsr_c, #0xD3           @ Disable interupts
     stmfd   sp!, {lr}               @ Store the LR for when we exit the kernel 
 
-    @bl      enableICache            @ Enable the instruction cache
-    @bl      enableDCache            @ Enable the data cache
+    bl      enableICache            @ Enable the instruction cache
+    bl      enableDCache            @ Enable the data cache
 
     bl      _vectorLoad             @ Load the vector table
     bl      kernelBoostrap          @ Boostrap the kernel
@@ -95,6 +95,7 @@ _systemCall:                        @ Called when an SWI occurs
 @ Redboot code
 @
 kernelEnd:                          @ Exists the kernel
+    bl      kernelCleanup           @ Cleanup the kernel
     ldmfd   sp!, {pc}               @ Load the LR into PC to return to redboot
 
 @

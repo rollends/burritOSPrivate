@@ -13,23 +13,37 @@ static KernelData kernel;
 
 U32* kernelBoostrap(U32 pc)
 {
+    // Temp - enable interrupts
+    RWRegister vic = (RWRegister)0x800C0010;
+    *vic |= 0x80000;
+
     uartSpeed(UART_PORT_2, UART_SPEED_HI);
     uartConfig(UART_PORT_2, 0, 0, 0);
     printString("%c[2J\r", 27);
-    timerInit(); 
+    timerInit(TIMER_3); 
 
     kernelDataInit(&kernel, pc);
     U16 taskID = taskTableAlloc(&kernel.tasks, 1, (U32)(&InitialTask) + pc, VAL_TO_ID(0));
     
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));
     printString("starting task %x\r\n", kernel.activeTask->stack);
+    
     return kernel.activeTask->stack;
+}
+
+void kernelCleanup()
+{
+    RWRegister vic1 = (RWRegister)0x800B0014;
+    *vic1 = 0xffffffff;
+
+    RWRegister vic2 = (RWRegister)0x800C0014;
+    *vic2 = 0xffffffff;
 }
 
 void kernelInterrupt()
 {
     printString("kernelInterrupt occured\r\n");
-    timerClear();
+    timerClear(TIMER_3);
 }
 
 U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)

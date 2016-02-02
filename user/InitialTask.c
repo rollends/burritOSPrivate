@@ -56,12 +56,12 @@ static void TimingTask()
         MessageEnvelope env;
         env.type = MESSAGE_RANDOM_BYTE;
 
-        timerStart(&state);
+        timerStart(TIMER_3, &state);
         for(i = 0; i < 100; ++i)
         {
             sysSend( timingId, &env, &env );
         }
-        printString("Timed receive-first message at %x\r\n", timerEnd( &state ) );
+        printString("Timed receive-first message at %x\r\n", timerEnd(TIMER_3, &state ) );
         env.type = 0;
         sysSend(timingId, &env, &env);
     }
@@ -73,12 +73,12 @@ static void TimingTask()
         MessageEnvelope env;
         env.type = MESSAGE_RANDOM_BYTE;
 
-        timerStart(&state);
+        timerStart(TIMER_3, &state);
         for(i = 0; i < 100; ++i)
         {
             sysSend( timingId, &env, &env );
         }
-        printString("Timed send-first message at %x\r\n", timerEnd( &state ) );
+        printString("Timed send-first message at %x\r\n", timerEnd(TIMER_3, &state ) );
         env.type = 0;
         sysSend(timingId, &env, &env);
     }
@@ -92,14 +92,14 @@ static void TimingTask()
         U32 buffer[16];
         env.type = MESSAGE_TYPE_64_BYTE;
 
-        timerStart(&state);
+        timerStart(TIMER_3, &state);
         for(i = 0; i < 100; ++i)
         {
             env.message.MessageArbitrary.body = buffer;
             sysSend( timingId, &env, &env );
             __memcpy(buffer, env.message.MessageArbitrary.body, 16);
         }
-        printString("Timed receive-first message at %x\r\n", timerEnd( &state ) );
+        printString("Timed receive-first message at %x\r\n", timerEnd(TIMER_3, &state ) );
         env.type = 0;
         sysSend(timingId, &env, &env);
     }
@@ -113,14 +113,14 @@ static void TimingTask()
         U32 buffer[16];
         env.type = MESSAGE_TYPE_64_BYTE;
 
-        timerStart(&state);
+        timerStart(TIMER_3, &state);
         for(i = 0; i < 100; ++i)
         {
             env.message.MessageArbitrary.body = buffer;
             sysSend( timingId, &env, &env );
             __memcpy(buffer, env.message.MessageArbitrary.body, 16);
         }
-        printString("Timed send-first message at %x\r\n", timerEnd( &state ) );
+        printString("Timed send-first message at %x\r\n", timerEnd(TIMER_3, &state ) );
         env.type = 0;
         sysSend(timingId, &env, &env);
     }
