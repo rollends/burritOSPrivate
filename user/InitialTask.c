@@ -17,30 +17,14 @@ static void TimingTask();
 
 void InitialTask()
 {
-    U32 i;
-    U8 seed = 11;
-
-#ifdef TIME_MESSAGE_PASSING
-	TimingTask();
-#else 
-	sysCreate(0, &Nameserver);
-    sysCreate(0, &RPSServer);
-    
-    nsRegister(God);
-
-	// Create RPS Players
-    for (i = 0; i < 6; i++)
+    while (1)
     {
-        U16 id = sysCreate(1, &TestTask);
-        
-        MessageEnvelope envelope;
-        envelope.type = MESSAGE_RANDOM_BYTE;
-        envelope.message.MessageU8.body = nextRandU8(&seed);
-        sysSend(id, &envelope, &envelope);
+        U32 val = timerValue();
+        if ((val & 8191) == 8191)
+        {
+            printString("%x\r\n", val);
+        }
     }
-#endif
-    printString("FirstUserTask: exiting\r\n");
-	sysExit();
 }
 
 static void TimingTask()

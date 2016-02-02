@@ -9,13 +9,30 @@
 void timerInit()
 {
     RWRegister control = Timer_RWRegister( CRTL_OFFSET );
-    *control = 0x88; // Enable the timer in free-running mode.
+    RWRegister value = Timer_RWRegister( LDR_OFFSET );
+    *control = 0xc8;
+    *value = 508000 * 2;
+
+    RWRegister vic = 0x800C0010;
+    *vic |= 0x80000;
 }
 
 void timerStart(TimerState* state)
 {
     RORegister rvalue = Timer_RORegister( VAL_OFFSET );
     state->start = *rvalue;
+}
+
+void timerClear()
+{
+    RWRegister value = Timer_RWRegister( CLR_OFFSET );
+    *value = 1;
+}
+
+U32 timerValue()
+{
+    RORegister rvalue = Timer_RORegister( VAL_OFFSET );
+    return *rvalue;
 }
 
 U32 timerEnd(TimerState const * state)

@@ -17,7 +17,7 @@ vectorTable:
     prefetch_handler_ref:   .word hang
     data_handler_ref:       .word hang
     unused_handler_ref:     .word hang
-    irq_handler_ref:        .word hang
+    irq_handler_ref:        .word _interruptCall
     fiq_handler_ref:        .word hang
 
 _vectorLoad:

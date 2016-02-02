@@ -24,6 +24,9 @@ void timerInit();
  */
 void timerStart(TimerState* state);
 
+void timerClear();
+U32 timerValue();
+
 /**
  * Ends the timer and returns the total duration
  * 

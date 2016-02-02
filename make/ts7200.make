@@ -4,7 +4,7 @@ LD      = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld
 CP	= 
 DM 	= /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/objdump
 
-OUT	= k2.elf
+OUT	= k3.elf
 
 CFLAGS  = -fPIC -O2 -Wall -I. -mcpu=arm920t -msoft-float
 LDFLAGS = -Map bin/main.map -N -T make/loadmap.ld
