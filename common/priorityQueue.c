@@ -14,40 +14,39 @@ S32 priorityQueueInit(PriorityQueue* queue)
 
 S32 priorityQueuePush(PriorityQueue* queue, const U8 priority, const U16 value)
 {
-    queue->data[queue->tail[priority] + priority * TASK_COUNT] = value;
-    queue->tail[priority] = (queue->tail[priority] + 1) & (TASK_COUNT-1);
-	queue->isNonEmpty |= 1 << priority;
+    queue->data[queue->tail[priority] + priority * 8] = value;
+    queue->tail[priority] = (queue->tail[priority] + 1) & ( 8 - 1);
+	queue->isNonEmpty |= (1 << priority);
     return 0;
 }
 
 S32 priorityQueuePop(PriorityQueue* queue, U16* dest)
 {
-	if( !queue->isNonEmpty )
+	if( 0 == queue->isNonEmpty )
 		return -1;
 
-	U8 priority = fastLog2( queue->isNonEmpty );
-	*dest = queue->data[queue->head[priority]];
-	queue->head[priority] = (queue->head[priority] + 1) & (TASK_COUNT - 1);
-	queue->isNonEmpty ^= (queue->head[priority] == queue->tail[priority] ? 1 : 0) << priority;
+	U32 priority = fastLog2( queue->isNonEmpty );
+	*dest = queue->data[queue->head[priority] + priority * 8];
+	queue->head[priority] = (queue->head[priority] + 1) & (8 - 1);
+	queue->isNonEmpty ^= (queue->head[priority] == queue->tail[priority] ? 1 : 0) << (priority);
     
 	return 0;
 }
 
 S32 priorityQueuePushPop(PriorityQueue* queue, const U8 priority, U16* value)
 {
-    S8 freePriority = fastLog2( queue->isNonEmpty );
+    U32 freePriority = fastLog2( queue->isNonEmpty );
 
-	if (priority < freePriority || !queue->isNonEmpty)
+	if (priority < freePriority || 0 == queue->isNonEmpty)
         return 1;
 
-    queue->data[queue->tail[priority] + priority * TASK_COUNT] = *value;
-    queue->tail[priority] = (queue->tail[priority] + 1) & (TASK_COUNT-1);
-	queue->isNonEmpty |= 1 << priority;
+    queue->data[queue->tail[priority] + priority * 8] = *value;
+    queue->tail[priority] = (queue->tail[priority] + 1) & (8-1);
+	queue->isNonEmpty |= (1 << (priority));
 
-    *value = queue->data[queue->head[freePriority] + freePriority * TASK_COUNT];
-    queue->head[freePriority] = (queue->head[freePriority] + 1) & (TASK_COUNT-1);
+    *value = queue->data[queue->head[freePriority] + freePriority * 8];
+    queue->head[freePriority] = (queue->head[freePriority] + 1) & (8-1);
 	queue->isNonEmpty ^= 
-		(queue->head[freePriority] == queue->tail[freePriority] ? 1 : 0) << freePriority;
-
+		(queue->head[freePriority] == queue->tail[freePriority] ? 1 : 0) << (freePriority);
     return 0;
 }

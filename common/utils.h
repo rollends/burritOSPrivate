@@ -2,21 +2,17 @@
 #define UTILS_H
 
 /// Borrowed from Standford's Bit Twiddling hacks
-static inline U8 fastLog2( U32 v )
+static U32 fastLog2( U32 v )
 {
-	static const int DeBruijnTable[32] = 
-	{
-	  	0, 9, 1, 10, 13, 21, 2, 29, 11, 14, 16, 18, 22, 25, 3, 30,
-	  	8, 12, 20, 28, 15, 17, 24, 7, 19, 27, 23, 6, 26, 5, 4, 31
-	};
-
-	v |= v >> 1; // first round down to one less than a power of 2 
-	v |= v >> 2;
-	v |= v >> 4;
-	v |= v >> 8;
-	v |= v >> 16;
-
-	return DeBruijnTable[(v * 0x07C4ACDDU) >> 27];
+	U32 c = 32; // c will be the number of zero bits on the right
+	v &= -((S32)(v));
+	if (v) c--;
+	if (v & 0x0000FFFF) c -= 16;
+	if (v & 0x00FF00FF) c -= 8;
+	if (v & 0x0F0F0F0F) c -= 4;
+	if (v & 0x33333333) c -= 2;
+	if (v & 0x55555555) c -= 1;
+	return c;
 }
 
 #endif

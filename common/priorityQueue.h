@@ -12,13 +12,13 @@
 typedef struct
 {
     /// The backing data for the priority queue
-    U16 data[TASK_COUNT*PRIORITY_COUNT];
+    U16 data[ 8 * PRIORITY_COUNT ];
 
     /// The head indices for the queues
-    U32 head[PRIORITY_COUNT];
+    U16 head[PRIORITY_COUNT];
 
     /// The tail indices for the queues
-    U32 tail[PRIORITY_COUNT];
+    U16 tail[PRIORITY_COUNT];
 
 	/// The Priority Queue Non-Empty Flags
 	U32 isNonEmpty;

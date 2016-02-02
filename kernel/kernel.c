@@ -140,15 +140,8 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
 
 U32* kernelSchedule(U32* sp)
 {
-    printString("Scheduling for task %x\r\n", sp);
     TaskDescriptor* desc = kernel.activeTask;
     TaskID tid = desc->tid;
-
-    int i;
-    for ( i = 0; i < 16; i++)
-    {
-//        printString("\t%x\r\n", sp[i]);
-    }
 
     if (desc->state == eReady)
     {
@@ -156,7 +149,6 @@ U32* kernelSchedule(U32* sp)
                                  desc->priority,
                                  &(tid.value)) == 1)
         {
-            printString("fast path sp = %x\r\n", sp);
             return sp;
         }
     }
@@ -164,19 +156,16 @@ U32* kernelSchedule(U32* sp)
     {
         if (desc->state == eZombie)
         {
-            printString("exiting task\r\n");
             taskTableFree(&kernel.tasks, tid);
         }
 
         if (priorityQueuePop(&kernel.queue, &(tid.value)) != 0)
         {
-            printString("Exiting kernel\r\n");
             return 0;
         }
     }
 
     desc->stack = sp;
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, tid);
-    printString("slow path sp = %x\r\n");
     return kernel.activeTask->stack;
 }
