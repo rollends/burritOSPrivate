@@ -1,25 +1,31 @@
 #include "common/types.h"
-#include "kernel/timer.h"
-#include "kernel/ts7200.h"
+
+#include "hardware/memory.h"
+#include "hardware/timer.h"
+#include "hardware/ts7200/ts7200.h"
 
 void timerInit(const U32 timer)
 {
     RWRegister control = (RWRegister)(timer + CRTL_OFFSET);
-    RWRegister value = (RWRegister)(timer + LDR_OFFSET);
-    *control = 0xc8;
-    *value = 508000 * 2;
+    __str(control, 0xc8);
 }
 
 void timerClear(const U32 timer)
 {
     RWRegister value = (RWRegister)(timer + CLR_OFFSET);
-    *value = 1;
+    __str(value, 1);
 }
 
-U32 timerValue(const U32 timer)
+U32 timerGetValue(const U32 timer)
 {
     RORegister rvalue = (RWRegister)(timer + VAL_OFFSET);
     return *rvalue;
+}
+
+void timerSetValue(const U32 timer, const U32 value)
+{
+    RWRegister load = (RWRegister)(timer + LDR_OFFSET);
+    __str(load, value);
 }
 
 U32 timerStart(const U32 timer, TimerState* state)

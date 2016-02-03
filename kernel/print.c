@@ -1,6 +1,6 @@
 #include "common/vaList.h"
+#include "hardware/hardware.h"
 #include "kernel/print.h"
-#include "kernel/uart.h"
 
 char x2c(int c)
 {
@@ -18,8 +18,8 @@ int printHex(U32 value)
     char chh, chl;
     unsigned char *str = (unsigned char*)&value;
 
-    uartWriteByte(UART_PORT_2, '0');
-    uartWriteByte(UART_PORT_2, 'x');
+    uartWriteByte(UART_2, '0');
+    uartWriteByte(UART_2, 'x');
 
     for (byte = 3; byte >= 0; byte--)
     {
@@ -27,8 +27,8 @@ int printHex(U32 value)
         chh = x2c(c / 16);
         chl = x2c(c % 16);
 
-        uartWriteByte(UART_PORT_2, chh);
-        uartWriteByte(UART_PORT_2, chl);
+        uartWriteByte(UART_2, chh);
+        uartWriteByte(UART_2, chl);
     }
 
     return 0;
@@ -36,10 +36,10 @@ int printHex(U32 value)
 
 int printHexByte(U8 value)
 {
-    uartWriteByte(UART_PORT_2, '0');
-    uartWriteByte(UART_PORT_2, 'x');
-    uartWriteByte(UART_PORT_2, x2c(value / 16));
-    uartWriteByte(UART_PORT_2, x2c(value % 16));
+    uartWriteByte(UART_2, '0');
+    uartWriteByte(UART_2, 'x');
+    uartWriteByte(UART_2, x2c(value / 16));
+    uartWriteByte(UART_2, x2c(value % 16));
 
     return 0;
 }
@@ -56,7 +56,7 @@ int printString(char* format, ...)
 
         if (ch != '%')
         {
-            ret = uartWriteByte(UART_PORT_2, ch);
+            ret = uartWriteByte(UART_2, ch);
         }
         else
         {
@@ -64,7 +64,7 @@ int printString(char* format, ...)
             switch (ch)
             {
                 case 'c':
-                    ret = uartWriteByte(UART_PORT_2, va_arg(va, S32));
+                    ret = uartWriteByte(UART_2, va_arg(va, S32));
                     break;
 
                 case 'x':
@@ -76,7 +76,7 @@ int printString(char* format, ...)
                     break;
 
                 case '%':
-                    ret = uartWriteByte(UART_PORT_2, ch);
+                    ret = uartWriteByte(UART_2, ch);
                     break;
 
                 default:

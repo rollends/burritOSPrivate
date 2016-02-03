@@ -1,26 +1,22 @@
 #include "common/types.h"
-
+#include "hardware/hardware.h"
 #include "kernel/kernelData.h"
 #include "kernel/message.h"
 #include "kernel/print.h"
 #include "kernel/sysCall.h"
-#include "kernel/timer.h"
-#include "kernel/uart.h"
-
 #include "user/InitialTask.h"
 
 static KernelData kernel;
 
 U32* kernelBoostrap(U32 pc)
 {
-    // Temp - enable interrupts
-    RWRegister vic = (RWRegister)0x800C0010;
-    *vic |= 0x80000;
-
-    uartSpeed(UART_PORT_2, UART_SPEED_HI);
-    uartConfig(UART_PORT_2, 0, 0, 0);
-    printString("%c[2J\r", 27);
+    uartSpeed(UART_2, UART_SPEED_HI);
+    uartConfig(UART_2, 0, 0, 0);
     timerInit(TIMER_3); 
+    timerSetValue(TIMER_3, 508000);
+    interruptEnable(INT_2, 0x80000);
+
+    printString("%c[2J\r", 27);
 
     kernelDataInit(&kernel, pc);
     U16 taskID = taskTableAlloc(&kernel.tasks, 1, (U32)(&InitialTask) + pc, VAL_TO_ID(0));
@@ -33,15 +29,13 @@ U32* kernelBoostrap(U32 pc)
 
 void kernelCleanup()
 {
-    RWRegister vic1 = (RWRegister)0x800B0014;
-    *vic1 = 0xffffffff;
-
-    RWRegister vic2 = (RWRegister)0x800C0014;
-    *vic2 = 0xffffffff;
+    interruptClear(INT_1, 0xFFFFFFFF);
+    interruptClear(INT_2, 0xFFFFFFFF);
 }
 
 void kernelInterrupt()
 {
+    printString("%x\r\n", interruptStatus(INT_2));
     printString("kernelInterrupt occured\r\n");
     timerClear(TIMER_3);
 }

@@ -1,4 +1,4 @@
-#include "common/memory.h"
+#include "hardware/memory.h"
 
 #include "kernel/sysCall.h"
 #include "kernel/message.h"

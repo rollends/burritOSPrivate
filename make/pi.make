@@ -5,8 +5,9 @@ CP		= arm-none-eabi-objcopy
 DM		= arm-none-eabi-objdump
 
 OUT		= k3.bin
+HRDWR 	= pi
 
-CFLAGS	= -Wall -O3 -nostdlib -nostartfiles -ffreestanding
+CFLAGS	= -Wall -O2 -nostdlib -nostartfiles -ffreestanding -DTARGET_PI
 LDFLAGS = -Map bin/main.map -N -T make/loadmap.ld
 ASFLAGS = 
 

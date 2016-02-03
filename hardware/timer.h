@@ -2,11 +2,6 @@
 #define TIMER_H
 
 #include "common/types.h"
-#include "kernel/ts7200.h"
-
-#define TIMER_1 TIMER1_BASE
-#define TIMER_2 TIMER2_BASE
-#define TIMER_3 TIMER3_BASE
 
 /**
  * Utility struct for storing timer state
@@ -23,7 +18,7 @@ typedef struct
  * @param   timer   The timer to initialize
  *
  */
-void timerInit(const U32 timer);
+inline void timerInit(const U32 timer);
 
 /**
  * Clears any active interrupts from the given timer
@@ -31,7 +26,7 @@ void timerInit(const U32 timer);
  * @param   timer   The timer to clear
  *
  */
-void timerClear(const U32 timer);
+inline void timerClear(const U32 timer);
 
 /**
  * Returns the value of a specific timer
@@ -40,7 +35,16 @@ void timerClear(const U32 timer);
  *
  * @return  A 32 bit value if using TIMER_3, else a 16 bit value
  */
-U32 timerValue(const U32 timer);
+inline U32 timerGetValue(const U32 timer);
+
+/**
+ * Sets the value of a specific timer
+ *
+ * @param   timer   The timer value to set
+ * @param   value   A 16 bit value for TIMER_1 and TIMER_2 else a 32 bit value
+ *
+ */
+inline void timerSetValue(const U32 timer, const U32 value);
 
 /**
  * Starts the timer and records the current value to a TimerState

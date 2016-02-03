@@ -1,10 +1,11 @@
 #include "common/types.h"
 #include "common/queue.h"
 
+#include "hardware/hardware.h"
+
 #include "kernel/message.h"
 #include "kernel/print.h"
 #include "kernel/sysCall.h"
-#include "kernel/uart.h"
 
 #include "user/messageTypes.h"
 #include "user/RPSServer.h"
@@ -77,7 +78,7 @@ void RPSServer()
 
             {
                 U8 c;
-                uartReadByte( UART_PORT_2, &c ); 
+                uartReadByte( UART_2, &c ); 
                 printString("\r\n\r\n");
             }
         } while( !quit );

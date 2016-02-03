@@ -1,7 +1,6 @@
-#include "common/memory.h"
-#include "common/types.h"
-
-#include "kernel/uart.h"
+#include "hardware/memory.h"
+#include "hardware/uart.h"
+#include "hardware/ts7200/ts7200.h"
 
 S32 uartSpeed(const U32 uart, const U32 speed)
 {

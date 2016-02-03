@@ -4,9 +4,10 @@ LD      = /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/ld
 CP	= 
 DM 	= /u/wbcowan/gnuarm-4.0.2/arm-elf/bin/objdump
 
-OUT	= k3.elf
+OUT		= k3.elf
+HRDWR	= ts7200
 
-CFLAGS  = -fPIC -O2 -Wall -I. -mcpu=arm920t -msoft-float
+CFLAGS  = -fPIC -O2 -Wall -I. -mcpu=arm920t -msoft-float -DTARGET_TS7200
 LDFLAGS = -Map bin/main.map -N -T make/loadmap.ld
 LDLIBS  =
 ASFLAGS = -mcpu=arm920t -mapcs-32
