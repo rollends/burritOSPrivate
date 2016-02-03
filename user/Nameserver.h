@@ -5,38 +5,40 @@
 #include "kernel/taskDescriptor.h"
 
 /** Task Name Enumerated List
- *  
- *	This list enumerates the task names with
- *	an appropriate index that is used internally
- *	by the Nameserver in order to accelerate name
- *	lookup/registration.
+ *
+ *    This list enumerates the task names with
+ *    an appropriate index that is used internally
+ *    by the Nameserver in order to accelerate name
+ *    lookup/registration.
  */
 typedef enum
 {
     God             = 0,
     RPS             = 1,
-    TaskNameCount   = 2,
+    ClockServer        = 2,
+    ClockCourier    = 3,
+    TaskNameCount   = 4,
 } TaskName;
 
 /** Nameserver Registration Method
  *
- *  This method is called by user tasks to register themselves to 
- *	a particular name. Currently registration of all names must be performed before any
- *	WhoIs requests are served. This may lead to race conditions if the
- * 	initial tasks are not structured correctly. Use with caution.
- *	
- * 	@param name The Name the calling task should be registered to.
- *	@return Zero on success.
+ *  This method is called by user tasks to register themselves to
+ *    a particular name. Currently registration of all names must be performed before any
+ *    WhoIs requests are served. This may lead to race conditions if the
+ *     initial tasks are not structured correctly. Use with caution.
+ *
+ *     @param name The Name the calling task should be registered to.
+ *    @return Zero on success.
  */
 S32 nsRegister( TaskName name );
 
 /** Nameserver Lookup Method
  *
- *	This method is called by user tasks in order to find a particular
- *	task. See nsRegister for warnings.
+ *    This method is called by user tasks in order to find a particular
+ *    task. See nsRegister for warnings.
  *
- *	@param name Task Name to lookup.
- *	@param sid TaskID (by ref) to store the result in.
+ *    @param name Task Name to lookup.
+ *    @param sid TaskID (by ref) to store the result in.
  *  @see nsRegister()
  */
 S32 nsWhoIs( TaskName name, TaskID* sid );
