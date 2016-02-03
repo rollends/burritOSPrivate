@@ -6,7 +6,7 @@
 #include "kernel/taskDescriptor.h"
 
 #include "user/messageTypes.h"
-
+#include "user/Nameserver.h"
 
 typedef struct DelayedTask
 {
@@ -29,6 +29,8 @@ void ClockServer()
 {
     DelayQueue dqueue;
     delayQueueInit( &dqueue );
+
+	nsRegister( Clock );
 
     MessageEnvelope response;
     response.type = MESSAGE_CLOCKSERVER_WAKE;

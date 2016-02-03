@@ -15,9 +15,8 @@ typedef enum
 {
     God             = 0,
     RPS             = 1,
-    ClockServer        = 2,
-    ClockCourier    = 3,
-    TaskNameCount   = 4,
+    Clock     		= 2,
+    TaskNameCount   = 3,
 } TaskName;
 
 /** Nameserver Registration Method

@@ -13,6 +13,8 @@
 #include "user/RPSServer.h"
 #include "user/TestTask.h"
 
+extern void ClockServer();
+
 static void TimingTask();
 
 void InitialTask()
@@ -25,7 +27,8 @@ void InitialTask()
 #else 
     sysCreate(0, &Nameserver);
     sysCreate(0, &RPSServer);
-    
+	sysCreate(1, &ClockServer);
+
     nsRegister(God);
 
     // Create RPS Players
