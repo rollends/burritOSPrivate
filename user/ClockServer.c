@@ -1,9 +1,18 @@
 
-typedef struct
+#include "common/types.h"
+
+#include "kernel/message.h"
+#include "kernel/sysCall.h"
+#include "kernel/taskDescriptor.h"
+
+#include "user/messageTypes.h"
+
+
+typedef struct DelayedTask
 {
-    DelayedTask*    next;
-    TaskID          tid;
-    S32             delay;
+    struct DelayedTask*   	next;
+    TaskID          		tid;
+    S32             		delay;
 } DelayedTask;
 
 typedef struct
@@ -12,6 +21,9 @@ typedef struct
     DelayedTask*    freeList;
     DelayedTask*    queue;
 } DelayQueue;
+
+void delayQueuePush( DelayQueue* dq, TaskID id, U32 delay );
+void delayQueueInit( DelayQueue* dq );
 
 void ClockServer()
 {
@@ -26,7 +38,7 @@ void ClockServer()
         MessageEnvelope envelope;
         TaskID id;
 
-        sysReceive(    &id.value, &envelope );
+        sysReceive( &id.value, &envelope );
 
         switch( envelope.type )
         {
