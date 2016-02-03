@@ -2,7 +2,7 @@
 
 #include "kernel/message.h"
 #include "kernel/print.h"
-#include "kernel/sysCall.h"
+#include "kernel/systemCall.h"
 
 #include "user/messageTypes.h"
 #include "user/Nameserver.h"

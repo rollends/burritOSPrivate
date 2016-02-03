@@ -1,6 +1,6 @@
 #include "hardware/memory.h"
 
-#include "kernel/sysCall.h"
+#include "kernel/systemCall.h"
 #include "kernel/message.h"
 
 #include "user/messageTypes.h"

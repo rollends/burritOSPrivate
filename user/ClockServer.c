@@ -2,7 +2,7 @@
 #include "common/types.h"
 
 #include "kernel/message.h"
-#include "kernel/sysCall.h"
+#include "kernel/systemCall.h"
 #include "kernel/taskDescriptor.h"
 
 #include "user/messageTypes.h"

@@ -1,4 +1,4 @@
-#include "kernel/sysCall.h"
+#include "kernel/systemCall.h"
 #include "user/IdleTask.h"
 #include "user/InitialTask.h"
 

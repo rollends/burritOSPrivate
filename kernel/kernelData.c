@@ -1,17 +1,19 @@
 #include "kernel/kernelData.h"
 
-S32 kernelDataInit(KernelData* data, const U32 pc)
-{
-    data->baseAddress = pc;
-    data->systemRunning = 1;
+KernelData kernel;
 
-    priorityQueueInit(&(data->queue));
-    taskTableInit(&(data->tasks));
+S32 kernelDataInit(const U32 pc)
+{
+    kernel.baseAddress = pc;
+    kernel.systemRunning = 1;
+
+    priorityQueueInit(&(kernel.queue));
+    taskTableInit(&(kernel.tasks));
 
 	U8 i = 0;
 	for(; i < EVENT_TABLE_SIZE; ++i)
 	{
-		data->eventTable[i].value = 0;
+		kernel.eventTable[i].value = 0;
 	}
 
     return 0;

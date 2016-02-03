@@ -38,6 +38,11 @@ typedef struct
  *
  * @return  0 on success, else an error code
  */
-S32 kernelDataInit(KernelData* data, const U32 pc);
+S32 kernelDataInit(const U32 pc);
+
+/**
+ * Shared static kernel struct
+ */
+extern KernelData kernel;
 
 #endif

@@ -16,6 +16,7 @@ HSOURCE := $(shell find common kernel user -type f -name *.h)
 HSOURCE += $(shell find hardware -maxdepth 1 -type f -name *.h)
 HSOURCE += $(shell find hardware/$(HRDWR) -type f -name *.h)
 SSOURCE := $(shell find common kernel user -type f -name *.s)
+SSOURCE += $(shell find hardware/$(HRDWR) -type f -name *.s)
 
 _OBJS = $(addprefix $(BLDDIR)/, $(CSOURCE:.c=.o))
 _OBJS += $(addprefix $(BLDDIR)/, $(SSOURCE:.s=.o))

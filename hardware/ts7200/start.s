@@ -18,7 +18,7 @@ _start:
     bl      enableDCache            @ Enable the data cache
 
     bl      _vectorLoad             @ Load the vector table
-    bl      kernelBoostrap          @ Boostrap the kernel
+    bl      bootstrap               @ Boostrap the kernel
 
 @
 @ Entry point for a user task. R0 should contain the stack pointer for the task
@@ -47,7 +47,7 @@ _interruptCall:                     @ Called when an hardware interrupt occurs
     sub     sp, sp, #4              @ Make space for the PC
     stmfd   sp!, {r0-r12}           @ Stack most user registers
     mov     r4, lr                  @ Save off the lr
-    bl      kernelInterrupt         @ Branch to the system call
+    bl      interruptHandler        @ Branch to the system call
     mov     r0, sp                  @ Store task sp
     
     msr     cpsr_c, #0xD2           @ Switch to IRQ mode
@@ -57,7 +57,7 @@ _interruptCall:                     @ Called when an hardware interrupt occurs
     str     lr, [r0, #60]           @ Store the pc to the task stack
 
     msr     cpsr_c, #0xD3           @ Switch to supervisor mode
-    bl      kernelSchedule          @ Schedule next task and update old task sp
+    bl      scheduler               @ Schedule next task and update old task sp
 
     cmp     r0, #0                  @ Check if the kernel should exit
     bne     enterTask               @ Enter next task
@@ -76,7 +76,7 @@ _systemCall:                        @ Called when an SWI occurs
     sub     sp, sp, #4              @ Make space for the PC
     stmfd   sp!, {r1-r12}           @ Stack most user registers
     mov     r4, lr                  @ Save off the lr
-    bl      kernelSystemCall        @ Branch to the system call
+    bl      systemCallHandler       @ Branch to the system call
     mov     r5, r0                  @ Save the return value
     mov     r0, sp                  @ Store task sp
     
@@ -85,7 +85,7 @@ _systemCall:                        @ Called when an SWI occurs
     stmfd   r0!, {r1, r4, r5}       @ Save the task PSR and LR to the task stack
     str     lr, [r0, #60]           @ Store the pc to the task stack
 
-    bl      kernelSchedule          @ Schedule next task and update old task sp
+    bl      scheduler               @ Schedule next task and update old task sp
 
     cmp     r0, #0                  @ Check if the kernel should exit
     bne     enterTask               @ Enter next task
@@ -95,7 +95,7 @@ _systemCall:                        @ Called when an SWI occurs
 @ Redboot code
 @
 kernelEnd:                          @ Exists the kernel
-    bl      kernelCleanup           @ Cleanup the kernel
+    bl      cleanup                 @ Cleanup the kernel
     ldmfd   sp!, {pc}               @ Load the LR into PC to return to redboot
 
 @

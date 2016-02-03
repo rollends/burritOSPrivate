@@ -1,44 +1,12 @@
 #include "common/types.h"
+
 #include "hardware/hardware.h"
+
 #include "kernel/kernelData.h"
 #include "kernel/message.h"
-#include "kernel/print.h"
-#include "kernel/sysCall.h"
+#include "kernel/systemCall.h"
 
-#include "user/IdleTask.h"
-#include "user/InitialTask.h"
-
-static KernelData kernel;
-
-U32* kernelBoostrap(U32 pc)
-{
-    uartSpeed(UART_2, UART_SPEED_HI);
-    uartConfig(UART_2, 0, 0, 0);
-    timerInit(TIMER_3); 
-    timerSetValue(TIMER_3, 508000);
-    timerClear(TIMER_3);
-    interruptEnable(INT_2, 0x80000);
-
-    printString("%c[2J\r", 27);
-
-    kernelDataInit(&kernel, pc);
-
-    U16 taskID = taskTableAlloc(&kernel.tasks,
-                                31,
-                                (U32)(&IdleTask) + pc,
-                                VAL_TO_ID(0));
-
-    kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));
-    return kernel.activeTask->stack;
-}
-
-void kernelCleanup()
-{
-    interruptClear(INT_1, 0xFFFFFFFF);
-    interruptClear(INT_2, 0xFFFFFFFF);
-}
-
-void kernelInterrupt()
+void interruptHandler()
 {
     TaskID tid = kernel.eventTable[ EVENT_TIMER_TICK ];
     
@@ -57,7 +25,7 @@ void kernelInterrupt()
     timerClear(TIMER_3);
 }
 
-U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
+U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
 {
     TaskDescriptor* desc = kernel.activeTask;
 
@@ -179,36 +147,4 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
     }
 
     return 0;
-}
-
-U32* kernelSchedule(U32* sp)
-{
-    TaskDescriptor* desc = kernel.activeTask;
-    TaskID tid = desc->tid;
-
-    if (desc->state == eReady)
-    {
-        if (priorityQueuePushPop(&kernel.queue,
-                                 desc->priority,
-                                 &(tid.value)) == 1)
-        {
-            return sp;
-        }
-    }
-    else
-    {
-        if (desc->state == eZombie)
-        {
-            taskTableFree(&kernel.tasks, tid);
-        }
-
-        if (priorityQueuePop(&kernel.queue, &(tid.value)) != 0)
-        {
-            return 0;
-        }
-    }
-
-    desc->stack = sp;
-    kernel.activeTask = taskGetDescriptor(&kernel.tasks, tid);
-    return kernel.activeTask->stack;
 }
