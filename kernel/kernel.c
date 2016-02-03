@@ -4,6 +4,8 @@
 #include "kernel/message.h"
 #include "kernel/print.h"
 #include "kernel/sysCall.h"
+
+#include "user/IdleTask.h"
 #include "user/InitialTask.h"
 
 static KernelData kernel;
@@ -14,16 +16,19 @@ U32* kernelBoostrap(U32 pc)
     uartConfig(UART_2, 0, 0, 0);
     timerInit(TIMER_3); 
     timerSetValue(TIMER_3, 508000);
+    timerClear(TIMER_3);
     interruptEnable(INT_2, 0x80000);
 
     printString("%c[2J\r", 27);
 
     kernelDataInit(&kernel, pc);
-    U16 taskID = taskTableAlloc(&kernel.tasks, 1, (U32)(&InitialTask) + pc, VAL_TO_ID(0));
-    
+
+    U16 taskID = taskTableAlloc(&kernel.tasks,
+                                3,
+                                (U32)(&IdleTask) + pc,
+                                VAL_TO_ID(0));
+
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));
-    printString("starting task %x\r\n", kernel.activeTask->stack);
-    
     return kernel.activeTask->stack;
 }
 
@@ -35,7 +40,18 @@ void kernelCleanup()
 
 void kernelInterrupt()
 {
-    printString("%x\r\n", interruptStatus(INT_2));
+    TaskID tid = kernel.eventTable[1];
+    
+    if (tid.value != 0)
+    {
+        TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
+
+        desc->state = eReady;
+        priorityQueuePush(&kernel.queue,
+                          desc->priority,
+                          desc->tid.value);
+    }
+
     printString("kernelInterrupt occured\r\n");
     timerClear(TIMER_3);
 }
@@ -126,6 +142,7 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
 		case SYS_CALL_AWAIT_ID:
 		{
 			kernel.eventTable[arg0] = desc->tid;
+            desc->state = eEventBlocked;
 			break;
 		}
 
@@ -137,6 +154,17 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
         case SYS_CALL_TID_ID:
         {
             return desc->tid.value;
+        }
+
+        case SYS_CALL_RUNNING_ID:
+        {
+            return kernel.systemRunning;
+        }
+
+        case SYS_CALL_SHUTDOWN_ID:
+        {
+            kernel.systemRunning = 0;
+            break;
         }
 
         case SYS_CALL_EXIT_ID:

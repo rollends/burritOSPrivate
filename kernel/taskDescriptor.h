@@ -41,6 +41,7 @@ typedef enum
     eSendBlocked,
     eReceiveBlocked,
     eReplyBlocked,
+    eEventBlocked,
 } TaskState;
 
 /**

@@ -70,7 +70,7 @@ S32 taskTableFree(TaskTable* table, const TaskID tid);
 static inline TaskDescriptor* taskGetDescriptor(TaskTable* table,
                                                 const TaskID tid)
 {
-    return &(table->descriptors[tid.fields.id - 1]);
+    return &(table->descriptors[tid.fields.id]);
 }
 
 #endif

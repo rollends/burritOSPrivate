@@ -13,6 +13,7 @@ void interruptEnable(const U32 interrupt, const U32 bits)
 void interruptClear(const U32 interrupt, const U32 bits)
 {
     RWRegister clear = (RWRegister)(interrupt + EN_CLEAR_OFFSET);
+
     __str(clear, bits);
 }
 

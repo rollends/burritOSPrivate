@@ -1,10 +1,10 @@
-#include "common/memory.h"
 #include "common/random.h"
+
+#include "hardware/hardware.h"
 
 #include "kernel/message.h"
 #include "kernel/print.h"
 #include "kernel/sysCall.h"
-#include "kernel/timer.h"
 
 #include "user/messageTypes.h"
 
@@ -19,30 +19,14 @@ static void TimingTask();
 
 void InitialTask()
 {
-    U32 i;
-    U8 seed = 11;
-
-#ifdef TIME_MESSAGE_PASSING
-    TimingTask();
-#else 
-    sysCreate(0, &Nameserver);
-    sysCreate(0, &RPSServer);
-	sysCreate(1, &ClockServer);
-
-    nsRegister(God);
-
-    // Create RPS Players
-    for (i = 0; i < 6; i++)
+    U32 i = 10;
+    while (i--)
     {
-        U16 id = sysCreate(1, &TestTask);
-        
-        MessageEnvelope envelope;
-        envelope.type = MESSAGE_RANDOM_BYTE;
-        envelope.message.MessageU8.body = nextRandU8(&seed);
-        sysSend(id, &envelope, &envelope);
+        sysAwaitEvent(1);
+        printString("Heeeeeee's tryiiin'\r\n");
     }
-#endif
-    printString("FirstUserTask: exiting\r\n");
+
+    sysShutdown();
     sysExit();
 }
 

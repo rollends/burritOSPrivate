@@ -8,7 +8,7 @@ S32 taskTableInit(TaskTable* table)
     U8 i;
     for(i = 0; i < TASK_COUNT; ++i)
     {
-        table->descriptors[i].tid.fields.id = i + 1;
+        table->descriptors[i].tid.fields.id = i;
         table->descriptors[i].tid.fields.generation = 0;
         table->descriptors[i].pid.value = 0;
         table->descriptors[i].state = eZombie;
@@ -52,7 +52,7 @@ S32 taskTableAlloc(TaskTable* table,
 
 S32 taskTableFree(TaskTable* table, const TaskID tid)
 {
-    U32 index = tid.fields.id - 1;
+    U32 index = tid.fields.id;
 
     TaskDescriptor* desc = &(table->descriptors[index]);
 

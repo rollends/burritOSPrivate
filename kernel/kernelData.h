@@ -25,6 +25,9 @@ typedef struct
 
     /// The kernel base address
     U32 baseAddress;
+
+    /// The system running flag
+    U8  systemRunning;
 } KernelData;
 
 /**
