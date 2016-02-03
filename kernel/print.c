@@ -12,6 +12,25 @@ char x2c(int c)
     return 'a' + c - 10;
 }
 
+int printDecimal(U32 value)
+{
+	char buffer[16];
+	U8 i = 0;
+	do
+	{
+		U8 d = value % 10;
+		buffer[i++] = x2c(d);
+		value /= 10;
+	} while( value );
+	
+	U8 ci = 0;
+	for(ci = 0; ci < i; ci++)
+	{
+		uartWriteByte( UART_2, buffer[i - ci - 1] );
+	}
+	return 0;
+}
+
 int printHex(U32 value)
 {
     int byte;
@@ -66,6 +85,10 @@ int printString(char* format, ...)
                 case 'c':
                     ret = uartWriteByte(UART_2, va_arg(va, S32));
                     break;
+
+				case 'd':
+					ret = printDecimal(va_arg(va, U32));
+					break;
 
                 case 'x':
                     ret = printHex(va_arg(va, U32));

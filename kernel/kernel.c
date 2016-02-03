@@ -24,7 +24,7 @@ U32* kernelBoostrap(U32 pc)
     kernelDataInit(&kernel, pc);
 
     U16 taskID = taskTableAlloc(&kernel.tasks,
-                                3,
+                                31,
                                 (U32)(&IdleTask) + pc,
                                 VAL_TO_ID(0));
 
