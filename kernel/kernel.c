@@ -114,7 +114,13 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
                               replyTo->tid.value);
             return result;
         }
-       
+
+		case SYS_CALL_AWAIT_ID:
+		{
+			kernel.eventTable[arg0] = desc->tid;
+			break;
+		}
+
         case SYS_CALL_PID_ID:
         {
             return desc->pid.value;
