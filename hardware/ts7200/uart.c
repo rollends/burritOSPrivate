@@ -35,7 +35,6 @@ S32 uartWriteByte(const U32 uart, const U8 byte)
     }
 
     __strb(data, byte);
-
     return 0;
 }
 
@@ -48,7 +47,6 @@ S32 uartReadByte(const U32 uart, U8* byte)
     {
     }
 
-    *byte = *data;
-
+    *byte = __ldr(data);
     return 0;
 }

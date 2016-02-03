@@ -45,10 +45,25 @@ static inline void __strb(RWRegister dst, const U8 src)
  *
  * @return  The value at the memory address
  */
-static inline U32 __ldr(U32 src)
+static inline U32 __ldr(RORegister src)
 {
-    asm volatile("ldr %0, [%1]" : "=r" (src) :  "r" (src) : "memory");
-    return src;
+    U32 result;
+    asm volatile("ldr %0, [%1]" : "=r" (result) :  "r" (src) : "memory");
+    return result;
+}
+
+/**
+ * Loads a U8 value from a memory location
+ *
+ * @param   src     The memory address to read from
+ *
+ * @return  The value at the memory address
+ */
+static inline U8 __ldrb(RORegister src)
+{
+    U8 result;
+    asm volatile("ldrb %0, [%1]" : "=r" (result) :  "r" (src) : "memory");
+    return result;
 }
 
 #endif

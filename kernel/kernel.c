@@ -50,6 +50,8 @@ void kernelInterrupt()
         priorityQueuePush(&kernel.queue,
                           desc->priority,
                           desc->tid.value);
+
+        kernel.eventTable[1] = VAL_TO_ID(0);
     }
 
     printString("kernelInterrupt occured\r\n");
@@ -139,12 +141,12 @@ U32 kernelSystemCall(U32 id, U32 arg0, U32 arg1, U32 arg2)
             return result;
         }
 
-		case SYS_CALL_AWAIT_ID:
-		{
-			kernel.eventTable[arg0] = desc->tid;
+        case SYS_CALL_AWAIT_ID:
+        {
+            kernel.eventTable[arg0] = desc->tid;
             desc->state = eEventBlocked;
-			break;
-		}
+            break;
+        }
 
         case SYS_CALL_PID_ID:
         {
