@@ -8,22 +8,29 @@
 
 #include "user/messageTypes.h"
 
+#include "user/ClockServer.h"
 #include "user/MessageTimingTask.h"
 #include "user/Nameserver.h"
 #include "user/RPSServer.h"
 #include "user/TestTask.h"
 
-extern void ClockServer();
-
 static void TimingTask();
 
 void InitialTask()
 {
-    U32 i = 10;
-    while (i--)
+    U32 i = 3;
+	
+	sysCreate( 0, &Nameserver );
+	sysCreate( 1, &ClockServer );
+
+	TaskID clock;
+	nsWhoIs( Clock, &clock );
+
+	printString( "Ready to start!\r\n" );
+    while(--i)
     {
-        sysAwaitEvent(1);
-        printString("Heeeeeee's tryiiin'\r\n");
+		DelayBy( clock, 5 );
+		printString( "5 seconds passed!\r\n");
     }
 
     sysShutdown();

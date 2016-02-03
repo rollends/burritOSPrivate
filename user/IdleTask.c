@@ -4,7 +4,7 @@
 
 void IdleTask()
 {
-    sysCreate(1, &InitialTask);
+    sysCreate(2, &InitialTask);
 
     while (sysRunning() != 0)
     {

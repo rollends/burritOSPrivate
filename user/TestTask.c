@@ -17,7 +17,7 @@ static U8 receiveSeed( );
 void TestTask()
 {
     TaskID rps;
-    nsWhoIs( RPS, &rps );
+    //nsWhoIs( RPS, &rps );
     
     U8 seed = receiveSeed();
     U8 maxPlays = 1 + (nextRandU8( &seed ) & 7);

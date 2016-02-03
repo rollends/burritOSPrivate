@@ -17,7 +17,7 @@ static void getPlayerMoves( TaskID* players,
                             RPSMessageType* plays );
 void RPSServer()
 {
-    nsRegister( RPS );  
+    //nsRegister( RPS );  
 
     U16         playerQueueData[16];
     QueueU16    playerQueue;

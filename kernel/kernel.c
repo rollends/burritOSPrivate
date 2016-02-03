@@ -40,7 +40,7 @@ void kernelCleanup()
 
 void kernelInterrupt()
 {
-    TaskID tid = kernel.eventTable[1];
+    TaskID tid = kernel.eventTable[ EVENT_TIMER_TICK ];
     
     if (tid.value != 0)
     {
@@ -54,7 +54,6 @@ void kernelInterrupt()
         kernel.eventTable[1] = VAL_TO_ID(0);
     }
 
-    printString("kernelInterrupt occured\r\n");
     timerClear(TIMER_3);
 }
 

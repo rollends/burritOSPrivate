@@ -7,6 +7,7 @@
 
 #include "user/messageTypes.h"
 #include "user/Nameserver.h"
+#include "user/ClockNotifier.h"
 
 typedef struct DelayedTask
 {
@@ -25,6 +26,14 @@ typedef struct
 void delayQueuePush( DelayQueue* dq, TaskID id, U32 delay );
 void delayQueueInit( DelayQueue* dq );
 
+void DelayBy( TaskID clockId, U8 ticks )
+{
+	MessageEnvelope envelope;
+	envelope.type = MESSAGE_CLOCKSERVER_DELAY_BY;
+	envelope.message.MessageU32.body = ticks;
+	sysSend( clockId.value, &envelope, &envelope );
+}
+
 void ClockServer()
 {
     DelayQueue dqueue;
@@ -34,6 +43,8 @@ void ClockServer()
 
     MessageEnvelope response;
     response.type = MESSAGE_CLOCKSERVER_WAKE;
+
+	sysCreate( 0, &ClockNotifier );
 
     for(;;)
     {
@@ -50,6 +61,8 @@ void ClockServer()
 
         case MESSAGE_CLOCKSERVER_NOTIFY_TICK:
         {
+			sysReply( id.value, &envelope );
+
             if( !dqueue.queue )
             {
                 break;
@@ -67,10 +80,26 @@ void ClockServer()
             break;
         }
 
+		case MESSAGE_CLOCKSERVER_KILL:
+			sysReply( id.value, &envelope );
+			goto ClockServerExit;
+
         default:
             break;
         }
     }
+
+ClockServerExit:
+	while( dqueue.queue )
+    {
+    	sysReply( dqueue.queue->tid.value, &response );
+        
+		DelayedTask* free = dqueue.queue;
+        dqueue.queue = free->next;
+        free->next = dqueue.freeList;
+        dqueue.freeList = free;
+    }
+	sysExit();
 }
 
 void delayQueuePush( DelayQueue* dq, TaskID id, U32 delay )
