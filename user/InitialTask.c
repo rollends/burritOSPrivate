@@ -11,6 +11,7 @@
 #include "user/ClockServer.h"
 #include "user/MessageTimingTask.h"
 #include "user/Nameserver.h"
+#include "user/PerformanceTask.h"
 #include "user/TestTask.h"
 #include "user/DelayTestTask.h"
 
@@ -26,7 +27,8 @@ void InitialTask()
 
 	sysCreate( 0, &Nameserver );
 	sysCreate( 1, &ClockServer );
-	
+	sysCreate(0, &PerformanceTask);
+
 	TaskID clock;
 	nsWhoIs( Clock, &clock );
 

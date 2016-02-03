@@ -148,7 +148,8 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                 taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
 
             U32 result = desc->performance;
-            result /= (4915);
+            result *= 100;
+            result /= (250*983);
             desc->performance = 0;
 
             return result;
