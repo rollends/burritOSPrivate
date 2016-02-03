@@ -1,8 +1,6 @@
 #ifndef KERNEL_DATA_H
 #define KERNEL_DATA_H
 
-#define PRIORITY_COUNT   3
-
 #include "common/priorityQueue.h"
 #include "kernel/taskDescriptor.h"
 #include "kernel/taskTable.h"

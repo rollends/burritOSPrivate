@@ -11,6 +11,7 @@
 #define SYS_CALL_SEND_ID    5
 #define SYS_CALL_RECEIVE_ID 6
 #define SYS_CALL_REPLY_ID   7
+#define	SYS_CALL_AWAIT_ID	8
 
 extern U32 __sysCall3(U32, U32, U32, U32);
 extern U32 __sysCall2(U32, U32, U32);
@@ -25,5 +26,6 @@ extern U32 __sysCall0(U32);
 #define sysSend(tid, pmsg, preply)  __sysCall3((U32)SYS_CALL_SEND_ID, (U32)tid, (U32)pmsg, (U32)preply)
 #define sysReceive(ptid, pmsg)      __sysCall2((U32)SYS_CALL_RECEIVE_ID, (U32)ptid, (U32)pmsg)
 #define sysReply(tid, preply)       __sysCall2((U32)SYS_CALL_REPLY_ID, (U32)tid, (U32)preply)
+#define sysAwaitEvent(event)		__sysCall2((U32)SYS_CALL_AWAIT_ID, (U32)event)
 
 #endif
