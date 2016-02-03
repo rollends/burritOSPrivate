@@ -67,6 +67,9 @@ typedef struct
 
     /// The send queue for the task
     QueueU16 sendQueue;
+
+    /// The peformance timer
+    U32 performance;
 } TaskDescriptor;
 
 #endif

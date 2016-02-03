@@ -8,6 +8,7 @@ U32* scheduler(U32* sp)
 {
     TaskDescriptor* desc = kernel.activeTask;
     TaskID tid = desc->tid;
+    desc->performance += timerSample(TIMER_4, &kernel.perfState);
 
     if (desc->state == eReady)
     {

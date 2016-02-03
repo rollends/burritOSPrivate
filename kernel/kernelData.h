@@ -2,6 +2,7 @@
 #define KERNEL_DATA_H
 
 #include "common/priorityQueue.h"
+#include "hardware/timer.h"
 #include "kernel/event.h"
 #include "kernel/taskDescriptor.h"
 #include "kernel/taskTable.h"
@@ -21,7 +22,10 @@ typedef struct
     TaskTable   tasks;
 
 	/// Event Table
-	TaskID eventTable[EVENT_TABLE_SIZE];	
+	TaskID eventTable[EVENT_TABLE_SIZE];
+
+    /// Performance timer state struct
+    TimerState perfState;
 
     /// The kernel base address
     U32 baseAddress;

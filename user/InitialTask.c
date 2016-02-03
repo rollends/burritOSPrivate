@@ -67,7 +67,7 @@ static void TimingTask()
         {
             sysSend( timingId, &env, &env );
         }
-        printString("Timed receive-first message at %x\r\n", timerEnd(TIMER_3, &state ) );
+        printString("Timed receive-first message at %x\r\n", timerSample(TIMER_3, &state));
         env.type = 0;
         sysSend(timingId, &env, &env);
     }
@@ -84,7 +84,7 @@ static void TimingTask()
         {
             sysSend( timingId, &env, &env );
         }
-        printString("Timed send-first message at %x\r\n", timerEnd(TIMER_3, &state ) );
+        printString("Timed send-first message at %x\r\n", timerSample(TIMER_3, &state ) );
         env.type = 0;
         sysSend(timingId, &env, &env);
     }
@@ -105,7 +105,7 @@ static void TimingTask()
             sysSend( timingId, &env, &env );
             __memcpy(buffer, env.message.MessageArbitrary.body, 16);
         }
-        printString("Timed receive-first message at %x\r\n", timerEnd(TIMER_3, &state ) );
+        printString("Timed receive-first message at %x\r\n", timerSample(TIMER_3, &state ) );
         env.type = 0;
         sysSend(timingId, &env, &env);
     }
@@ -126,7 +126,7 @@ static void TimingTask()
             sysSend( timingId, &env, &env );
             __memcpy(buffer, env.message.MessageArbitrary.body, 16);
         }
-        printString("Timed send-first message at %x\r\n", timerEnd(TIMER_3, &state ) );
+        printString("Timed send-first message at %x\r\n", timerSample(TIMER_3, &state ) );
         env.type = 0;
         sysSend(timingId, &env, &env);
     }

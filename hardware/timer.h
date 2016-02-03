@@ -56,12 +56,13 @@ inline void timerSetValue(const U32 timer, const U32 value);
 U32 timerStart(const U32 timer, TimerState* state);
 
 /**
- * Ends the timer and returns the total duration
+ * Returns the total duration since the last start or sample. Updates the 
+ * timer state struct.
  * 
  * @param   state   The TimerState instance that has the starting state
  *
- * @return  The time delta between start and end
+ * @return  The time delta between start and the current time
  */
-U32 timerEnd(const U32 timer, TimerState const * state);
+U32 timerSample(const U32 timer, TimerState* state);
 
 #endif

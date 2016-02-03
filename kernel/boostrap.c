@@ -10,11 +10,14 @@ U32* bootstrap(U32 pc)
     uartSpeed(UART_2, UART_SPEED_HI);
     uartConfig(UART_2, 0, 0, 0);
     
-    timerInit(TIMER_3); 
-    timerSetValue(TIMER_3, 508000);
-    timerClear(TIMER_3);
+    timerInit(TIMER_1); 
+    timerSetValue(TIMER_1, 5080);
+    timerClear(TIMER_1);
 
-    interruptEnable(INT_2, 0x80000);
+    timerInit(TIMER_4);
+    timerStart(TIMER_4, &kernel.perfState);
+
+    interruptEnable(INT_1, 0x10);
 
     printString("%c[2J\r", 27);
 

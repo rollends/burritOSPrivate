@@ -22,7 +22,7 @@ void interruptHandler()
         kernel.eventTable[1] = VAL_TO_ID(0);
     }
 
-    timerClear(TIMER_3);
+    timerClear(TIMER_1);
 }
 
 U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
@@ -140,6 +140,18 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
         {
             desc->state = eZombie;
             break;
+        }
+
+        case SYS_CALL_PERF_ID:
+        {
+            TaskDescriptor* desc =
+                taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
+
+            U32 result = desc->performance;
+            result /= (4915);
+            desc->performance = 0;
+
+            return result;
         }
 
         default:
