@@ -2,7 +2,7 @@
 #define UTILS_H
 
 /// Borrowed from Standford's Bit Twiddling hacks
-static U32 fastLog2( U32 v )
+static inline U32 __ctz( U32 v )
 {
 	U32 c = 32; // c will be the number of zero bits on the right
 	v &= -((S32)(v));

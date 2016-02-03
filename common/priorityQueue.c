@@ -25,7 +25,7 @@ S32 priorityQueuePop(PriorityQueue* queue, U16* dest)
 	if( 0 == queue->isNonEmpty )
 		return -1;
 
-	U32 priority = fastLog2( queue->isNonEmpty );
+	U32 priority = __ctz( queue->isNonEmpty );
 	*dest = queue->data[queue->head[priority] + priority * 8];
 	queue->head[priority] = (queue->head[priority] + 1) & (8 - 1);
 	queue->isNonEmpty ^= (queue->head[priority] == queue->tail[priority] ? 1 : 0) << (priority);
@@ -35,7 +35,7 @@ S32 priorityQueuePop(PriorityQueue* queue, U16* dest)
 
 S32 priorityQueuePushPop(PriorityQueue* queue, const U8 priority, U16* value)
 {
-    U32 freePriority = fastLog2( queue->isNonEmpty );
+    U32 freePriority = __ctz( queue->isNonEmpty );
 
 	if (priority < freePriority || 0 == queue->isNonEmpty)
         return 1;
