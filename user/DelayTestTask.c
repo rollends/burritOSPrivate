@@ -7,6 +7,7 @@
 #include "user/messageTypes.h"
 #include "user/Nameserver.h"
 #include "user/DelayTestTask.h"
+#include "user/ClockServer.h"
 
 void DelayTestTask()
 {
@@ -25,11 +26,13 @@ void DelayTestTask()
 	U16 delayFinished = 0;
 	while( delayCount )
 	{
-		DelayBy( clock, delayTime );
-		printString( "%d \t %d \t %d\r\n", 
+		clockDelayBy( clock, delayTime );
+		U32 time = clockTime( clock );
+		printString( "  %d             %d                    %d          %d\r\n", 
 					tid,
 					++delayFinished, 
-					delayTime );
+					delayTime,
+					time );
 		delayCount--;
 	}
 	sysShutdown();

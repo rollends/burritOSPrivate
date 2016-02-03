@@ -27,8 +27,13 @@ void InitialTask()
 	sysCreate( 0, &Nameserver );
 	sysCreate( 1, &ClockServer );
 	
-    U32 i = 0;
-	printString("(TID)\t(Completed)\t(Delay Ticks)\r\n");
+	TaskID clock;
+	nsWhoIs( Clock, &clock );
+
+    printString( "Creating all tasks at time %d\r\n", clockTime( clock ) );
+	printString( "(TID)        (Completed)        (Delay Ticks)    (Current Time)\r\n" );
+	
+	U8 i = 0;
 	for(i = 0; i < 4; ++i)
 	{
 		sysCreate( 3 + i, &DelayTestTask );
