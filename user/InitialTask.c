@@ -19,44 +19,44 @@ static void TimingTask();
 
 void InitialTask()
 {
-	U16 DelayTimes[4], DelayCount[4];
-	DelayTimes[0] = 10;	DelayCount[0] = 20;
-	DelayTimes[1] = 23; DelayCount[1] = 9;
-	DelayTimes[2] = 33;	DelayCount[2] = 6;
-	DelayTimes[3] = 71; DelayCount[3] = 3;
+    U16 DelayTimes[4],      DelayCount[4];
+    DelayTimes[0] = 10;     DelayCount[0] = 20;
+    DelayTimes[1] = 23;     DelayCount[1] = 9;
+    DelayTimes[2] = 33;     DelayCount[2] = 6;
+    DelayTimes[3] = 71;     DelayCount[3] = 3;
 
-	sysCreate( 0, &Nameserver );
-	sysCreate( 1, &ClockServer );
-	sysCreate(0, &PerformanceTask);
+    sysCreate( 0, &Nameserver );
+    sysCreate( 1, &ClockServer );
+    sysCreate(0, &PerformanceTask);
 
-	TaskID clock;
-	nsWhoIs( Clock, &clock );
+    TaskID clock;
+    nsWhoIs( Clock, &clock );
 
     printString( "Creating all tasks at time %d\r\n", clockTime( clock ) );
-	printString( "(TID)        (Completed)        (Delay Ticks)    (Current Time)\r\n" );
-	
-	U8 i = 0;
-	for(i = 0; i < 4; ++i)
-	{
-		sysCreate( 3 + i, &DelayTestTask );
-	}
+    printString( "(TID)        (Completed)        (Delay Ticks)    (Current Time)\r\n" );
 
-	for(i = 0; i < 4; ++i)
-	{
-		MessageEnvelope env;
-		TaskID id;
-	
-		sysReceive( &id.value, &env );
-		env.message.MessageU32.body = ( DelayTimes[i] << (8*2) ) | DelayCount[i];
-		sysReply( id.value, &env );
-	}
+    U8 i = 0;
+    for(i = 0; i < 4; ++i)
+    {
+        sysCreate( 3 + i, &DelayTestTask );
+    }
+
+    for(i = 0; i < 4; ++i)
+    {
+        MessageEnvelope env;
+        TaskID id;
+
+        sysReceive( &id.value, &env );
+        env.message.MessageU32.body = ( DelayTimes[i] << (8*2) ) | DelayCount[i];
+        sysReply( id.value, &env );
+    }
 
     sysExit();
 }
 
 static void TimingTask()
 {
-	U8 i = 0;
+    U8 i = 0;
     {
         U16 timingId = sysCreate(0, &MessageTimingTask);
         TimerState state;
@@ -95,7 +95,7 @@ static void TimingTask()
         U16 timingId = sysCreate(0, &MessageTimingTask64);
         TimerState state;
 
-        
+
         MessageEnvelope env;
         U32 buffer[16];
         env.type = MESSAGE_TYPE_64_BYTE;
@@ -116,7 +116,7 @@ static void TimingTask()
         U16 timingId = sysCreate(2, &MessageTimingTask64);
         TimerState state;
 
-        
+
         MessageEnvelope env;
         U32 buffer[16];
         env.type = MESSAGE_TYPE_64_BYTE;
@@ -132,5 +132,5 @@ static void TimingTask()
         env.type = 0;
         sysSend(timingId, &env, &env);
     }
-	sysExit();
+    sysExit();
 }

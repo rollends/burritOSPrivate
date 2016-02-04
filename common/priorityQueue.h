@@ -20,8 +20,8 @@ typedef struct
     /// The tail indices for the queues
     U16 tail[PRIORITY_COUNT];
 
-	/// The Priority Queue Non-Empty Flags
-	U32 isNonEmpty;
+    /// The Priority Queue Non-Empty Flags
+    U32 isNonEmpty;
 } PriorityQueue;
 
 /**
@@ -55,8 +55,8 @@ S32 priorityQueuePush(PriorityQueue* queue, const U8 priority, const U16 value);
 S32 priorityQueuePop(PriorityQueue* queue, U16* dest);
 
 /**
- * Performs a combined push and pop operation that minimizes the amount of 
- * queue access needed. If the pushed and popped value are the same, the 
+ * Performs a combined push and pop operation that minimizes the amount of
+ * queue access needed. If the pushed and popped value are the same, the
  * function returns out early.
  *
  * @param   queue       The priority queue to push and pop from

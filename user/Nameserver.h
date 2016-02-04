@@ -13,8 +13,8 @@
  */
 typedef enum
 {
-    Clock     		= 0,
-    TaskNameCount   = 1,
+    Clock             = 0,
+    TaskNameCount     = 1,
 } TaskName;
 
 /** Nameserver Registration Method

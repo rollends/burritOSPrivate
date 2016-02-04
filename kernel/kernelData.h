@@ -14,15 +14,15 @@ typedef struct
 {
     /// Active task descriptor
     TaskDescriptor*  activeTask;
-    
+
     /// Task priority queue
     PriorityQueue   queue;
 
     /// The task descriptor table
     TaskTable   tasks;
 
-	/// Event Table
-	TaskID eventTable[EVENT_TABLE_SIZE];
+    /// Event Table
+    TaskID eventTable[EVENT_TABLE_SIZE];
 
     /// Performance timer state struct
     TimerState perfState;

@@ -3,7 +3,7 @@
 
 #include "common/types.h"
 
-#define QUEUE_MEM_SIZE(length, type) sizeof(type)*length 
+#define QUEUE_MEM_SIZE(length, type) sizeof(type)*length
 
 /**
  * FIFO circular buffer of U8 values
@@ -11,10 +11,10 @@
 typedef struct
 {
     /// The data pointer for the buffer
-    U8*    	data;
+    U8*     data;
 
     /// The head index
-    U8      head; 
+    U8      head;
 
     /// The tail index
     U8      tail;
@@ -35,7 +35,7 @@ typedef struct
     U16*    data;
 
     /// The head index
-    U8      head; 
+    U8      head;
 
     /// The tail index
     U8      tail;

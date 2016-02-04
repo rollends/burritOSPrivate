@@ -18,19 +18,19 @@ void TestTask()
 {
     TaskID rps;
     //nsWhoIs( RPS, &rps );
-    
+
     U8 seed = receiveSeed();
     U8 maxPlays = 1 + (nextRandU8( &seed ) & 7);
     TaskID meId;
     meId.value = sysTid();
 
     printString( "%b: Playing max of %b.\r\n", meId.fields.id, maxPlays, rps.fields.id );
-    
+
     gameSignup( rps );
     while( maxPlays-- > 0 )
     {
         volatile U8 r3 = ( nextRandU8( &seed ) );
-		r3 -= 3 * (r3 / 3);
+        r3 -= 3 * (r3 / 3);
 
         RPSMessageType move = PlayRock + r3;
         if( gamePlay( meId, rps, move ) )
@@ -107,7 +107,7 @@ static U8 receiveSeed( )
     MessageEnvelope env;
     TaskID id;
     TaskID pid;
-    
+
     pid.value = sysPid();
     do
     {
