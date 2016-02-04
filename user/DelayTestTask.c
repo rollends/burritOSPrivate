@@ -28,7 +28,7 @@ void DelayTestTask()
     {
         clockDelayBy( clock, delayTime );
         U32 time = clockTime( clock );
-        printString( "  %d             %d                    %d          %d\r\n",
+        printString( "%3d\t%3d\t%3d\t%3d\r\n",
                     tid,
                     ++delayFinished,
                     delayTime,

@@ -12,7 +12,7 @@ char x2c(int c)
     return 'a' + c - 10;
 }
 
-int printDecimal(U32 value)
+int printDecimal(U32 value, U32 width)
 {
     char buffer[16];
     U8 i = 0;
@@ -24,6 +24,11 @@ int printDecimal(U32 value)
     } while( value );
 
     U8 ci = 0;
+    while( width > i )
+    {
+        uartWriteByte(UART_2, '0');
+        width--;
+    }
     for(ci = 0; ci < i; ci++)
     {
         uartWriteByte( UART_2, buffer[i - ci - 1] );
@@ -63,51 +68,82 @@ int printHexByte(U8 value)
     return 0;
 }
 
-int printString(char* format, ...)
+int printString(char const * format, ...)
 {
     va_list va;
     va_start(va, format);
 
+    enum { PLAIN, FORMAT, ESCAPE } state = PLAIN;
+
     char ch;
     while ((ch = *(format++)))
     {
-        int ret = 0;
-
-        if (ch != '%')
+        switch( state )
         {
-            ret = uartWriteByte(UART_2, ch);
+        case ESCAPE:
+        {
+            uartWriteByte(UART_2, ch);
+            break;
         }
-        else
+
+        case PLAIN:
         {
-            ch = *(format++);
-            switch (ch)
+            if (c == '%')
             {
-                case 'c':
-                    ret = uartWriteByte(UART_2, va_arg(va, S32));
+                state = FORMAT;
+                widthFlag = 0;
+            }
+            else if( c == '\\' )
+                state = ESCAPE;
+            else
+                uartWriteByte(UART_2, ch);
+            break;
+        }
+        case FORMAT:
+        {
+            if( c >= '0' && c <= '9' )
+                widthFlag = widthFlag * 10 + (ch - '0');
+            else
+            {
+                switch( ch )
+                {
+                case 'd':
+                    printDecimal(va_arg(va, U32), widthFlag);
                     break;
 
-                case 'd':
-                    ret = printDecimal(va_arg(va, U32));
+                case 's':
+                    printString( va_arg(va, char const *) );
+                    break;
+
+                case 'c':
+                    uartWriteByte(UART_2, va_arg(va, S32));
                     break;
 
                 case 'x':
-                    ret = printHex(va_arg(va, U32));
+                    printHex(va_arg(va, U32));
                     break;
 
                 case 'b':
-                    ret = printHexByte(va_arg(va, U8));
+                    printHexByte(va_arg(va, U8));
                     break;
 
                 case '%':
-                    ret = uartWriteByte(UART_2, ch);
+                    uartWriteByte(UART_2, '%');
                     break;
 
                 default:
+                    uartWriteByte(UART_2, '%');
+                    printDecimal(widthFlag, 0);
+                    uartWriteByte(UART_2, ch);
                     break;
+                }
+                state = PLAIN;
             }
+            break;
+        }
         }
     }
 
     va_end(va);
-    return 0;
+    return (state == PLAIN ? 0 : -1);
 }

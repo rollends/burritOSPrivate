@@ -33,7 +33,7 @@ void InitialTask()
     nsWhoIs( Clock, &clock );
 
     printString( "Creating all tasks at time %d\r\n", clockTime( clock ) );
-    printString( "(TID)        (Completed)        (Delay Ticks)    (Current Time)\r\n" );
+    printString( "(TID)\t(Completed)\t(Delay Ticks)\t(Current Time)\r\n" );
 
     U8 i = 0;
     for(i = 0; i < 4; ++i)
