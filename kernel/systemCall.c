@@ -32,7 +32,11 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
     {
         case SYS_CALL_CREATE_ID:
         {
-            U16 result = taskTableAlloc(&kernel.tasks, arg0, arg1 + kernel.baseAddress, desc->tid);
+            U16 result = taskTableAlloc(&kernel.tasks,
+                                        arg0,
+                                        arg1 + kernel.baseAddress,
+                                        arg2,
+                                        desc->tid);
             priorityQueuePush(&kernel.queue, arg0, result);
             return result;
         }
@@ -124,17 +128,18 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             return desc->tid.value;
         }
 
-        case SYS_CALL_PERF_ID:
+        case SYS_CALL_PERF_START_ID:
         {
-            TaskDescriptor* desc =
-                taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
+            timerStart(TIMER_4, &kernel.perfState);
+            taskTablePerfClear(&kernel.tasks);
+            break;
+        }
 
-            U32 result = desc->performance;
-            result *= 100;
-            result /= (250*983);
-            desc->performance = 0;
-
-            return result;
+        case SYS_CALL_PERF_QUERY_ID:
+        {
+            return taskTablePerf(&kernel.tasks,
+                                 VAL_TO_ID(arg0),
+                                 kernel.perfState.total);
         }
         
         case SYS_CALL_RUNNING_ID:

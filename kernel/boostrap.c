@@ -15,7 +15,6 @@ U32* bootstrap(U32 pc)
     timerClear(TIMER_1);
 
     timerInit(TIMER_4);
-    timerStart(TIMER_4, &kernel.perfState);
 
     interruptEnable(INT_1, 0x10);
 
@@ -26,6 +25,7 @@ U32* bootstrap(U32 pc)
     U16 taskID = taskTableAlloc(&kernel.tasks,
                                 31,
                                 (U32)(&IdleTask) + pc,
+                                STACK_SIZE_SMALL,
                                 VAL_TO_ID(0));
 
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));

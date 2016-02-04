@@ -6,7 +6,7 @@ S32 taskTableInit(TaskTable* table)
     queueU8Init(&(table->allocationQueue), table->allocationTable, TASK_COUNT);
 
     U8 i;
-    for(i = 0; i < TASK_COUNT; ++i)
+    for(i = 0; i < TASK_COUNT; i++)
     {
         table->descriptors[i].tid.fields.id = i;
         table->descriptors[i].tid.fields.generation = 0;
@@ -15,12 +15,14 @@ S32 taskTableInit(TaskTable* table)
         queueU8Push(&(table->allocationQueue), i);
     }
 
+    stackAllocatorInit(&table->stackAllocator, (U32*)(0x01000000));
     return 0;
 }
 
 S32 taskTableAlloc(TaskTable* table,
                    const U8 priority,
                    const U32 entry,
+                   const U32 size,
                    const TaskID pid)
 {
     if (table->allocationQueue.count == 0)
@@ -32,9 +34,7 @@ S32 taskTableAlloc(TaskTable* table,
     queueU8Pop(&(table->allocationQueue), &index);
 
     TaskDescriptor* desc = &(table->descriptors[index]);
-
-    U32* tablebase = (U32*)(0x01000000);
-    U32* stack = (U32*)(tablebase + 1024*(index+1) - 1);
+    U32* stack = stackAllocatorAlloc(&table->stackAllocator, size);
     *(stack) = entry;
     *(stack-15) = 0x10;
     
@@ -69,4 +69,27 @@ S32 taskTableFree(TaskTable* table, const TaskID tid)
     desc->state = eZombie;
 
     return 0;
+}
+
+S32 taskTablePerfClear(TaskTable* table)
+{
+    U32 i = 0;
+    for(i = 0; i < TASK_COUNT; i++)
+    {
+        table->descriptors[i].performance = 0;
+    }
+
+    return 0;
+}
+
+U32 taskTablePerf(TaskTable* table, const TaskID tid, const U32 runtime)
+{
+    U32 index = tid.fields.id;
+    TaskDescriptor* desc = &(table->descriptors[index]);
+
+    U32 result = desc->performance;
+    result *= 1000;
+    result /= runtime;
+
+    return result;
 }

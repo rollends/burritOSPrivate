@@ -44,7 +44,10 @@ void timerSetValue(const U32 timer, const U32 value)
 U32 timerStart(const U32 timer, TimerState* state)
 {
     state->start = timerGetValue(timer);
-    return state->start;
+    state->last = state->start;
+    state->total = 0;
+    
+    return state->last;
 }
 
 U32 timerSample(const U32 timer, TimerState * state)
@@ -54,32 +57,33 @@ U32 timerSample(const U32 timer, TimerState * state)
 
     if (timer == TIMER_4)
     {
-        if (value < state->start)
+        if (value < state->last)
         {
-            result = value + (0xFFFFFFFF - state->start);
+            result = value + (0xFFFFFFFF - state->last);
         }   
         else
         {
-            result = value - state->start;
+            result = value - state->last;
         }
     }
-    else if (value > state->start)
+    else if (value > state->last)
     {
         if (timer == TIMER_3)
         {
-            result = state->start + (0xFFFFFFFF - value);
+            result = state->last + (0xFFFFFFFF - value);
         }
         else
         {
-            result = state->start + (0x0000FFFF - value);
+            result = state->last + (0x0000FFFF - value);
         }
     }   
     else
     {
-        result = state->start - value;
+        result = state->last - value;
     }
 
-    state->start = value;
+    state->last = value;
+    state->total += result;
 
     return result;
 }

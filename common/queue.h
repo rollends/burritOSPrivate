@@ -79,7 +79,6 @@ S32 queueU8Push(QueueU8* queue, const U8 value);
 S32 queueU8Pop(QueueU8* queue, U8* value);
 
 
-
 /**
  * Initializes a U16 queue
  *

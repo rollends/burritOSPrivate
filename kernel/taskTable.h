@@ -4,6 +4,7 @@
 #include "common/common.h"
 
 #include "kernel/config.h"
+#include "kernel/stackAllocator.h"
 #include "kernel/taskDescriptor.h"
 
 /**
@@ -19,6 +20,9 @@ typedef struct
 
     /// Backing data for the descriptor queue
     U8 allocationTable[TASK_COUNT];
+
+    /// Stack allocation table
+    StackAllocator stackAllocator;
 
     /// Backing data for the send queue
     U16 sendQueueTable[TASK_COUNT*SEND_QUEUE_LENGTH];
@@ -39,6 +43,7 @@ S32 taskTableInit(TaskTable* table);
  * @param   table       The table to get the descriptor
  * @param   priority    The priority to assign to the descriptor
  * @param   entry       The entry point (pc) of the task
+ * @param   size        The stack size, one of .._SMALL, .._MEDIUM, or .._LARGE
  * @param   pid         The parent task id
  *
  * @return  0 on success, else an error code
@@ -46,6 +51,7 @@ S32 taskTableInit(TaskTable* table);
 S32 taskTableAlloc(TaskTable* table,
                    const U8 priority,
                    const U32 entry,
+                   const U32 size,
                    const TaskID pid);
 
 /**
@@ -57,6 +63,26 @@ S32 taskTableAlloc(TaskTable* table,
  * @return  0 on success, else an error code
  */
 S32 taskTableFree(TaskTable* table, const TaskID tid);
+
+/**
+ * Clears performance data for all tasks in the table
+ *
+ * @param   table       The table to clear data in
+ *
+ * @return  0 on success, else an error code
+ */
+S32 taskTablePerfClear(TaskTable* table);
+
+/**
+ * Returns the run time percentage to 1 decimal place for a given task
+ *
+ * @param   table       The table to get the performance from
+ * @param   tid         The task id
+ * @param   runtime     The total system runtime
+ *
+ * @return  performance percentage in 10ths of a percent
+ */
+U32 taskTablePerf(TaskTable* table, const TaskID tid, const U32 runtime);
 
 /**
  * Gets a descriptor from a table by ID

@@ -10,6 +10,12 @@ typedef struct
 {
     /// The timer start time
     U32 start;
+
+    /// The last recorded time
+    U32 last;
+
+    /// The total running time
+    U32 total;
 } TimerState;
 
 #endif
