@@ -78,8 +78,6 @@ void RPSServer()
             }
         } while( !quit );
     } while( playerQueue.count );
-    
-    sysExit();
 }
 
 static void getTwoPlayers( QueueU16* playerQueue )

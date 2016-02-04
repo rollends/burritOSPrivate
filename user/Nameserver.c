@@ -107,5 +107,4 @@ void Nameserver()
         envelope.type = MESSAGE_NAMESERVER_RESPONSE;
         sysReply( fTid.value, &envelope );
     }
-    sysExit();
 }

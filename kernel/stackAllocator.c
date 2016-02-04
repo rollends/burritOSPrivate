@@ -1,11 +1,6 @@
 #include "kernel/stackAllocator.h"
 #include "kernel/print.h"
 
-static inline U32* blockToAddress(U16 block, U32* baseAddress)
-{
-    return baseAddress + ((U32)(block) * STACK_BLOCK_SIZE);
-}
-
 S32 stackAllocatorInit(StackAllocator* alloc, U32* base)
 {
     alloc->baseAddress = base;
@@ -18,18 +13,18 @@ S32 stackAllocatorInit(StackAllocator* alloc, U32* base)
                  STACK_LARGE_COUNT);
 
     U32 i;
-    for (i = 1; i <= STACK_SMALL_COUNT; i++)
+    for (i = 0; i < STACK_SMALL_COUNT; i++)
     {
         queueU16Push(&alloc->smallQueue, i);
     }
 
-    for (i = 1; i <= STACK_MEDIUM_COUNT; i++)
+    for (i = 0; i < STACK_MEDIUM_COUNT; i++)
     {
         queueU16Push(&alloc->mediumQueue,
                      i*STACK_SIZE_MEDIUM + STACK_SMALL_COUNT);
     }
 
-    for (i = 1; i <= STACK_MEDIUM_COUNT; i++)
+    for (i = 0; i < STACK_MEDIUM_COUNT; i++)
     {
         queueU16Push(&alloc->mediumQueue,
                      i*STACK_SIZE_LARGE + STACK_MEDIUM_COUNT*STACK_SIZE_MEDIUM + STACK_SMALL_COUNT);
@@ -62,8 +57,39 @@ U32 stackAllocatorAlloc(StackAllocator* alloc, const U32 size)
 
     if (queueU16Pop(queue, &block) == 0)
     {
-        return blockToAddress(block, alloc->baseAddress);
+        U32* address = alloc->baseAddress +
+                            ((U32)(block+1) * STACK_BLOCK_SIZE - 1);
+        *address-- = block;
+        *address-- = size;
+        return (U32)(address);
     }
 
+    return 0;
+}
+
+S32 stackAllocatorFree(StackAllocator* alloc, U32* stack)
+{
+    U32 size = *(++stack);
+    U32 id = *(++stack);
+    QueueU16* queue = 0;
+
+    if (size == STACK_SIZE_SMALL)
+    {
+        queue = &alloc->smallQueue;
+    }
+    else if (size == STACK_SIZE_MEDIUM)
+    {
+        queue = &alloc->mediumQueue;
+    }
+    else if (size == STACK_SIZE_LARGE)
+    {
+        queue = &alloc->largeQueue;
+    }
+    else
+    {
+        return -1;
+    }
+
+    queueU16Push(queue, id);
     return 0;
 }

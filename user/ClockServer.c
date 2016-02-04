@@ -122,7 +122,6 @@ ClockServerExit:
         free->next = dqueue.freeList;
         dqueue.freeList = free;
     }
-    sysExit();
 }
 
 void delayQueuePush( DelayQueue* dq, TaskID id, U32 delay )

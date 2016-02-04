@@ -9,6 +9,7 @@ U32* scheduler(U32* sp)
     TaskDescriptor* desc = kernel.activeTask;
     TaskID tid = desc->tid;
     desc->performance += timerSample(TIMER_4, &kernel.perfState);
+    desc->stack = sp;
 
     if (desc->state == eReady)
     {
@@ -32,7 +33,6 @@ U32* scheduler(U32* sp)
         }
     }
 
-    desc->stack = sp;
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, tid);
     return kernel.activeTask->stack;
 }

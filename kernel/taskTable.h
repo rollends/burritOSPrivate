@@ -42,7 +42,8 @@ S32 taskTableInit(TaskTable* table);
  *
  * @param   table       The table to get the descriptor
  * @param   priority    The priority to assign to the descriptor
- * @param   entry       The entry point (pc) of the task
+ * @param   entryAddr   The entry point (pc) of the task
+ * @param   exitAddr    The exit point (lr) of the task
  * @param   size        The stack size, one of .._SMALL, .._MEDIUM, or .._LARGE
  * @param   pid         The parent task id
  *
@@ -50,7 +51,8 @@ S32 taskTableInit(TaskTable* table);
  */
 S32 taskTableAlloc(TaskTable* table,
                    const U8 priority,
-                   const U32 entry,
+                   const U32 entryAddr,
+                   const U32 exitAddr,
                    const U32 size,
                    const TaskID pid);
 

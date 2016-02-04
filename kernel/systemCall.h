@@ -2,6 +2,7 @@
 #define SYS_CALL_H
 
 #include "common/common.h"
+#include "kernel/kernelUtils.h"
 
 #define SYS_CALL_EXIT_ID        0
 #define SYS_CALL_PASS_ID        1
@@ -16,11 +17,6 @@
 #define SYS_CALL_AWAIT_ID       10
 #define SYS_CALL_PERF_START_ID  11
 #define SYS_CALL_PERF_QUERY_ID  12
-
-extern U32 __sysCall3(U32, U32, U32, U32);
-extern U32 __sysCall2(U32, U32, U32);
-extern U32 __sysCall1(U32, U32);
-extern U32 __sysCall0(U32);
 
 #define sysExit() \
             __sysCall0((U32)SYS_CALL_EXIT_ID)

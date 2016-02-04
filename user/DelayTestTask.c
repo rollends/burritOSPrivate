@@ -32,6 +32,4 @@ void DelayTestTask()
                     time );
         delayCount--;
     }
-
-    sysExit();
 }

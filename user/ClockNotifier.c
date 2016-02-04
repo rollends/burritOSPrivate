@@ -17,5 +17,4 @@ void ClockNotifier()
 
     envelope.type = MESSAGE_CLOCKSERVER_KILL;
     sysSend( id.value, &envelope, &envelope );
-    sysExit();
 }

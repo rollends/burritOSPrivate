@@ -4,13 +4,13 @@
 #include "common/common.h"
 #include "kernel/config.h"
 
-/// The number of small blocks in the allocator
+/// The number of small stacks in the allocator
 #define STACK_SMALL_COUNT   TASK_COUNT
 
-/// The number of medium blocks in the allocator
+/// The number of medium stacks in the allocator
 #define STACK_MEDIUM_COUNT  8
 
-/// The number of large blocks in the allocator
+/// The number of large stacks in the allocator
 #define STACK_LARGE_COUNT   4
 
 /**
@@ -55,5 +55,15 @@ S32 stackAllocatorInit(StackAllocator* alloc, U32* base);
  * @return  0 (null pointer) on failure, else a memory address
  */
 U32 stackAllocatorAlloc(StackAllocator* alloc, const U32 size);
+
+/**
+ * Frees a stack block
+ *
+ * @param   alloc   The stack allocator pointer
+ * @param   size    The stack size
+ *
+ * @return  0 on success, else an error code
+ */
+S32 stackAllocatorFree(StackAllocator* alloc, U32* stack);
 
 #endif

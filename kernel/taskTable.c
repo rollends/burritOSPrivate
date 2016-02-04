@@ -21,7 +21,8 @@ S32 taskTableInit(TaskTable* table)
 
 S32 taskTableAlloc(TaskTable* table,
                    const U8 priority,
-                   const U32 entry,
+                   const U32 entryAddr,
+                   const U32 exitAddr,
                    const U32 size,
                    const TaskID pid)
 {
@@ -35,7 +36,8 @@ S32 taskTableAlloc(TaskTable* table,
 
     TaskDescriptor* desc = &(table->descriptors[index]);
     U32* stack = stackAllocatorAlloc(&table->stackAllocator, size);
-    *(stack) = entry;
+    *(stack) = entryAddr;
+    *(stack-14) = exitAddr;
     *(stack-15) = 0x10;
     
     desc->stack = stack - 15;
@@ -67,6 +69,8 @@ S32 taskTableFree(TaskTable* table, const TaskID tid)
     desc->tid.fields.generation++;
     desc->pid.value = 0;
     desc->state = eZombie;
+
+    stackAllocatorFree(&table->stackAllocator, desc->stack + 15);
 
     return 0;
 }

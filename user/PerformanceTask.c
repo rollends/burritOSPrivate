@@ -26,5 +26,4 @@ void PerformanceTask()
     }
 
     sysShutdown();
-    sysExit();
 }

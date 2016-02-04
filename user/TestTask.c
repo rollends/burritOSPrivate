@@ -38,7 +38,7 @@ void TestTask()
     gameQuit( rps );
 
 GameOver:
-    sysExit();
+    return;
 }
 
 static void gameSignup( TaskID sid )

@@ -44,6 +44,4 @@ void InitialTask()
         env.message.MessageU32.body = ( DelayTimes[i] << (8*2) ) | DelayCount[i];
         sysReply( id.value, &env );
     }
-
-    sysExit();
 }

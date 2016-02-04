@@ -1,8 +1,8 @@
 #include "common/common.h"
 #include "hardware/hardware.h"
-
 #include "kernel/kernelData.h"
 #include "kernel/print.h"
+#include "kernel/kernelUtils.h"
 #include "user/IdleTask.h"
 
 U32* bootstrap(U32 pc)
@@ -25,6 +25,7 @@ U32* bootstrap(U32 pc)
     U16 taskID = taskTableAlloc(&kernel.tasks,
                                 31,
                                 (U32)(&IdleTask) + pc,
+                                (U32)(&__taskExit) + pc,
                                 STACK_SIZE_SMALL,
                                 VAL_TO_ID(0));
 

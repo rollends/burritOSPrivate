@@ -15,7 +15,6 @@ void MessageTimingTask()
         if( envelope.type == 0 )
             break;
     }
-    sysExit();
 }
 
 void MessageTimingTask64()
@@ -33,5 +32,4 @@ void MessageTimingTask64()
         if( envelope.type == 0 )
             break;
     }
-    sysExit();
 }

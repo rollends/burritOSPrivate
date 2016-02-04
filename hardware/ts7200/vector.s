@@ -43,24 +43,3 @@ _vectorLoad:
 
 hang:
     b hang
-
-.global __sysCall0
-__sysCall0:
-    swi 0
-    bx lr
-
-.global __sysCall1
-__sysCall1:
-    swi 0
-    bx lr
-
-.global __sysCall2
-__sysCall2:
-    swi 0
-    bx lr
-
-.global __sysCall3
-__sysCall3:
-    swi 0
-    bx lr
-    

@@ -11,6 +11,4 @@ void IdleTask()
     {
         sysPass();
     }
-
-    sysExit();
 }
