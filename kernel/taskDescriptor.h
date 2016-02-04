@@ -1,15 +1,14 @@
 #ifndef TASK_DESCRIPTOR_H
 #define TASK_DESCRIPTOR_H
 
-#define VAL_TO_ID(val)  (TaskID)((U16)(val))
-
-#define TASK_RETURN(desc) desc->stack[2]
-#define TASK_ARG_0(desc) desc->stack[3]
-#define TASK_ARG_1(desc) desc->stack[4]
-#define TASK_ARG_2(desc) desc->stack[5]
-
-#include "common/queue.h"
+#include "common/common.h"
 #include "kernel/config.h"
+
+#define VAL_TO_ID(val)      (TaskID)((U16)(val))
+#define TASK_RETURN(desc)   desc->stack[2]
+#define TASK_ARG_0(desc)    desc->stack[3]
+#define TASK_ARG_1(desc)    desc->stack[4]
+#define TASK_ARG_2(desc)    desc->stack[5]
 
 /**
  * Defines a  TaskID type that includes both the task id and a

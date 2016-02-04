@@ -1,10 +1,3 @@
-
-#include "common/types.h"
-
-#include "kernel/message.h"
-#include "kernel/systemCall.h"
-#include "kernel/taskDescriptor.h"
-
 #include "user/messageTypes.h"
 #include "user/Nameserver.h"
 #include "user/ClockNotifier.h"
@@ -66,7 +59,7 @@ void ClockServer()
     MessageEnvelope respondTime;
     respondTime.type = MESSAGE_CLOCKSERVER_WAKE;
 
-    sysCreate( 0, &ClockNotifier );
+    sysCreate(0, &ClockNotifier, STACK_SIZE_SMALL);
 
     for(;;)
     {

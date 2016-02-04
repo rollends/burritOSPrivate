@@ -1,5 +1,4 @@
-#include "common/types.h"
-
+#include "common/common.h"
 #include "hardware/hardware.h"
 
 #include "kernel/kernelData.h"

@@ -1,8 +1,8 @@
 #ifndef CLOCK_SERVER_H
 #define CLOCK_SERVER_H
 
-#include "common/types.h"
-#include "kernel/taskDescriptor.h"
+#include "common/common.h"
+#include "kernel/kernel.h"
 
 void clockDelayBy( TaskID clock, U32 );
 U32 clockTime( TaskID clock );

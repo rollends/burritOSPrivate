@@ -1,7 +1,7 @@
 #ifndef SYS_CALL_H
 #define SYS_CALL_H
 
-#include "common/types.h"
+#include "common/common.h"
 
 #define SYS_CALL_EXIT_ID        0
 #define SYS_CALL_PASS_ID        1
@@ -21,17 +21,29 @@ extern U32 __sysCall2(U32, U32, U32);
 extern U32 __sysCall1(U32, U32);
 extern U32 __sysCall0(U32);
 
-#define sysExit()                   __sysCall0((U32)SYS_CALL_EXIT_ID)
-#define sysPass()                   __sysCall0((U32)SYS_CALL_PASS_ID)
-#define sysRunning()                __sysCall0((U32)SYS_CALL_RUNNING_ID)
-#define sysShutdown()               __sysCall0((U32)SYS_CALL_SHUTDOWN_ID)
-#define sysCreate(pri, entry)       __sysCall2((U32)SYS_CALL_CREATE_ID, (U32)pri, (U32)entry)
-#define sysTid()                    __sysCall0((U32)SYS_CALL_TID_ID)
-#define sysPid()                    __sysCall0((U32)SYS_CALL_PID_ID)
-#define sysSend(tid, pmsg, preply)  __sysCall3((U32)SYS_CALL_SEND_ID, (U32)tid, (U32)pmsg, (U32)preply)
-#define sysReceive(ptid, pmsg)      __sysCall2((U32)SYS_CALL_RECEIVE_ID, (U32)ptid, (U32)pmsg)
-#define sysReply(tid, preply)       __sysCall2((U32)SYS_CALL_REPLY_ID, (U32)tid, (U32)preply)
-#define sysAwaitEvent(event)        __sysCall1((U32)SYS_CALL_AWAIT_ID, (U32)event)
-#define sysPerformance(tid)         __sysCall1((U32)SYS_CALL_PERF_ID, (U32)tid)
+#define sysExit() \
+            __sysCall0((U32)SYS_CALL_EXIT_ID)
+#define sysPass() \
+            __sysCall0((U32)SYS_CALL_PASS_ID)
+#define sysRunning() \
+            __sysCall0((U32)SYS_CALL_RUNNING_ID)
+#define sysShutdown() \
+            __sysCall0((U32)SYS_CALL_SHUTDOWN_ID)
+#define sysCreate(pri, entry, size) \
+            __sysCall3((U32)SYS_CALL_CREATE_ID, (U32)pri, (U32)entry, (U32)size)
+#define sysTid() \
+            __sysCall0((U32)SYS_CALL_TID_ID)
+#define sysPid() \
+            __sysCall0((U32)SYS_CALL_PID_ID)
+#define sysSend(tid, pmsg, preply) \
+            __sysCall3((U32)SYS_CALL_SEND_ID, (U32)tid, (U32)pmsg, (U32)preply)
+#define sysReceive(ptid, pmsg) \
+            __sysCall2((U32)SYS_CALL_RECEIVE_ID, (U32)ptid, (U32)pmsg)
+#define sysReply(tid, preply) \
+            __sysCall2((U32)SYS_CALL_REPLY_ID, (U32)tid, (U32)preply)
+#define sysAwaitEvent(event) \
+            __sysCall1((U32)SYS_CALL_AWAIT_ID, (U32)event)
+#define sysPerformance(tid) \
+            __sysCall1((U32)SYS_CALL_PERF_ID, (U32)tid)
 
 #endif

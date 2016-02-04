@@ -1,8 +1,9 @@
 #ifndef KERNEL_DATA_H
 #define KERNEL_DATA_H
 
-#include "common/priorityQueue.h"
-#include "hardware/timer.h"
+#include "common/common.h"
+#include "hardware/hardware.h"
+
 #include "kernel/event.h"
 #include "kernel/taskDescriptor.h"
 #include "kernel/taskTable.h"

@@ -1,13 +1,7 @@
-#include "common/random.h"
-
-#include "hardware/hardware.h"
-
-#include "kernel/message.h"
-#include "kernel/print.h"
-#include "kernel/systemCall.h"
+#include "common/common.h"
+#include "kernel/kernel.h"
 
 #include "user/messageTypes.h"
-
 #include "user/ClockServer.h"
 #include "user/MessageTimingTask.h"
 #include "user/Nameserver.h"
@@ -25,9 +19,9 @@ void InitialTask()
     DelayTimes[2] = 33;     DelayCount[2] = 6;
     DelayTimes[3] = 71;     DelayCount[3] = 3;
 
-    sysCreate( 0, &Nameserver );
-    sysCreate( 1, &ClockServer );
-    sysCreate(0, &PerformanceTask);
+    sysCreate(0, &Nameserver, STACK_SIZE_SMALL);
+    sysCreate(1, &ClockServer, STACK_SIZE_SMALL);
+    sysCreate(0, &PerformanceTask, STACK_SIZE_SMALL);
 
     TaskID clock;
     nsWhoIs( Clock, &clock );
@@ -38,7 +32,7 @@ void InitialTask()
     U8 i = 0;
     for(i = 0; i < 4; ++i)
     {
-        sysCreate( 3 + i, &DelayTestTask );
+        sysCreate(3 + i, &DelayTestTask, STACK_SIZE_SMALL);
     }
 
     for(i = 0; i < 4; ++i)
@@ -51,86 +45,5 @@ void InitialTask()
         sysReply( id.value, &env );
     }
 
-    sysExit();
-}
-
-static void TimingTask()
-{
-    U8 i = 0;
-    {
-        U16 timingId = sysCreate(0, &MessageTimingTask);
-        TimerState state;
-
-        MessageEnvelope env;
-        env.type = MESSAGE_RANDOM_BYTE;
-
-        timerStart(TIMER_3, &state);
-        for(i = 0; i < 100; ++i)
-        {
-            sysSend( timingId, &env, &env );
-        }
-        printString("Timed receive-first message at %x\r\n", timerSample(TIMER_3, &state));
-        env.type = 0;
-        sysSend(timingId, &env, &env);
-    }
-
-    {
-        U16 timingId = sysCreate(2, &MessageTimingTask);
-        TimerState state;
-
-        MessageEnvelope env;
-        env.type = MESSAGE_RANDOM_BYTE;
-
-        timerStart(TIMER_3, &state);
-        for(i = 0; i < 100; ++i)
-        {
-            sysSend( timingId, &env, &env );
-        }
-        printString("Timed send-first message at %x\r\n", timerSample(TIMER_3, &state ) );
-        env.type = 0;
-        sysSend(timingId, &env, &env);
-    }
-
-    {
-        U16 timingId = sysCreate(0, &MessageTimingTask64);
-        TimerState state;
-
-
-        MessageEnvelope env;
-        U32 buffer[16];
-        env.type = MESSAGE_TYPE_64_BYTE;
-
-        timerStart(TIMER_3, &state);
-        for(i = 0; i < 100; ++i)
-        {
-            env.message.MessageArbitrary.body = buffer;
-            sysSend( timingId, &env, &env );
-            __memcpy(buffer, env.message.MessageArbitrary.body, 16);
-        }
-        printString("Timed receive-first message at %x\r\n", timerSample(TIMER_3, &state ) );
-        env.type = 0;
-        sysSend(timingId, &env, &env);
-    }
-
-    {
-        U16 timingId = sysCreate(2, &MessageTimingTask64);
-        TimerState state;
-
-
-        MessageEnvelope env;
-        U32 buffer[16];
-        env.type = MESSAGE_TYPE_64_BYTE;
-
-        timerStart(TIMER_3, &state);
-        for(i = 0; i < 100; ++i)
-        {
-            env.message.MessageArbitrary.body = buffer;
-            sysSend( timingId, &env, &env );
-            __memcpy(buffer, env.message.MessageArbitrary.body, 16);
-        }
-        printString("Timed send-first message at %x\r\n", timerSample(TIMER_3, &state ) );
-        env.type = 0;
-        sysSend(timingId, &env, &env);
-    }
     sysExit();
 }

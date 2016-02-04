@@ -1,7 +1,7 @@
 #ifndef INTERRUPT_H
 #define INTERRUPT_H
 
-#include "common/types.h"
+#include "common/common.h"
 
 /**
  * Enables interrupts in the given VIC

@@ -1,7 +1,7 @@
 #ifndef TIMER_H
 #define TIMER_H
 
-#include "common/types.h"
+#include "common/common.h"
 
 /**
  * Utility struct for storing timer state

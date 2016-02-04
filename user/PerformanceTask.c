@@ -1,6 +1,4 @@
-#include "kernel/print.h"
-#include "kernel/systemCall.h"
-#include "kernel/taskDescriptor.h"
+#include "kernel/kernel.h"
 
 #include "user/ClockServer.h"
 #include "user/Nameserver.h"

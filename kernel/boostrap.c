@@ -1,8 +1,8 @@
-#include "common/types.h"
+#include "common/common.h"
 #include "hardware/hardware.h"
+
 #include "kernel/kernelData.h"
 #include "kernel/print.h"
-
 #include "user/IdleTask.h"
 
 U32* bootstrap(U32 pc)

@@ -1,7 +1,5 @@
-#include "hardware/memory.h"
-
-#include "kernel/systemCall.h"
-#include "kernel/message.h"
+#include "hardware/hardware.h"
+#include "kernel/kernel.h"
 
 #include "user/messageTypes.h"
 #include "user/MessageTimingTask.h"

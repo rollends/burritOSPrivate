@@ -1,4 +1,3 @@
-#include "common/vaList.h"
 #include "hardware/hardware.h"
 #include "kernel/print.h"
 

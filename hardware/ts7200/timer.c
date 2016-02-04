@@ -1,5 +1,3 @@
-#include "common/types.h"
-
 #include "hardware/memory.h"
 #include "hardware/timer.h"
 #include "hardware/ts7200/ts7200.h"

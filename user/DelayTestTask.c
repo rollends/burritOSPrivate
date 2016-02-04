@@ -1,8 +1,5 @@
-#include "common/random.h"
-
-#include "kernel/message.h"
-#include "kernel/print.h"
-#include "kernel/systemCall.h"
+#include "common/common.h"
+#include "kernel/kernel.h"
 
 #include "user/messageTypes.h"
 #include "user/Nameserver.h"

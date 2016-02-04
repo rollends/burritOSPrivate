@@ -1,8 +1,8 @@
 #ifndef NAMESERVER_H
 #define NAMESERVER_H
 
-#include "common/types.h"
-#include "kernel/taskDescriptor.h"
+#include "common/common.h"
+#include "kernel/kernel.h"
 
 /** Task Name Enumerated List
  *

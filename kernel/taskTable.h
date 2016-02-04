@@ -1,8 +1,7 @@
 #ifndef TASK_TABLE_H
 #define TASK_TABLE_H
 
-#include "common/queue.h"
-#include "common/types.h"
+#include "common/common.h"
 
 #include "kernel/config.h"
 #include "kernel/taskDescriptor.h"

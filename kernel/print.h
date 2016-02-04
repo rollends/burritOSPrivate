@@ -1,7 +1,7 @@
 #ifndef PRINT_H
 #define PRINT_H
 
-#include "common/types.h"
+#include "common/common.h"
 
 /**
  * Prints a formated string

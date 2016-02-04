@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#include "common/types.h"
+#include "common/common.h"
 
 /**
  * Copies words of memory from src to dst

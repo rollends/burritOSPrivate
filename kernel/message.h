@@ -1,7 +1,7 @@
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
-#include "common/types.h"
+#include "common/common.h"
 
 /**
  * Message holder struct that includes the message type and a union of 

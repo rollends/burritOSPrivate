@@ -1,8 +1,4 @@
-
-#include "kernel/event.h"
-#include "kernel/message.h"
-#include "kernel/systemCall.h"
-
+#include "kernel/kernel.h"
 #include "user/Nameserver.h"
 #include "user/messageTypes.h"
 
