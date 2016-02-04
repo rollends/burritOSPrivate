@@ -75,6 +75,7 @@ int printString(char const * format, ...)
 
     enum { PLAIN, FORMAT, ESCAPE } state = PLAIN;
 
+	U32 widthFlag = 0;
     char ch;
     while ((ch = *(format++)))
     {
@@ -88,12 +89,12 @@ int printString(char const * format, ...)
 
         case PLAIN:
         {
-            if (c == '%')
+            if (ch == '%')
             {
                 state = FORMAT;
                 widthFlag = 0;
             }
-            else if( c == '\\' )
+            else if( ch == '\\' )
                 state = ESCAPE;
             else
                 uartWriteByte(UART_2, ch);
@@ -101,7 +102,7 @@ int printString(char const * format, ...)
         }
         case FORMAT:
         {
-            if( c >= '0' && c <= '9' )
+            if( ch >= '0' && ch <= '9' )
                 widthFlag = widthFlag * 10 + (ch - '0');
             else
             {
