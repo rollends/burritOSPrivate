@@ -68,6 +68,14 @@ int printHexByte(U8 value)
     return 0;
 }
 
+int printStringNoFormat(char const * str)
+{
+    char c;
+    while( (c = *(str++)) )
+        uartWriteByte(UART_2, c);
+    return 0;
+}
+
 int printString(char const * format, ...)
 {
     va_list va;
@@ -113,7 +121,7 @@ int printString(char const * format, ...)
                     break;
 
                 case 's':
-                    printString( va_arg(va, char const *) );
+                    printStringNoFormat( va_arg(va, char const *) );
                     break;
 
                 case 'c':
