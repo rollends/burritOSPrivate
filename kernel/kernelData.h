@@ -2,7 +2,6 @@
 #define KERNEL_DATA_H
 
 #include "common/common.h"
-#include "hardware/hardware.h"
 
 #include "kernel/event.h"
 #include "kernel/taskDescriptor.h"

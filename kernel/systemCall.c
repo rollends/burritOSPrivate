@@ -7,7 +7,7 @@
 
 void interruptHandler()
 {
-    TaskID tid = kernel.eventTable[ EVENT_TIMER_TICK ];
+    TaskID tid = kernel.eventTable[EVENT_10MS_TICK];
     
     if (tid.value != 0)
     {
@@ -18,7 +18,7 @@ void interruptHandler()
                           desc->priority,
                           desc->tid.value);
 
-        kernel.eventTable[EVENT_TIMER_TICK] = VAL_TO_ID(0);
+        kernel.eventTable[EVENT_10MS_TICK] = VAL_TO_ID(0);
     }
 
     timerClear(TIMER_1);

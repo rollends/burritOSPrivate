@@ -4,15 +4,6 @@
 #include "common/common.h"
 
 /**
- * Utility struct for storing timer state
- */
-typedef struct
-{
-    /// The timer start time
-    U32 start;
-} TimerState;
-
-/**
  * Initializes a hardware timer
  *
  * @param   timer   The timer to initialize

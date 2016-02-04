@@ -9,7 +9,7 @@
  * @param   interrupt   The VIC in which the bits should be enabled
  * @param   bits        The enable bit values
  */
-void interruptEnable(const U32 interrupt, const U32 bits);
+inline void interruptEnable(const U32 interrupt, const U32 bits);
 
 /**
  * Clears interrupts in the given VIC
@@ -17,7 +17,7 @@ void interruptEnable(const U32 interrupt, const U32 bits);
  * @param   interrupt   The VIC in which bits should be cleared
  * @param   bits        The clear bit values
  */
-void interruptClear(const U32 interrupt, const U32 bits);
+inline void interruptClear(const U32 interrupt, const U32 bits);
 
 /**
  * Returns the interrupt status bits for a givne interrupt vector
@@ -26,6 +26,6 @@ void interruptClear(const U32 interrupt, const U32 bits);
  *
  * @return  The status word for the given vector
  */
-U32 interruptStatus(const U32 interrupt);
+inline U32 interruptStatus(const U32 interrupt);
 
 #endif

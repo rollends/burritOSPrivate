@@ -5,6 +5,7 @@
 #include "common/priorityQueue.h"
 #include "common/queue.h"
 #include "common/random.h"
+#include "common/timerState.h"
 #include "common/types.h"
 #include "common/utils.h"
 #include "common/vaList.h"
