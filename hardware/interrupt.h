@@ -8,7 +8,6 @@
  *
  * @param   interrupt   The VIC in which the bits should be enabled
  * @param   bits        The enable bit values
- *
  */
 void interruptEnable(const U32 interrupt, const U32 bits);
 
@@ -17,7 +16,6 @@ void interruptEnable(const U32 interrupt, const U32 bits);
  *
  * @param   interrupt   The VIC in which bits should be cleared
  * @param   bits        The clear bit values
- * 
  */
 void interruptClear(const U32 interrupt, const U32 bits);
 
