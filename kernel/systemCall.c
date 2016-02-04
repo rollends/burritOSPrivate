@@ -7,21 +7,31 @@
 
 void interruptHandler()
 {
-    TaskID tid = kernel.eventTable[EVENT_10MS_TICK];
+    U32 status = interruptStatus(INT_1);
     
-    if (tid.value != 0)
+    if (status & 0x10)
     {
-        TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
+        TaskID tid = kernel.eventTable[EVENT_10MS_TICK];
 
-        desc->state = eReady;
-        priorityQueuePush(&kernel.queue,
-                          desc->priority,
-                          desc->tid.value);
+        if (tid.value != 0)
+        {
+            TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
 
-        kernel.eventTable[EVENT_10MS_TICK] = VAL_TO_ID(0);
+            desc->state = eReady;
+            priorityQueuePush(&kernel.queue,
+                              desc->priority,
+                              desc->tid.value);
+
+            kernel.eventTable[EVENT_10MS_TICK] = VAL_TO_ID(0);
+        }
+
+        timerClear(TIMER_1);
     }
 
-    timerClear(TIMER_1);
+    if (status & 0x20)
+    {
+        timerClear(TIMER_2);
+    }
 }
 
 U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)

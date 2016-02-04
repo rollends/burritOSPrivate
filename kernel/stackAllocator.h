@@ -54,7 +54,7 @@ S32 stackAllocatorInit(StackAllocator* alloc, U32* base);
  *
  * @return  0 (null pointer) on failure, else a memory address
  */
-U32 stackAllocatorAlloc(StackAllocator* alloc, const U32 size);
+U32* stackAllocatorAlloc(StackAllocator* alloc, const U32 size);
 
 /**
  * Frees a stack block

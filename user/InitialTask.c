@@ -9,8 +9,6 @@
 #include "user/TestTask.h"
 #include "user/DelayTestTask.h"
 
-static void TimingTask();
-
 void InitialTask()
 {
     U16 DelayTimes[4],      DelayCount[4];

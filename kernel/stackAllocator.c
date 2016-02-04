@@ -33,7 +33,7 @@ S32 stackAllocatorInit(StackAllocator* alloc, U32* base)
     return 0;
 }
 
-U32 stackAllocatorAlloc(StackAllocator* alloc, const U32 size)
+U32* stackAllocatorAlloc(StackAllocator* alloc, const U32 size)
 {
     U16 block;
     QueueU16* queue = 0;
@@ -61,7 +61,7 @@ U32 stackAllocatorAlloc(StackAllocator* alloc, const U32 size)
                             ((U32)(block+1) * STACK_BLOCK_SIZE - 1);
         *address-- = block;
         *address-- = size;
-        return (U32)(address);
+        return address;
     }
 
     return 0;
