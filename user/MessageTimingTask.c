@@ -1,4 +1,3 @@
-#include "hardware/hardware.h"
 #include "kernel/kernel.h"
 
 #include "user/messageTypes.h"
@@ -28,7 +27,7 @@ void MessageTimingTask64()
     for(;;)
     {
         sysReceive( &id, &envelope );
-        __memcpy(buffer, envelope.message.MessageArbitrary.body, 16);
+        memcpy(buffer, envelope.message.MessageArbitrary.body, 16);
         envelope.message.MessageArbitrary.body = buffer;
         sysReply( id, &envelope );
         if( envelope.type == 0 )

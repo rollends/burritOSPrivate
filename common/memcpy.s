@@ -1,10 +1,10 @@
 .section .text
-.global __memcpy
+.global memcpy
 
 @
 @ C signature: void _memcpy(U32* dest, U32* src, U32 length)
 @
-__memcpy:
+memcpy:
     stmfd   sp!, {r4-r11} 
     add     r11, pc, #12
 
