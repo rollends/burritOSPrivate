@@ -50,7 +50,7 @@ typedef struct
 } MessageEnvelope;
 
 /**
- * Performs a deep copy of a message envelope
+ * Performs a copy of a message envelope. Does NOT deep copy MessageArbitrary.
  *
  * @param   dst     The desintation envelope
  * @param   src     The source envelope
