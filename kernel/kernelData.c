@@ -10,8 +10,8 @@ S32 kernelDataInit(const U32 pc)
     priorityQueueInit(&(kernel.queue));
     taskTableInit(&(kernel.tasks));
 
-    U8 i = 0;
-    for(; i < EVENT_TABLE_SIZE; ++i)
+    U32 i;
+    for(i = 0; i < EVENT_TABLE_SIZE; i++)
     {
         kernel.eventTable[i].value = 0;
     }

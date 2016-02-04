@@ -13,25 +13,25 @@
 typedef struct
 {
     /// Active task descriptor
-    TaskDescriptor*  activeTask;
+    TaskDescriptor*     activeTask;
 
     /// Task priority queue
-    PriorityQueue   queue;
+    PriorityQueue       queue;
 
     /// The task descriptor table
-    TaskTable   tasks;
+    TaskTable           tasks;
 
-    /// Event Table
-    TaskID eventTable[EVENT_TABLE_SIZE];
+    /// Event table data
+    TaskID              eventTable[EVENT_TABLE_SIZE];
 
     /// Performance timer state struct
-    TimerState perfState;
+    TimerState          perfState;
 
     /// The kernel base address
-    U32 baseAddress;
+    U32                 baseAddress;
 
     /// The system running flag
-    U8  systemRunning;
+    U8                  systemRunning;
 } KernelData;
 
 /**
