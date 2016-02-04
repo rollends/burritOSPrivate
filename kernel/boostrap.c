@@ -27,7 +27,7 @@ U32* bootstrap(U32 pc)
     kernelDataInit(pc);
 
     U16 taskID = taskTableAlloc(&kernel.tasks,
-                                31,
+                                PRIORITY_COUNT - 1,
                                 (U32)(&IdleTask) + pc,
                                 (U32)(&__taskExit) + pc,
                                 STACK_SIZE_SMALL,
