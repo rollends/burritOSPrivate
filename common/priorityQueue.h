@@ -12,7 +12,7 @@
 typedef struct
 {
     /// The backing data for the priority queue
-    U16 data[ 8 * PRIORITY_COUNT ];
+    U16 data[PRIORITY_LENGTH * PRIORITY_COUNT];
 
     /// The head indices for the queues
     U16 head[PRIORITY_COUNT];
@@ -20,8 +20,8 @@ typedef struct
     /// The tail indices for the queues
     U16 tail[PRIORITY_COUNT];
 
-    /// The Priority Queue Non-Empty Flags
-    U32 isNonEmpty;
+    /// The queue state bits
+    U32 priorityBits;
 } PriorityQueue;
 
 /**

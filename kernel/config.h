@@ -7,6 +7,9 @@
 /// Number of priorities in the kernel
 #define PRIORITY_COUNT      32
 
+/// Length of each priority queue
+#define PRIORITY_LENGTH     8
+
 /// Length of task send queues
 #define SEND_QUEUE_LENGTH   8
 

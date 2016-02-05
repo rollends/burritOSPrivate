@@ -6,7 +6,7 @@ S32 taskTableInit(TaskTable* table)
     queueU8Init(&(table->allocationQueue), table->allocationTable, TASK_COUNT);
 
     U8 i;
-    for(i = 0; i < TASK_COUNT; i++)
+    for (i = 0; i < TASK_COUNT; i++)
     {
         table->descriptors[i].tid.fields.id = i;
         table->descriptors[i].tid.fields.generation = 0;
@@ -77,7 +77,7 @@ S32 taskTableFree(TaskTable* table, const TaskID tid)
 
 S32 taskTablePerfClear(TaskTable* table)
 {
-    U32 i = 0;
+    U32 i;
     for(i = 0; i < TASK_COUNT; i++)
     {
         table->descriptors[i].performance = 0;

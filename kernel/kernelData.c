@@ -11,7 +11,7 @@ S32 kernelDataInit(const U32 pc)
     taskTableInit(&(kernel.tasks));
 
     U32 i;
-    for(i = 0; i < EVENT_TABLE_SIZE; i++)
+    for (i = 0; i < EVENT_TABLE_SIZE; i++)
     {
         kernel.eventTable[i].value = 0;
     }
