@@ -34,12 +34,25 @@ typedef union
  */
 typedef enum
 {
+    /// No longer running; waiting to be recycled
     eZombie,
+
+    /// Ready to run, i.e. not blocked
     eReady,
+
+    /// Currently running
     eActive,
+
+    /// Blocked on receiving a messaage
     eSendBlocked,
+
+    /// Blocked on sending a message
     eReceiveBlocked,
+
+    /// Blocked in receiving a reply
     eReplyBlocked,
+
+    /// Blocked on an interrupt event
     eEventBlocked,
 } TaskState;
 
@@ -67,7 +80,7 @@ typedef struct
     /// The send queue for the task
     QueueU16 sendQueue;
 
-    /// The peformance timer
+    /// The cummulative performance since the last clear
     U32 performance;
 } TaskDescriptor;
 
