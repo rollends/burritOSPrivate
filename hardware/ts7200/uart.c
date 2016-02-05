@@ -2,25 +2,50 @@
 #include "hardware/uart.h"
 #include "hardware/ts7200/ts7200.h"
 
+S32 uartEnable(const U32 uart,
+               const U32 enable,
+               const U32 timeout,
+               const U32 trans,
+               const U32 rcv,
+               const U32 modem)
+{
+    RWRegister control = (RWRegister)(uart + UART_CTLR_OFFSET);
+    
+    U32 value = __ldr(control);
+    value = (enable ? value | UARTEN_MASK : value & ~UARTEN_MASK);
+    value = (modem ? value | MSIEN_MASK : value & ~MSIEN_MASK);
+    value = (rcv ? value | RIEN_MASK : value & ~RIEN_MASK);
+    value = (trans ? value | TIEN_MASK : value & ~TIEN_MASK);
+    value = (timeout ? value | RTIEN_MASK : value & ~RTIEN_MASK);
+    __str(control, value);
+
+    return 0;
+}
+
 S32 uartSpeed(const U32 uart, const U32 speed)
 {
-    RWRegister high = (RWRegister)(uart + UART_LCRM_OFFSET);
+    RWRegister mid = (RWRegister)(uart + UART_LCRM_OFFSET);
     RWRegister low = (RWRegister)(uart + UART_LCRL_OFFSET);
 
-    __str(high, 0x0);
+    __str(mid, 0x0);
     __str(low, speed);
 
     return 0;
 }
 
-S32 uartConfig(const U32 uart, const U32 fifo, const U32 stp, const U32 pen)
+S32 uartConfig(const U32 uart,
+               const U32 fifo,
+               const U32 stp,
+               const U32 pen)
 {
-    RWRegister config = (RWRegister)(uart + UART_LCRH_OFFSET);
-    
-    *config = (fifo ? *config | FEN_MASK : *config & ~FEN_MASK);
-    *config = (stp ? *config | STP2_MASK : *config & ~STP2_MASK);
-    *config = (pen ? *config | PEN_MASK : *config & ~PEN_MASK);
-    *config = *config | WLEN_MASK;
+    RWRegister high = (RWRegister)(uart + UART_LCRH_OFFSET);
+
+    U32 value = __ldr(high);
+    value = (fifo ? value | FEN_MASK : value & ~FEN_MASK);
+    value = (stp ? value | STP2_MASK : value & ~STP2_MASK);
+    value = (pen ? value | PEN_MASK : value & ~PEN_MASK);
+    value = value | WLEN_MASK;
+    __str(high, value);
     
     return 0;
 }
@@ -49,4 +74,13 @@ S32 uartReadByte(const U32 uart, U8* byte)
 
     *byte = __ldr(data);
     return 0;
+}
+
+U8 uartInterruptStatus(const U32 uart)
+{
+    RWRegister status = (RWRegister)(uart + UART_INTR_OFFSET);
+    U8 result = __ldr(status) & 0xF;
+    __str(status, 0);
+
+    return result;
 }

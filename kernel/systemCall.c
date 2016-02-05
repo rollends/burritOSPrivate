@@ -3,6 +3,7 @@
 
 #include "kernel/kernelData.h"
 #include "kernel/message.h"
+#include "kernel/print.h"
 #include "kernel/systemCall.h"
 
 void interruptHandler()
@@ -45,6 +46,20 @@ void interruptHandler()
         }
 
         timerClear(TIMER_2);
+    }
+
+    if (status1 & 0x06000000)
+    {
+        if (status1 & 0x02000000)
+        {
+            U8 byte;
+            uartReadByte(UART_2, &byte);
+            printString("%c\r\n", byte);
+        }
+        else
+        {
+            uartWriteByte(UART_2, 'a');
+        }
     }
 }
 

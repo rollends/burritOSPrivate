@@ -24,22 +24,11 @@
     #define ENABLE_OFFSET   0x10
     #define EN_CLEAR_OFFSET 0x14  
 
-
-#define LED_ADDRESS     0x80840020
-    #define LED_NONE        0x0
-    #define LED_GREEN       0x1
-    #define LED_RED         0x2
-    #define LED_BOTH        0x3
-
-#define IRDA_BASE   0x808b0000
-#define UART_1      0x808c0000
-#define UART_2      0x808d0000
+#define UART_1          0x808c0000
+#define UART_2          0x808d0000
 
 #define UART_SPEED_LO 0xBF
 #define UART_SPEED_HI 0x3
-
-// All the below registers for UART1
-// First nine registers (up to Ox28) for UART 2
 
 #define UART_DATA_OFFSET    0x0 // low 8 bits
     #define DATA_MASK   0xff
