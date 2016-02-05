@@ -4,7 +4,7 @@ LD		= arm-none-eabi-ld
 CP		= arm-none-eabi-objcopy
 DM		= arm-none-eabi-objdump
 
-OUT		= k3.bin
+OUT		= k4.bin
 HRDWR 	= pi
 
 CFLAGS	= -Wall -O2 -nostdlib -nostartfiles -ffreestanding -DTARGET_PI
