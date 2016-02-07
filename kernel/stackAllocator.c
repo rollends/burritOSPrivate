@@ -24,9 +24,9 @@ S32 stackAllocatorInit(StackAllocator* alloc, U32* base)
                      i*STACK_SIZE_MEDIUM + STACK_SMALL_COUNT);
     }
 
-    for (i = 0; i < STACK_MEDIUM_COUNT; i++)
+    for (i = 0; i < STACK_SIZE_LARGE; i++)
     {
-        queueU16Push(&alloc->mediumQueue,
+        queueU16Push(&alloc->largeQueue,
                      i*STACK_SIZE_LARGE + STACK_MEDIUM_COUNT*STACK_SIZE_MEDIUM + STACK_SMALL_COUNT);
     }
 
