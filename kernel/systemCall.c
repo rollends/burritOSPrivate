@@ -101,6 +101,18 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             break;
         }
 
+        case SYS_CALL_READ_ID:
+        {
+            U8 byte;
+            if (queueU8Pop(&kernel.terminalInput, &byte) != 0)
+            {
+                kernel.eventTable[EVENT_TERMINAL_READ] = desc->tid;
+                desc->state = eEventBlocked;
+            }
+
+            return kernel.terminalInput.count;
+        }
+
         case SYS_CALL_PID_ID:
         {
             return desc->pid.value;

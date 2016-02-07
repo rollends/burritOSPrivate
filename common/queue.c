@@ -1,6 +1,6 @@
 #include "common/queue.h"
 
-S32 queueU8Init(QueueU8* queue, U8* data, const U8 length)
+S32 queueU8Init(QueueU8* queue, U8* data, const U32 length)
 {
     if (data == 0)
     {
@@ -42,7 +42,7 @@ S32 queueU8Pop(QueueU8* queue, U8* value)
     return 0;
 }
 
-S32 queueU16Init(QueueU16* queue, U16* data, const U8 length)
+S32 queueU16Init(QueueU16* queue, U16* data, const U32 length)
 {
     if (data == 0)
     {

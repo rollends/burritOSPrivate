@@ -26,4 +26,8 @@
 /// Large stack, equal to 64 stack blocks (262,144 bytes = 256 kb)
 #define STACK_SIZE_LARGE    64
 
+
+/// The terminal i/o buffer size
+#define TERM_BUFFER         128
+
 #endif

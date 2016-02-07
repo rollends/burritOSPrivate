@@ -4,19 +4,21 @@
 #include "common/common.h"
 #include "kernel/kernelUtils.h"
 
-#define SYS_CALL_EXIT_ID        0
-#define SYS_CALL_PASS_ID        1
-#define SYS_CALL_RUNNING_ID     2
-#define SYS_CALL_SHUTDOWN_ID    3
-#define SYS_CALL_CREATE_ID      4
-#define SYS_CALL_TID_ID         5
-#define SYS_CALL_PID_ID         6
-#define SYS_CALL_SEND_ID        7
-#define SYS_CALL_RECEIVE_ID     8
-#define SYS_CALL_REPLY_ID       9
-#define SYS_CALL_AWAIT_ID       10
-#define SYS_CALL_PERF_START_ID  11
-#define SYS_CALL_PERF_QUERY_ID  12
+#define SYS_CALL_EXIT_ID            0
+#define SYS_CALL_PASS_ID            1
+#define SYS_CALL_RUNNING_ID         2
+#define SYS_CALL_SHUTDOWN_ID        3
+#define SYS_CALL_CREATE_ID          4
+#define SYS_CALL_TID_ID             5
+#define SYS_CALL_PID_ID             6
+#define SYS_CALL_SEND_ID            7
+#define SYS_CALL_RECEIVE_ID         8
+#define SYS_CALL_REPLY_ID           9
+#define SYS_CALL_PERF_START_ID      10
+#define SYS_CALL_PERF_QUERY_ID      11
+#define SYS_CALL_AWAIT_ID           12
+#define SYS_CALL_READ_ID            13
+#define SYS_CALL_WRITE_ID           14
 
 #define sysExit() \
             __sysCall0((U32)SYS_CALL_EXIT_ID)
@@ -44,5 +46,9 @@
             __sysCall0((U32)SYS_CALL_PERF_START_ID)
 #define sysPerfQuery(tid) \
             __sysCall1((U32)SYS_CALL_PERF_QUERY_ID, (U32)tid)
+#define sysRead() \
+            __sysCall0((U32)SYS_CALL_READ_ID)
+#define sysWrite() \
+            __sysCall0((U32)SYS_CALL_WRITE_ID)
 
 #endif

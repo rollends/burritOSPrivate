@@ -14,16 +14,16 @@ typedef struct
     U8*     data;
 
     /// The head index
-    U8      head;
+    U32     head;
 
     /// The tail index
-    U8      tail;
+    U32     tail;
 
     /// The element count, 0 => empty
-    U8      count;
+    U32     count;
 
     /// The length of the queue
-    U8      length;
+    U32     length;
 } QueueU8;
 
 /**
@@ -35,16 +35,16 @@ typedef struct
     U16*    data;
 
     /// The head index
-    U8      head;
+    U32     head;
 
     /// The tail index
-    U8      tail;
+    U32     tail;
 
     /// The element count, 0 => empty
-    U8      count;
+    U32     count;
 
     /// The length of the queue
-    U8      length;
+    U32     length;
 } QueueU16;
 
 /**
@@ -56,7 +56,7 @@ typedef struct
  *
  * @return  0 on success, else an error code
  */
-S32 queueU8Init(QueueU8* queue, U8* data, const U8 length);
+S32 queueU8Init(QueueU8* queue, U8* data, const U32 length);
 
 /**
  * Enqueues a value in a U8 queue
@@ -88,7 +88,7 @@ S32 queueU8Pop(QueueU8* queue, U8* value);
  *
  * @return  0 on success, else an error code
  */
-S32 queueU16Init(QueueU16* queue, U16* data, const U8 length);
+S32 queueU16Init(QueueU16* queue, U16* data, const U32 length);
 
 /**
  * Enqueues a value in a U16 queue

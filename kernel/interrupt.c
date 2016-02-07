@@ -47,17 +47,26 @@ void interruptHandler()
         timerClear(TIMER_2);
     }
 
-    if (status1 & 0x06000000)
+    if (status1 & 0x02000000)
     {
-        if (status1 & 0x02000000)
+        TaskID tid = kernel.eventTable[EVENT_TERMINAL_READ];
+        U8 byte;
+        uartReadByte(UART_2, &byte);
+        queueU8Push(&kernel.terminalInput, byte);
+
+        if (tid.value != 0)
         {
-            U8 byte;
-            uartReadByte(UART_2, &byte);
-            printString("%c\r\n", byte);
-        }
-        else
-        {
-            uartWriteByte(UART_2, 'a');
+            TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
+
+            queueU8Pop(&kernel.terminalInput, &byte);
+            TASK_RETURN(desc) = kernel.terminalInput.count;
+
+            desc->state = eReady;
+            priorityQueuePush(&kernel.queue,
+                              desc->priority,
+                              desc->tid.value);
+
+            kernel.eventTable[EVENT_TERMINAL_READ] = VAL_TO_ID(0);
         }
     }
 }

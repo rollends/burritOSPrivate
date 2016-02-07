@@ -32,6 +32,18 @@ typedef struct
 
     /// The system running flag
     U8                  systemRunning;
+
+    /// Terminal input queue
+    QueueU8             terminalInput;
+
+    /// Terminal output queue
+    QueueU8             terminalOutput;
+    
+    /// Backing data for the terminal input buffer
+    U8                  terminalInputData[TERM_BUFFER];
+
+    /// Backing data for the terminal outputbuffer
+    U8                  terminalOutputData[TERM_BUFFER];
 } KernelData;
 
 /**
