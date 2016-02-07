@@ -11,7 +11,7 @@ char x2c(int c)
     return 'a' + c - 10;
 }
 
-int printDecimal(U32 value, U32 width)
+int printDecimal(U32 value, U32 width, const char delim, const char comma)
 {
     char buffer[16];
     U8 i = 0;
@@ -23,14 +23,20 @@ int printDecimal(U32 value, U32 width)
     } while( value );
 
     U8 ci = 0;
-    while( width > i )
+    U8 ti = i + (i-1) / 3;
+    while( width > ti )
     {
-        uartWriteByte(UART_2, '0');
+        uartWriteByte(UART_2, delim);
         width--;
     }
     for(ci = 0; ci < i; ci++)
     {
-        uartWriteByte( UART_2, buffer[i - ci - 1] );
+        U32 index = i - ci - 1;
+        uartWriteByte( UART_2, buffer[index] );
+        if (index > 0 && index % 3 == 0 && comma != 0)
+        {
+            uartWriteByte(UART_2, ',');
+        }
     }
     return 0;
 }
@@ -116,7 +122,11 @@ int printString(char const * format, ...)
                 switch( ch )
                 {
                 case 'd':
-                    printDecimal(va_arg(va, U32), widthFlag);
+                    printDecimal(va_arg(va, U32), widthFlag, '0', 0);
+                    break;
+
+                case 'n':
+                    printDecimal(va_arg(va, U32), widthFlag, ' ', 1);
                     break;
 
                 case 's':
@@ -141,7 +151,7 @@ int printString(char const * format, ...)
 
                 default:
                     uartWriteByte(UART_2, '%');
-                    printDecimal(widthFlag, 0);
+                    printDecimal(widthFlag, 0, '0', 0);
                     uartWriteByte(UART_2, ch);
                     break;
                 }

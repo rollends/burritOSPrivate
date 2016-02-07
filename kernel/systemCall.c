@@ -8,6 +8,7 @@
 U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
 {
     TaskDescriptor* desc = kernel.activeTask;
+    desc->performance[ePerfTask] += timerSample(TIMER_4, &kernel.perfState);
 
     switch (id)
     {
@@ -110,18 +111,42 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             return desc->tid.value;
         }
 
-        case SYS_CALL_PERF_START_ID:
+        case SYS_CALL_PERF_RESET_ID:
         {
             timerStart(TIMER_4, &kernel.perfState);
             taskTablePerfClear(&kernel.tasks);
+
             break;
         }
 
-        case SYS_CALL_PERF_QUERY_ID:
+        case SYS_CALL_PERF_QUERYP_ID:
         {
-            return taskTablePerf(&kernel.tasks,
-                                 VAL_TO_ID(arg0),
-                                 kernel.perfState.total);
+            if (arg1 == ePerfTotal)
+            {
+                return 10000;
+            }
+
+            return taskTablePerfP(&kernel.tasks,
+                                  VAL_TO_ID(arg0),
+                                  arg1,
+                                  kernel.perfState.total);
+        }
+
+        case SYS_CALL_PERF_QUERYT_ID:
+        {
+            if (arg1 == ePerfTotal)
+            {
+                U32 total = kernel.perfState.total;
+                total *= 1000;
+                total /= 983;
+
+                return total;
+            }
+
+            return taskTablePerfT(&kernel.tasks,
+                                  VAL_TO_ID(arg0),
+                                  arg1,
+                                  kernel.perfState.total);
         }
         
         case SYS_CALL_RUNNING_ID:

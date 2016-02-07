@@ -44,7 +44,8 @@ S32 taskTableAlloc(TaskTable* table,
     desc->state = eReady;
     desc->pid = pid;
     desc->priority = priority;
-    desc->performance = 0;
+    desc->performance[ePerfKernel] = 0;
+    desc->performance[ePerfTask] = 0;
 
     queueU16Init(&desc->sendQueue,
                  table->sendQueueTable + index*SEND_QUEUE_LENGTH,
@@ -80,20 +81,55 @@ S32 taskTablePerfClear(TaskTable* table)
     U32 i;
     for(i = 0; i < TASK_COUNT; i++)
     {
-        table->descriptors[i].performance = 0;
+        table->descriptors[i].performance[ePerfKernel] = 0;
+        table->descriptors[i].performance[ePerfTask] = 0;
     }
 
     return 0;
 }
 
-U32 taskTablePerf(TaskTable* table, const TaskID tid, const U32 runtime)
+U32 taskTablePerfP(TaskTable* table, const TaskID tid, const TaskPerf perf, const U32 runtime)
+{
+    U32 index = tid.fields.id;
+    U32 denom = runtime;
+    denom >>= 3;
+    TaskDescriptor* desc = &(table->descriptors[index]);
+
+    U32 result;
+    if (perf == ePerfBoth)
+    {
+        result = desc->performance[ePerfTask] + desc->performance[ePerfKernel];
+    }
+    else
+    {
+        result = desc->performance[perf];
+    }
+
+    result *= 1000;
+    result /= denom;
+    result *= 10;
+    result >>= 3;
+
+    return result;
+}
+
+U32 taskTablePerfT(TaskTable* table, const TaskID tid, const TaskPerf perf, const U32 runtime)
 {
     U32 index = tid.fields.id;
     TaskDescriptor* desc = &(table->descriptors[index]);
 
-    U32 result = desc->performance;
+    U32 result;
+    if (perf == ePerfBoth)
+    {
+        result = desc->performance[ePerfTask] + desc->performance[ePerfKernel];
+    }
+    else
+    {
+        result = desc->performance[perf];
+    }
+
     result *= 1000;
-    result /= runtime;
+    result /= 983;
 
     return result;
 }

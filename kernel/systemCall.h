@@ -15,8 +15,9 @@
 #define SYS_CALL_RECEIVE_ID     8
 #define SYS_CALL_REPLY_ID       9
 #define SYS_CALL_AWAIT_ID       10
-#define SYS_CALL_PERF_START_ID  11
-#define SYS_CALL_PERF_QUERY_ID  12
+#define SYS_CALL_PERF_RESET_ID  11
+#define SYS_CALL_PERF_QUERYP_ID 12
+#define SYS_CALL_PERF_QUERYT_ID 13
 
 #define sysExit() \
             __sysCall0((U32)SYS_CALL_EXIT_ID)
@@ -40,9 +41,11 @@
             __sysCall2((U32)SYS_CALL_REPLY_ID, (U32)tid, (U32)preply)
 #define sysAwaitEvent(event) \
             __sysCall1((U32)SYS_CALL_AWAIT_ID, (U32)event)
-#define sysPerfStart() \
-            __sysCall0((U32)SYS_CALL_PERF_START_ID)
-#define sysPerfQuery(tid) \
-            __sysCall1((U32)SYS_CALL_PERF_QUERY_ID, (U32)tid)
+#define sysPerfReset() \
+            __sysCall0((U32)SYS_CALL_PERF_RESET_ID)
+#define sysPerfQueryP(tid, mode) \
+            __sysCall2((U32)SYS_CALL_PERF_QUERYP_ID, (U32)tid, (U32)mode)
+#define sysPerfQueryT(tid, mode) \
+            __sysCall2((U32)SYS_CALL_PERF_QUERYT_ID, (U32)tid, (U32)mode)
 
 #endif

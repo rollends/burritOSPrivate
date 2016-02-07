@@ -57,6 +57,27 @@ typedef enum
 } TaskState;
 
 /**
+ * Enumeration of potential performance values to query
+ */
+typedef enum
+{
+    /// Time spent in kernel mode, e.g. handling system calls or interrupts
+    ePerfKernel,
+
+    /// Time spent in user mode, i.e. the task code itself
+    ePerfTask,
+
+    /// Total time spent in both modes
+    ePerfBoth,
+
+    /// Total time spent since the last reset
+    ePerfTotal,
+
+    /// Length flag
+    ePerfCount
+} TaskPerf;
+
+/**
  * Defines a task data structure that contains the necessary information
  * for the kernel to manage the task. 
  */
@@ -81,7 +102,7 @@ typedef struct
     QueueU16 sendQueue;
 
     /// The cummulative performance since the last clear
-    U32 performance;
+    U32 performance[ePerfCount];
 } TaskDescriptor;
 
 #endif
