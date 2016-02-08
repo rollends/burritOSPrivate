@@ -7,6 +7,6 @@ void InitialTask()
     while (1)
     {
         U8 byte = sysRead();
-        printString("\t\t%b\r\n", byte);
+        sysWrite(byte);
     }
 }

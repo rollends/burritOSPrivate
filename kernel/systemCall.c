@@ -110,7 +110,14 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                 desc->state = eEventBlocked;
             }
 
-            return kernel.terminalInput.count;
+            return byte;
+        }
+
+        case SYS_CALL_WRITE_ID:
+        {
+            interruptEnable(INT_1, 0x04000000);
+            kernel.eventTable[EVENT_TERMINAL_WRITE] = desc->tid;
+            return 0;
         }
 
         case SYS_CALL_PID_ID:

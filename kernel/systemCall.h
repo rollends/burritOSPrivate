@@ -48,7 +48,7 @@
             __sysCall1((U32)SYS_CALL_PERF_QUERY_ID, (U32)tid)
 #define sysRead() \
             __sysCall0((U32)SYS_CALL_READ_ID)
-#define sysWrite() \
-            __sysCall0((U32)SYS_CALL_WRITE_ID)
+#define sysWrite(byte) \
+            __sysCall1((U32)SYS_CALL_WRITE_ID, (U32)byte)
 
 #endif

@@ -15,7 +15,10 @@
 /// UART 2 input event
 #define EVENT_TERMINAL_READ     3
 
+/// UART 2 output event
+#define EVENT_TERMINAL_WRITE    4
+
 /// Event table size 
-#define EVENT_TABLE_SIZE        4
+#define EVENT_TABLE_SIZE        5
 
 #endif

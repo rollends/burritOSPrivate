@@ -59,7 +59,7 @@ void interruptHandler()
             TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
 
             queueU8Pop(&kernel.terminalInput, &byte);
-            TASK_RETURN(desc) = kernel.terminalInput.count;
+            TASK_RETURN(desc) = byte;
 
             desc->state = eReady;
             priorityQueuePush(&kernel.queue,
@@ -68,5 +68,23 @@ void interruptHandler()
 
             kernel.eventTable[EVENT_TERMINAL_READ] = VAL_TO_ID(0);
         }
+    }
+
+    if (status1 & 0x04000000)
+    {
+        TaskID tid = kernel.eventTable[EVENT_TERMINAL_WRITE];
+
+        if (tid.value != 0)
+        {
+            TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
+            desc->state = eReady;
+
+            U8 byte = (U8)(TASK_ARG_0(desc));
+            uartWriteByte(UART_2, byte);
+            
+            kernel.eventTable[EVENT_TERMINAL_WRITE] = VAL_TO_ID(0);
+        }
+
+        interruptClear(INT_1, 0x04000000);
     }
 }

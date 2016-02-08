@@ -28,6 +28,6 @@
 
 
 /// The terminal i/o buffer size
-#define TERM_BUFFER         128
+#define TERM_BUFFER         8
 
 #endif

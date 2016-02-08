@@ -25,12 +25,12 @@ int printDecimal(U32 value, U32 width)
     U8 ci = 0;
     while( width > i )
     {
-        uartWriteByte(UART_2, '0');
+        uartWriteByteBlock(UART_2, '0');
         width--;
     }
     for(ci = 0; ci < i; ci++)
     {
-        uartWriteByte( UART_2, buffer[i - ci - 1] );
+        uartWriteByteBlock( UART_2, buffer[i - ci - 1] );
     }
     return 0;
 }
@@ -41,8 +41,8 @@ int printHex(U32 value)
     char chh, chl;
     unsigned char *str = (unsigned char*)&value;
 
-    uartWriteByte(UART_2, '0');
-    uartWriteByte(UART_2, 'x');
+    uartWriteByteBlock(UART_2, '0');
+    uartWriteByteBlock(UART_2, 'x');
 
     for (byte = 3; byte >= 0; byte--)
     {
@@ -50,8 +50,8 @@ int printHex(U32 value)
         chh = x2c(c / 16);
         chl = x2c(c % 16);
 
-        uartWriteByte(UART_2, chh);
-        uartWriteByte(UART_2, chl);
+        uartWriteByteBlock(UART_2, chh);
+        uartWriteByteBlock(UART_2, chl);
     }
 
     return 0;
@@ -59,10 +59,10 @@ int printHex(U32 value)
 
 int printHexByte(U8 value)
 {
-    uartWriteByte(UART_2, '0');
-    uartWriteByte(UART_2, 'x');
-    uartWriteByte(UART_2, x2c(value / 16));
-    uartWriteByte(UART_2, x2c(value % 16));
+    uartWriteByteBlock(UART_2, '0');
+    uartWriteByteBlock(UART_2, 'x');
+    uartWriteByteBlock(UART_2, x2c(value / 16));
+    uartWriteByteBlock(UART_2, x2c(value % 16));
 
     return 0;
 }
@@ -71,7 +71,7 @@ int printStringNoFormat(char const * str)
 {
     char c;
     while( (c = *(str++)) )
-        uartWriteByte(UART_2, c);
+        uartWriteByteBlock(UART_2, c);
     return 0;
 }
 
@@ -90,7 +90,7 @@ int printString(char const * format, ...)
         {
         case ESCAPE:
         {
-            uartWriteByte(UART_2, ch);
+            uartWriteByteBlock(UART_2, ch);
             break;
         }
 
@@ -104,7 +104,7 @@ int printString(char const * format, ...)
             else if( ch == '\\' )
                 state = ESCAPE;
             else
-                uartWriteByte(UART_2, ch);
+                uartWriteByteBlock(UART_2, ch);
             break;
         }
         case FORMAT:
@@ -124,7 +124,7 @@ int printString(char const * format, ...)
                     break;
 
                 case 'c':
-                    uartWriteByte(UART_2, va_arg(va, S32));
+                    uartWriteByteBlock(UART_2, va_arg(va, S32));
                     break;
 
                 case 'x':
@@ -136,13 +136,13 @@ int printString(char const * format, ...)
                     break;
 
                 case '%':
-                    uartWriteByte(UART_2, '%');
+                    uartWriteByteBlock(UART_2, '%');
                     break;
 
                 default:
-                    uartWriteByte(UART_2, '%');
+                    uartWriteByteBlock(UART_2, '%');
                     printDecimal(widthFlag, 0);
-                    uartWriteByte(UART_2, ch);
+                    uartWriteByteBlock(UART_2, ch);
                     break;
                 }
                 state = PLAIN;

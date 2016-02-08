@@ -55,6 +55,7 @@ S32 uartConfig(const U32 uart,
  *
  * @return 0 on success, else an error code
 */
+S32 uartWriteByteBlock(const U32 uart, const U8 byte);
 S32 uartWriteByte(const U32 uart, const U8 byte);
 
 /**
@@ -65,6 +66,7 @@ S32 uartWriteByte(const U32 uart, const U8 byte);
  *
  * @return 0 on success, else an error code
 */
+S32 uartReadByteBlock(const U32 uart, U8* byte);
 S32 uartReadByte(const U32 uart, U8* byte);
 
 /**
