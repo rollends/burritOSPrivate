@@ -5,6 +5,7 @@
 
 void IdleTask()
 {
+    sysPerfReset();
     sysCreate(2, &InitialTask, STACK_SIZE_SMALL);
 
     while (sysRunning() != 0)

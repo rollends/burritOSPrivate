@@ -76,15 +76,34 @@ S32 taskTableFree(TaskTable* table, const TaskID tid);
 S32 taskTablePerfClear(TaskTable* table);
 
 /**
- * Returns the run time percentage to 1 decimal place for a given task
+ * Returns the run time percentage to 2 decimal place for a given task
  *
  * @param   table       The table to get the performance from
  * @param   tid         The task id
+ * @param   perf        The performance mode to measure
  * @param   runtime     The total system runtime
  *
  * @return  performance percentage in 10ths of a percent
  */
-U32 taskTablePerf(TaskTable* table, const TaskID tid, const U32 runtime);
+U32 taskTablePerfP(TaskTable* table,
+                   const TaskID tid,
+                   const TaskPerf perf,
+                   const U32 runtime);
+
+/**
+ * Returns the absolute run time for a given task
+ *
+ * @param   table       The table to get the performance from
+ * @param   tid         The task id
+ * @param   perf        The performance mode to measure
+ * @param   runtime     The total system runtime
+ *
+ * @return  performance percentage in 10ths of a percent
+ */
+U32 taskTablePerfT(TaskTable* table,
+                   const TaskID tid,
+                   const TaskPerf perf,
+                   const U32 runtime);
 
 /**
  * Gets a descriptor from a table by ID

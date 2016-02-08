@@ -26,7 +26,7 @@ typedef struct
 
     /// Performance timer state struct
     TimerState          perfState;
-
+    
     /// The kernel base address
     U32                 baseAddress;
 
