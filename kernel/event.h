@@ -1,8 +1,6 @@
 #ifndef EVENT_H
 #define EVENT_H
 
-#include "kernel/taskDescriptor.h"
-
 /// Unknown or null event type
 #define EVENT_NULL              0
 
@@ -18,7 +16,20 @@
 /// UART 2 output event
 #define EVENT_TERMINAL_WRITE    4
 
+/// UART 1 input event
+#define EVENT_TRAIN_READ        5
+
+/// UART 1 output event
+#define EVENT_TRAIN_WRITE       6
+
 /// Event table size 
-#define EVENT_TABLE_SIZE        5
+#define EVENT_TABLE_SIZE        7
+
+
+/// The terminal IO port 
+#define PORT_TERMINAL           0
+
+/// The train IO port
+#define PORT_TRAIN              1
 
 #endif

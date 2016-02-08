@@ -47,7 +47,7 @@ _interruptCall:                     @ Called when an hardware interrupt occurs
     sub     sp, sp, #4              @ Make space for the PC
     stmfd   sp!, {r0-r12}           @ Stack most user registers
     mov     r4, lr                  @ Save off the lr
-    bl      interruptHandler        @ Branch to the system call
+    bl      eventHandler            @ Branch to the system call
     mov     r0, sp                  @ Store task sp
     
     msr     cpsr_c, #0xD2           @ Switch to IRQ mode

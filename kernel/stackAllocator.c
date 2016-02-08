@@ -38,21 +38,19 @@ U32* stackAllocatorAlloc(StackAllocator* alloc, const U32 size)
     U16 block;
     QueueU16* queue = 0;
 
-    if (size == STACK_SIZE_SMALL)
+    switch (size)
     {
-        queue = &alloc->smallQueue;
-    }
-    else if (size == STACK_SIZE_MEDIUM)
-    {
-        queue = &alloc->mediumQueue;
-    }
-    else if (size == STACK_SIZE_LARGE)
-    {
-        queue = &alloc->largeQueue;
-    }
-    else
-    {
-        return 0;
+        case STACK_SIZE_SMALL:
+            queue = &alloc->smallQueue;
+            break;
+        case STACK_SIZE_MEDIUM:
+            queue = &alloc->mediumQueue;
+            break;
+        case STACK_SIZE_LARGE:
+            queue = &alloc->largeQueue;
+            break;
+        default:
+            return 0;
     }
 
     if (queueU16Pop(queue, &block) == 0)
@@ -73,23 +71,22 @@ S32 stackAllocatorFree(StackAllocator* alloc, U32* stack)
     U32 id = *(++stack);
     QueueU16* queue = 0;
 
-    if (size == STACK_SIZE_SMALL)
+    switch (size)
     {
-        queue = &alloc->smallQueue;
-    }
-    else if (size == STACK_SIZE_MEDIUM)
-    {
-        queue = &alloc->mediumQueue;
-    }
-    else if (size == STACK_SIZE_LARGE)
-    {
-        queue = &alloc->largeQueue;
-    }
-    else
-    {
-        return -1;
+        case STACK_SIZE_SMALL:
+            queue = &alloc->smallQueue;
+            break;
+        case STACK_SIZE_MEDIUM:
+            queue = &alloc->mediumQueue;
+            break;
+        case STACK_SIZE_LARGE:
+            queue = &alloc->largeQueue;
+            break;
+        default:
+            return -1;
     }
 
     queueU16Push(queue, id);
+    
     return 0;
 }

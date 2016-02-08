@@ -38,6 +38,8 @@ typedef struct
     
     /// Backing data for the terminal input buffer
     U8                  terminalInputData[TERM_BUFFER];
+
+    U8                  cts;
 } KernelData;
 
 /**

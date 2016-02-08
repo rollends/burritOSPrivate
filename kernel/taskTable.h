@@ -47,7 +47,7 @@ S32 taskTableInit(TaskTable* table);
  * @param   size        The stack size, one of .._SMALL, .._MEDIUM, or .._LARGE
  * @param   pid         The parent task id
  *
- * @return  0 on success, else an error code
+ * @return  TaskID on success, else an error code
  */
 S32 taskTableAlloc(TaskTable* table,
                    const U8 priority,

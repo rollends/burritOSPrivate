@@ -11,7 +11,7 @@ void ClockNotifier()
     envelope.type = MESSAGE_CLOCKSERVER_NOTIFY_TICK;
     while( sysRunning() != 0 )
     {
-        sysAwaitEvent( EVENT_10MS_TICK );
+        sysAwait( EVENT_10MS_TICK );
         sysSend( id.value, &envelope, &envelope );
     }
 

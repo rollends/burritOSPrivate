@@ -90,6 +90,24 @@ S32 uartReadByte(const U32 uart, U8* byte)
     return 0;
 }
 
+U32 uartCTS(const U32 uart)
+{
+    RWRegister flags = (RWRegister)(uart + UART_FLAG_OFFSET);
+
+    return __ldr(flags) & CTS_MASK;
+}
+
+S32 uartInterruptTX(const U32 uart, const U8 enable)
+{
+    RWRegister control = (RWRegister)(uart + UART_CTLR_OFFSET);
+    
+    U32 value = __ldr(control);
+    value = (enable ? value | TIEN_MASK : value & ~TIEN_MASK);
+    __str(control, value);
+
+    return 0;
+}
+
 U8 uartInterruptStatus(const U32 uart)
 {
     RWRegister status = (RWRegister)(uart + UART_INTR_OFFSET);

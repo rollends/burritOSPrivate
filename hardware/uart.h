@@ -56,6 +56,15 @@ S32 uartConfig(const U32 uart,
  * @return 0 on success, else an error code
 */
 S32 uartWriteByteBlock(const U32 uart, const U8 byte);
+
+/**
+ * Non blocking write to the a UART - assumes CTS and TXFE
+ *
+ * @param   uart    The UART port to write to
+ * @param   byte    the value to write
+ *
+ * @return  0 on success, else an error code
+ */
 S32 uartWriteByte(const U32 uart, const U8 byte);
 
 /**
@@ -67,7 +76,35 @@ S32 uartWriteByte(const U32 uart, const U8 byte);
  * @return 0 on success, else an error code
 */
 S32 uartReadByteBlock(const U32 uart, U8* byte);
+
+/**
+ * Non blocking read from a UART - assumes CTS and RXFE
+ *
+ * @param   uart    The UART port to write to
+ * @param   byte    the value to read into
+ *
+ * @return  0 on success, else an error code
+ */
 S32 uartReadByte(const U32 uart, U8* byte);
+
+/**
+ * Returns the CTS flag status for a given UART
+ *
+ * @param   uart    The uart to inspect
+ *
+ * @return  The value of the CTS flag
+ */
+U32 uartCTS(const U32 uart);
+
+/**
+ * Sets the TX interrupt enable flag for a given UART
+ *
+ * @param   uart    The uart to set the flag on
+ * @param   enable  Whether or not the flag is enabled
+ *
+ * @return  0 on success, else an error code
+ */
+S32 uartInterruptTX(const U32 uart, const U8 enable);
 
 /**
  * Read the interrupt status of the UART and clears it

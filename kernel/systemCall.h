@@ -47,11 +47,11 @@
             __sysCall2((U32)SYS_CALL_PERF_QUERYP_ID, (U32)tid, (U32)mode)
 #define sysPerfQueryT(tid, mode) \
             __sysCall2((U32)SYS_CALL_PERF_QUERYT_ID, (U32)tid, (U32)mode)
-#define sysAwaitEvent(event) \
+#define sysAwait(event) \
             __sysCall1((U32)SYS_CALL_AWAIT_ID, (U32)event)
-#define sysRead() \
-            __sysCall0((U32)SYS_CALL_READ_ID)
-#define sysWrite(byte) \
-            __sysCall1((U32)SYS_CALL_WRITE_ID, (U32)byte)
+#define sysRead(port) \
+            __sysCall1((U32)SYS_CALL_READ_ID, (U32)port)
+#define sysWrite(port, byte) \
+            __sysCall2((U32)SYS_CALL_WRITE_ID, (U32)port, (U32)byte)
 
 #endif

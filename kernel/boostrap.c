@@ -7,9 +7,13 @@
 
 U32* bootstrap(U32 pc)
 {
-    uartEnable(UART_2, 1, 0, 1, 1, 0);
+    uartEnable(UART_2, 1, 0, 0, 1, 0);
     uartSpeed(UART_2, UART_SPEED_HI);
     uartConfig(UART_2, 0, 0, 0);
+
+    uartEnable(UART_1, 1, 0, 0, 1, 1);
+    uartSpeed(UART_1, UART_SPEED_LO);
+    uartConfig(UART_1, 0, 1, 0);
     
     timerInit(TIMER_1);
     timerSetValue(TIMER_1, 5080);
@@ -21,7 +25,10 @@ U32* bootstrap(U32 pc)
 
     timerInit(TIMER_4);
 
-    interruptEnable(INT_1, 0x02000030);
+    interruptEnable(INT_1, 0x06000030);
+    interruptEnable(INT_2, 0x00100000);
+
+    uartInterruptStatus(UART_1);
 
     printString("%c[2J\r", 27);
 

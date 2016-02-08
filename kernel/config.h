@@ -30,4 +30,7 @@
 /// The terminal i/o buffer size
 #define TERM_BUFFER         8
 
+/// The train i/o buffer size
+#define TRAIN_BUFFER        8
+
 #endif

@@ -1,6 +1,7 @@
 #include "common/common.h"
 #include "hardware/hardware.h"
 
+#include "kernel/event.h"
 #include "kernel/kernelData.h"
 #include "kernel/message.h"
 #include "kernel/print.h"
@@ -105,10 +106,23 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
         case SYS_CALL_READ_ID:
         {
             U8 byte;
-            if (queueU8Pop(&kernel.terminalInput, &byte) != 0)
+            switch (arg0)
             {
-                kernel.eventTable[EVENT_TERMINAL_READ] = desc->tid;
-                desc->state = eEventBlocked;
+                case PORT_TERMINAL:
+                    if (queueU8Pop(&kernel.terminalInput, &byte) != 0)
+                    {
+                        kernel.eventTable[EVENT_TERMINAL_READ] = desc->tid;
+                        desc->state = eEventBlocked;
+                    }
+                    break;
+
+                case PORT_TRAIN:
+                    kernel.eventTable[EVENT_TRAIN_READ] = desc->tid;
+                    desc->state = eEventBlocked;
+                    break;
+
+                default:
+                    return -1;
             }
 
             return byte;
@@ -116,8 +130,24 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
 
         case SYS_CALL_WRITE_ID:
         {
-            interruptEnable(INT_1, 0x04000000);
-            kernel.eventTable[EVENT_TERMINAL_WRITE] = desc->tid;
+            switch (arg0)
+            {
+                case PORT_TERMINAL:
+                    uartInterruptTX(UART_2, 1);
+                    kernel.eventTable[EVENT_TERMINAL_WRITE] = desc->tid;
+                    break;
+
+                case PORT_TRAIN:
+                    uartInterruptTX(UART_1, 1);
+                    kernel.eventTable[EVENT_TRAIN_WRITE] = desc->tid;
+                    break;
+
+                default:
+                    return -1;
+            }
+
+            desc->state = eEventBlocked;
+
             return 0;
         }
 

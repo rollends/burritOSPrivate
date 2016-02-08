@@ -17,5 +17,7 @@ S32 kernelDataInit(const U32 pc)
         kernel.eventTable[i].value = 0;
     }
 
+    kernel.cts = 1;
+
     return 0;
 }
