@@ -1,5 +1,5 @@
 #include "user/messageTypes.h"
-#include "user/Nameserver.h"
+#include "user/NameServer.h"
 
 S32 nsRegister( TaskName name )
 {
@@ -29,7 +29,7 @@ S32 nsWhoIs( TaskName name, TaskID* sid )
 }
 
 
-void Nameserver()
+void NameServer()
 {
     MessageEnvelope envelope;
     U16             nameTable[ TaskNameCount ];

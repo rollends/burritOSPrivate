@@ -1,5 +1,5 @@
 #include "user/messageTypes.h"
-#include "user/Nameserver.h"
+#include "user/NameServer.h"
 #include "user/ClockNotifier.h"
 
 typedef struct DelayedTask
@@ -51,8 +51,6 @@ void ClockServer()
     DelayQueue dqueue;
     delayQueueInit( &dqueue );
 
-    nsRegister( Clock );
-
     MessageEnvelope response;
     response.type = MESSAGE_CLOCKSERVER_WAKE;
 
@@ -61,6 +59,7 @@ void ClockServer()
 
     sysCreate(0, &ClockNotifier);
 
+    nsRegister( Clock );
     for(;;)
     {
         MessageEnvelope envelope;
@@ -103,30 +102,18 @@ void ClockServer()
             break;
         }
 
-        case MESSAGE_CLOCKSERVER_KILL:
-            sysReply( id.value, &envelope );
-            goto ClockServerExit;
-
         default:
             break;
         }
-    }
-
-ClockServerExit:
-    while( dqueue.queue )
-    {
-        sysReply( dqueue.queue->tid.value, &response );
-
-        DelayedTask* free = dqueue.queue;
-        dqueue.queue = free->next;
-        free->next = dqueue.freeList;
-        dqueue.freeList = free;
     }
 }
 
 void delayQueuePush( DelayQueue* dq, TaskID id, U32 delay )
 {
     DelayedTask* node = dq->freeList;
+
+    assert( node != 0 );
+
     dq->freeList = dq->freeList->next;
 
     node->tid = id;

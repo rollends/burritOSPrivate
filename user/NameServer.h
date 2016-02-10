@@ -14,7 +14,10 @@
 typedef enum
 {
     Clock             = 0,
-    TaskNameCount     = 1,
+    TerminalInput     = 1,
+    TerminalOutput    = 2,
+    Train             = 3,
+    TaskNameCount     = 4,
 } TaskName;
 
 /** Nameserver Registration Method
@@ -42,6 +45,6 @@ S32 nsWhoIs( TaskName name, TaskID* sid );
 
 /** The Nameserver User Task
  */
-void Nameserver();
+void NameServer();
 
 #endif

@@ -1,78 +1,90 @@
 #include "common/common.h"
-#include "hardware/hardware.h"
 #include "kernel/kernel.h"
-#include "kernel/print.h"
 
-#include "user/messageTypes.h"
-#include "user/Nameserver.h"
-#include "user/ClockServer.h"
+#include "user/services/services.h"
+#include "user/DigitalClock.h"
 #include "user/PerformanceTask.h"
+#include "user/SensorDisplay.h"
 
-void MessageTimingTask()
-{
-    MessageEnvelope envelope;
-
-    U16 id;
-    for(;;)
-    {
-        sysReceive( &id, &envelope );
-        sysReply( id, &envelope );
-        if( envelope.type == 0 )
-            break;
-    }
-}
-
-void PerfTestTask()
-{
-    U32 i = 0;
-    {
-        U16 timingId = sysCreate(0, &MessageTimingTask);
-        TimerState state;
-
-        MessageEnvelope env;
-        env.type = MESSAGE_RANDOM_BYTE;
-
-        timerEnable(TIMER_3, 1, 0, 1);
-        timerStart(TIMER_3, &state);
-        for(i = 0; i < 10000; ++i)
-        {
-            sysSend( timingId, &env, &env );
-        }
-        timerSample(TIMER_3, &state);
-        printBlocking("Timed receive-first message at %x\r\n", state.delta);
-        env.type = 0;
-        sysSend(timingId, &env, &env);
-    }
-}
+#define SwitchCount 22
 
 void InitialTask()
 {
-    sysCreate(0, &Nameserver);
-    sysCreate(1, &ClockServer);
+    U16 i = 0;
+    setupUserServices();
+
     sysCreate(2, &PerformanceTask);
+    sysCreate(4, &DigitalClock);
+    sysCreate(4, &SensorDisplay);
 
-    sysWrite(EVENT_TRAIN_WRITE, 0x60);
-    sysCreate(0, &PerfTestTask);
 
-    while (1)
+    TaskID  clock   = nsWhoIs(Clock),
+            train   = nsWhoIs(Train),
+            sSwitch = nsWhoIs(TrainSwitches),
+            stdout  = nsWhoIs(TerminalOutput), 
+            stdin   = nsWhoIs(TerminalInput);
+
+	U8 switchId2Row[256];
+    for(i = 0; i < 256; ++i) { switchId2Row[i] = 255; }
+    
+    for(i = 1; i <= 18; i++)
+		switchId2Row[i] = i - 1;
+	switchId2Row[0x99] = 18;
+	switchId2Row[0x9A] = 19;
+	switchId2Row[0x9B] = 20;
+	switchId2Row[0x9C] = 21; 
+
+    trainStop(train);
+    trainGo(train);
+
+    for(i = 0; i < 256; i++)
     {
-        U8 byte = sysRead(EVENT_TERMINAL_READ);
+        U8 row = switchId2Row[i];
 
-        if (byte == 'q')
-        {
-            sysShutdown();
-        }
-        
-        sysWrite(EVENT_TRAIN_WRITE, 0x85);
-        sysWrite(EVENT_TRAIN_WRITE, 0x00);
-        
-        U32 i;
-        for (i = 0; i < 10; i++)
-        {
-            sysWrite(EVENT_TERMINAL_WRITE, sysRead(EVENT_TRAIN_READ) + 'a');
-        }
-
-        sysWrite(EVENT_TERMINAL_WRITE, '\r');
-        sysWrite(EVENT_TERMINAL_WRITE, '\n');
+      if( row >= SwitchCount ) continue;
+    
+        trainSwitch(sSwitch, i, eCurved);
     }
+
+    for(;;)
+    {
+        char buffer[256];
+        String ibuffer = buffer;
+        
+        printf(stdout, "\033[20;1H\033[2K> ");
+
+        // Fill our buffer til carriage return
+        while( '\r' != (*ibuffer = getc(stdin)) )
+        {
+            if(*ibuffer == '\b')
+            {   
+                if( ibuffer == buffer ) continue;
+                printf(stdout, "\x1B[1D \x1B[1D");
+                --ibuffer;
+            }
+            else
+            {
+                putc(stdout, *ibuffer);
+                ++ibuffer;
+            }
+        }
+        
+        *ibuffer = '\0';
+
+        printf(stdout, "\r\n");
+
+        if( buffer[0] == 'q' ) 
+        {
+            break; 
+        }
+        else
+        {
+            dispatchTrainCommand(buffer);
+        }
+    }
+    trainStop(train);
+    
+    printf(stdout, "Finished playing with trains... :)\r\n");
+    clockLongDelayBy(clock, 3);
+    sysShutdown();
 }
