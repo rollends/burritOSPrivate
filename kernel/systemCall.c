@@ -14,6 +14,28 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
 
     switch (id)
     {
+        case SYS_CALL_EXIT_ID:
+        {
+            desc->state = eZombie;
+            break;
+        }
+
+        case SYS_CALL_PASS_ID:
+        {
+            break;
+        }
+
+        case SYS_CALL_RUNNING_ID:
+        {
+            return kernel.systemRunning;
+        }
+
+        case SYS_CALL_SHUTDOWN_ID:
+        {
+            kernel.systemRunning = 0;
+            break;
+        }
+
         case SYS_CALL_CREATE_ID:
         {
             U16 result = taskTableAlloc(&kernel.tasks,
@@ -23,6 +45,16 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                                         desc->tid);
             priorityQueuePush(&kernel.queue, arg0, result);
             return result;
+        }
+
+        case SYS_CALL_PID_ID:
+        {
+            return desc->pid.value;
+        }
+
+        case SYS_CALL_TID_ID:
+        {
+            return desc->tid.value;
         }
 
         case SYS_CALL_SEND_ID:
@@ -95,6 +127,45 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             return result;
         }
 
+        case SYS_CALL_PERF_RESET_ID:
+        {
+            timerStart(TIMER_4, &kernel.perfState);
+            taskTablePerfClear(&kernel.tasks);
+
+            break;
+        }
+
+        case SYS_CALL_PERF_QUERYP_ID:
+        {
+            if (arg1 == ePerfTotal)
+            {
+                return 10000;
+            }
+
+            return taskTablePerfP(&kernel.tasks,
+                                  VAL_TO_ID(arg0),
+                                  arg1,
+                                  kernel.perfState.total);
+        }
+
+        case SYS_CALL_PERF_QUERYT_ID:
+        {
+            if (arg1 == ePerfTotal)
+            {
+                U32 total = kernel.perfState.total;
+                total *= 1000;
+                total /= 983;
+
+                return total;
+            }
+
+            return taskTablePerfT(&kernel.tasks,
+                                  VAL_TO_ID(arg0),
+                                  arg1,
+                                  kernel.perfState.total);
+        }
+
+
         case SYS_CALL_AWAIT_ID:
         {
             kernel.eventTable[arg0] = desc->tid;
@@ -149,70 +220,16 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
 
             return 0;
         }
-
-        case SYS_CALL_PID_ID:
-        {
-            return desc->pid.value;
-        }
-
-        case SYS_CALL_TID_ID:
-        {
-            return desc->tid.value;
-        }
-
-        case SYS_CALL_PERF_RESET_ID:
-        {
-            timerStart(TIMER_4, &kernel.perfState);
-            taskTablePerfClear(&kernel.tasks);
-
-            break;
-        }
-
-        case SYS_CALL_PERF_QUERYP_ID:
-        {
-            if (arg1 == ePerfTotal)
-            {
-                return 10000;
-            }
-
-            return taskTablePerfP(&kernel.tasks,
-                                  VAL_TO_ID(arg0),
-                                  arg1,
-                                  kernel.perfState.total);
-        }
-
-        case SYS_CALL_PERF_QUERYT_ID:
-        {
-            if (arg1 == ePerfTotal)
-            {
-                U32 total = kernel.perfState.total;
-                total *= 1000;
-                total /= 983;
-
-                return total;
-            }
-
-            return taskTablePerfT(&kernel.tasks,
-                                  VAL_TO_ID(arg0),
-                                  arg1,
-                                  kernel.perfState.total);
-        }
         
-        case SYS_CALL_RUNNING_ID:
+        case SYS_CALL_ALLOC_ID:
         {
-            return kernel.systemRunning;
+            return (U32)(memoryAllocatorAlloc(&kernel.tasks.memoryAllocator));
         }
 
-        case SYS_CALL_SHUTDOWN_ID:
+        case SYS_CALL_FREE_ID:
         {
-            kernel.systemRunning = 0;
-            break;
-        }
-
-        case SYS_CALL_EXIT_ID:
-        {
-            desc->state = eZombie;
-            break;
+            return memoryAllocatorFree(&kernel.tasks.memoryAllocator,
+                                       (U32*)arg0);
         }
 
         default:

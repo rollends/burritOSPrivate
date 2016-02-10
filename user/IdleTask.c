@@ -7,7 +7,6 @@ void IdleTask()
 {
     sysPerfReset();
     sysCreate(2, &InitialTask);
-
     while (sysRunning() != 0)
     {
         sysPass();

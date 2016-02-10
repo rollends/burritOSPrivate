@@ -21,11 +21,11 @@ typedef struct
     /// Backing data for the descriptor queue
     U8 allocationTable[TASK_COUNT];
 
-    /// Stack and block allocation table
-    MemoryAllocator memoryAllocator;
-
     /// Backing data for the send queue
     U16 sendQueueTable[TASK_COUNT*SEND_QUEUE_LENGTH];
+    
+    /// Stack and block allocation table
+    MemoryAllocator memoryAllocator;
 } TaskTable;
 
 /**
