@@ -1,6 +1,7 @@
 MEMORY
 {
-    ram : ORIGIN = 0x0, LENGTH = 0x10000
+    ram : ORIGIN = 0x00050000, LENGTH = 31M
+    rom : ORIGIN = 0x60000000, LENGTH = 8M
 }
 
 SECTIONS

@@ -10,7 +10,6 @@
 @ run, so control falls through to enterTask below.
 @
 _start:
-    sub     r0, pc, #8              @ Store off the PC
     msr     cpsr_c, #0xD3           @ Disable interupts
     stmfd   sp!, {lr}               @ Store the LR for when we exit the kernel 
 

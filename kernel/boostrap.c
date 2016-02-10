@@ -5,7 +5,7 @@
 #include "kernel/kernelUtils.h"
 #include "user/IdleTask.h"
 
-U32* bootstrap(U32 pc)
+U32* bootstrap()
 {
     uartEnable(UART_2, 1, 0, 0, 1, 0);
     uartSpeed(UART_2, UART_SPEED_HI);
@@ -30,17 +30,16 @@ U32* bootstrap(U32 pc)
 
     uartInterruptStatus(UART_1);
 
-    printString("%c[2J\r", 27);
-
-    kernelDataInit(pc);
+    kernelDataInit();
 
     U16 taskID = taskTableAlloc(&kernel.tasks,
                                 PRIORITY_COUNT - 1,
-                                (U32)(&IdleTask) + pc,
-                                (U32)(&__taskExit) + pc,
+                                (U32)(&IdleTask),
+                                (U32)(&__taskExit),
                                 STACK_SIZE_SMALL,
                                 VAL_TO_ID(0));
 
+    printString("%c[2J", 27);
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));
     return kernel.activeTask->stack;
 }

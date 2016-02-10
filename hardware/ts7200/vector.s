@@ -21,23 +21,12 @@ vectorTable:
     fiq_handler_ref:        .word hang
 
 _vectorLoad:
-    ldr r1, = vectorTable
-    add r1, r1, r0
+    ldr r1, =vectorTable
     mov r2, #0
 
     ldmia r1!,{r3,r4,r5,r6,r7,r8,r9,r10}
     stmia r2!,{r3,r4,r5,r6,r7,r8,r9,r10}
     ldmia r1,{r3,r4,r5,r6,r7,r8,r9,r10}
-
-    add r3, r3, r0
-    add r4, r4, r0
-    add r5, r5, r0
-    add r6, r6, r0
-    add r7, r7, r0
-    add r8, r8, r0
-    add r9, r9, r0
-    add r10, r10, r0
-
     stmia r2,{r3,r4,r5,r6,r7,r8,r9,r10}
     bx lr
 

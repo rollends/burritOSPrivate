@@ -2,9 +2,8 @@
 
 KernelData kernel;
 
-S32 kernelDataInit(const U32 pc)
+S32 kernelDataInit()
 {
-    kernel.baseAddress = pc;
     kernel.systemRunning = 1;
 
     priorityQueueInit(&(kernel.queue));

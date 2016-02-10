@@ -27,9 +27,6 @@ typedef struct
     /// Performance timer state struct
     TimerState          perfState;
     
-    /// The kernel base address
-    U32                 baseAddress;
-
     /// The system running flag
     U8                  systemRunning;
 
@@ -45,12 +42,9 @@ typedef struct
 /**
  * Initializes a kernel data struct
  *
- * @param   data    The kernel data pointer
- * @param   pc      The pc (base address) where the kernel is loaded
- *
  * @return  0 on success, else an error code
  */
-S32 kernelDataInit(const U32 pc);
+S32 kernelDataInit();
 
 /**
  * Shared static kernel struct

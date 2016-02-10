@@ -18,8 +18,8 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
         {
             U16 result = taskTableAlloc(&kernel.tasks,
                                         arg0,
-                                        arg1 + kernel.baseAddress,
-                                        (U32)(&__taskExit) + kernel.baseAddress,
+                                        arg1,
+                                        (U32)(&__taskExit),
                                         arg2,
                                         desc->tid);
             priorityQueuePush(&kernel.queue, arg0, result);
