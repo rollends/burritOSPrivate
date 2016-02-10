@@ -1,5 +1,4 @@
 #include "kernel/kernel.h"
-
 #include "user/IdleTask.h"
 #include "user/InitialTask.h"
 

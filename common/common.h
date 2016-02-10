@@ -1,6 +1,7 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include "common/error.h"
 #include "common/memcpy.h"
 #include "common/priorityQueue.h"
 #include "common/queue.h"

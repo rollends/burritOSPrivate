@@ -77,11 +77,14 @@ int printStringNoFormat(char const * str)
 {
     char c;
     while( (c = *(str++)) )
+    {
         uartWriteByteBlock(UART_2, c);
+    }
+
     return 0;
 }
 
-int printString(char const * format, ...)
+int printBlocking(char const * format, ...)
 {
     va_list va;
     va_start(va, format);
@@ -164,4 +167,19 @@ int printString(char const * format, ...)
 
     va_end(va);
     return (state == PLAIN ? 0 : -1);
+}
+
+void printTaco()
+{
+    printStringNoFormat("\r\n .................... \r\n");
+    printStringNoFormat(" .......╭╯╭╯╭╯....... \r\n");
+    printStringNoFormat(" ......______   ..... \r\n");
+    printStringNoFormat(" .....╱      \\╮╲..... \r\n");
+    printStringNoFormat(" ....╱  x  x  ╲╮╲.... \r\n");
+    printStringNoFormat(" ....▏  ____  ▕╮▕.... \r\n");
+    printStringNoFormat(" ....▏ /    \\ ▕╮▕.... \r\n");
+    printStringNoFormat(" ....╲_________╲╱.... \r\n");
+    printStringNoFormat(" .................... \r\n");
+    printStringNoFormat(" .....SAD..TACO...... \r\n");
+    printStringNoFormat(" .................... \r\n\r\n");
 }

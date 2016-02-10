@@ -1,8 +1,11 @@
+#include "common/error.h"
 #include "common/priorityQueue.h"
 #include "common/utils.h"
 
 S32 priorityQueueInit(PriorityQueue* queue)
 {
+    IS_NOT_NULL(queue);
+    
     U8 i;
     for (i = 0; i < PRIORITY_COUNT; i++)
     {
@@ -11,7 +14,7 @@ S32 priorityQueueInit(PriorityQueue* queue)
 
     queue->priorityBits = 0;
 
-    return 0;
+    return OK;
 }
 
 S32 priorityQueuePush(PriorityQueue* queue, const U8 priority, const U16 value)
@@ -20,7 +23,7 @@ S32 priorityQueuePush(PriorityQueue* queue, const U8 priority, const U16 value)
     queue->tail[priority] = (queue->tail[priority] + 1) & (PRIORITY_LENGTH - 1);
     queue->priorityBits |= (1 << priority);
 
-    return 0;
+    return OK;
 }
 
 S32 priorityQueuePop(PriorityQueue* queue, U16* dest)
@@ -37,7 +40,7 @@ S32 priorityQueuePop(PriorityQueue* queue, U16* dest)
     queue->priorityBits ^=
         (queue->head[priority] == queue->tail[priority] ? 1 : 0) << (priority);
 
-    return 0;
+    return OK;
 }
 
 S32 priorityQueuePushPop(PriorityQueue* queue, const U8 priority, U16* value)
@@ -58,5 +61,5 @@ S32 priorityQueuePushPop(PriorityQueue* queue, const U8 priority, U16* value)
     queue->priorityBits ^=
         (queue->head[free] == queue->tail[free] ? 1 : 0) << (free);
         
-    return 0;
+    return OK;
 }

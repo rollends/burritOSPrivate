@@ -2,7 +2,7 @@
 #include "hardware/timer.h"
 #include "hardware/ts7200/ts7200.h"
 
-void timerInit(const U32 timer)
+S32 timerInit(const U32 timer)
 {
     RWRegister control = (RWRegister)(timer + CRTL_OFFSET);
     if (timer != TIMER_4)
@@ -15,15 +15,19 @@ void timerInit(const U32 timer)
         controlValue |= DEBUG_MASK;
         __str(control, controlValue);
     }
+
+    return 0;
 }
 
-void timerClear(const U32 timer)
+S32 timerClear(const U32 timer)
 {
     if (timer != TIMER_4)
     {
         RWRegister value = (RWRegister)(timer + CLR_OFFSET);
         __str(value, 1);
     }
+
+    return 0;
 }
 
 U32 timerGetValue(const U32 timer)
@@ -32,13 +36,15 @@ U32 timerGetValue(const U32 timer)
     return *rvalue;
 }
 
-void timerSetValue(const U32 timer, const U32 value)
+S32 timerSetValue(const U32 timer, const U32 value)
 {
     if (timer != TIMER_4)
     {
         RWRegister load = (RWRegister)(timer + LDR_OFFSET);
         __str(load, value);
     }
+
+    return 0;
 }
 
 U32 timerStart(const U32 timer, TimerState* state)

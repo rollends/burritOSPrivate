@@ -8,14 +8,14 @@
  *
  * @param   timer   The timer to initialize
  */
-inline void timerInit(const U32 timer);
+inline S32 timerInit(const U32 timer);
 
 /**
  * Clears any active interrupts from the given timer
  *
  * @param   timer   The timer to clear
  */
-inline void timerClear(const U32 timer);
+inline S32 timerClear(const U32 timer);
 
 /**
  * Returns the value of a specific timer
@@ -32,7 +32,7 @@ inline U32 timerGetValue(const U32 timer);
  * @param   timer   The timer value to set
  * @param   value   A 16 bit value for TIMER_1 and TIMER_2 else a 32 bit value
  */
-inline void timerSetValue(const U32 timer, const U32 value);
+inline S32 timerSetValue(const U32 timer, const U32 value);
 
 /**
  * Starts the timer and records the current value to a TimerState

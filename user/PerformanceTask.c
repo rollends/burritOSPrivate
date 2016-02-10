@@ -11,15 +11,15 @@ void PerformanceTask()
 
     clockDelayBy(clock, 250);
 
-    printString("\r\nPerformance summary:\r\n");
+    printBlocking("\r\nPerformance summary:\r\n");
     
     U32 i;
-    printString("\tTaskId\tTsk %%\tKrnl %%\tTtl %%\tTsk us\t\tKrnl us\t\tTtl us\r\n");
+    printBlocking("\tTaskId\tTsk %%\tKrnl %%\tTtl %%\tTsk us\t\tKrnl us\t\tTtl us\r\n");
     for (i = 0; i < 10; i++)
     {
         if (i == 0)
         {
-            printString("\x1b[7m");
+            printBlocking("\x1b[7m");
         }
 
         U32 up = sysPerfQueryP(i, ePerfTask);
@@ -30,7 +30,7 @@ void PerformanceTask()
         U32 ku = sysPerfQueryT(i, ePerfKernel);
         U32 tu = sysPerfQueryT(i, ePerfBoth);
  
-        printString("\t%b\t%2d.%2d\t%2d.%2d\t%2d.%2d\t%9n\t%9n\t%9n\r\n", i,
+        printBlocking("\t%b\t%2d.%2d\t%2d.%2d\t%2d.%2d\t%9n\t%9n\t%9n\r\n", i,
                                                            up / 100, up % 100,
                                                            kp / 100, kp % 100,
                                                            tp / 100, tp % 100,
@@ -39,13 +39,13 @@ void PerformanceTask()
                                                            tu);
         if (i == 0)
         {
-            printString("\x1b[0m");
+            printBlocking("\x1b[0m");
         }
     }
 
     U32 total = sysPerfQueryT(0, ePerfTotal);
     U32 totalms = total / 1000;
-    printString("\r\n\tTotal run time: %nus ~ %d.%3ds\r\n", total,
+    printBlocking("\r\n\tTotal run time: %nus ~ %d.%3ds\r\n", total,
                                                         totalms / 1000,
                                                         totalms % 1000);
 
