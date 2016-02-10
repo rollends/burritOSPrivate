@@ -4,15 +4,6 @@
 #include "common/common.h"
 #include "kernel/config.h"
 
-/// The number of small stacks in the allocator
-#define STACK_SMALL_COUNT   TASK_COUNT
-
-/// The number of medium stacks in the allocator
-#define STACK_MEDIUM_COUNT  8
-
-/// The number of large stacks in the allocator
-#define STACK_LARGE_COUNT   4
-
 /**
  * Stack allocator state struct with memory block queues
  */
@@ -22,19 +13,11 @@ typedef struct
     U32*        baseAddress;
 
     /// FIFO queue of small stack blocks
-    QueueU16    smallQueue;
-
-    /// FIFO queue of medium stack blocks
-    QueueU16    mediumQueue;
-
-    /// FIFO queue of large stackblocks
-    QueueU16    largeQueue;
+    QueueU16    blockQueue;
 
     /// Backing data for the queues
-    U16         queueData[STACK_SMALL_COUNT +
-                          STACK_MEDIUM_COUNT +
-                          STACK_LARGE_COUNT];
-} StackAllocator;
+    U16         queueData[MEMORY_BLOCK_COUNT];
+} MemoryAllocator;
 
 /**
  * Initializes a stack allocator instance at a given base address
@@ -44,7 +27,7 @@ typedef struct
  *
  * @return  0 on success, else an error code
  */
-S32 stackAllocatorInit(StackAllocator* alloc, U32* base);
+S32 memoryAllocatorInit(MemoryAllocator* alloc, U32* base);
 
 /**
  * Allocates a stack of a given size
@@ -54,7 +37,7 @@ S32 stackAllocatorInit(StackAllocator* alloc, U32* base);
  *
  * @return  0 (null pointer) on failure, else a memory address
  */
-U32* stackAllocatorAlloc(StackAllocator* alloc, const U32 size);
+U32* memoryAllocatorAlloc(MemoryAllocator* alloc);
 
 /**
  * Frees a stack block
@@ -64,6 +47,6 @@ U32* stackAllocatorAlloc(StackAllocator* alloc, const U32 size);
  *
  * @return  0 on success, else an error code
  */
-S32 stackAllocatorFree(StackAllocator* alloc, U32* stack);
+S32 memoryAllocatorFree(MemoryAllocator* alloc, U32* stack);
 
 #endif

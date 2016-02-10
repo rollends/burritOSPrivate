@@ -36,7 +36,6 @@ U32* bootstrap()
                                 PRIORITY_COUNT - 1,
                                 (U32)(&IdleTask),
                                 (U32)(&__taskExit),
-                                STACK_SIZE_SMALL,
                                 VAL_TO_ID(0));
 
     printString("%c[2J", 27);

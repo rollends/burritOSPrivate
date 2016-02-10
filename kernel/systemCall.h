@@ -29,8 +29,8 @@
             __sysCall0((U32)SYS_CALL_RUNNING_ID)
 #define sysShutdown() \
             __sysCall0((U32)SYS_CALL_SHUTDOWN_ID)
-#define sysCreate(pri, entry, size) \
-            __sysCall3((U32)SYS_CALL_CREATE_ID, (U32)pri, (U32)entry, (U32)size)
+#define sysCreate(pri, entry) \
+            __sysCall2((U32)SYS_CALL_CREATE_ID, (U32)pri, (U32)entry)
 #define sysTid() \
             __sysCall0((U32)SYS_CALL_TID_ID)
 #define sysPid() \

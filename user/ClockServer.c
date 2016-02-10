@@ -59,7 +59,7 @@ void ClockServer()
     MessageEnvelope respondTime;
     respondTime.type = MESSAGE_CLOCKSERVER_WAKE;
 
-    sysCreate(0, &ClockNotifier, STACK_SIZE_SMALL);
+    sysCreate(0, &ClockNotifier);
 
     for(;;)
     {

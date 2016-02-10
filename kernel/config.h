@@ -14,17 +14,11 @@
 #define SEND_QUEUE_LENGTH   8
 
 
-/// The stack block size in words
-#define STACK_BLOCK_SIZE    1024
+/// The memory block size in words (16,384 bytes = 16kb)
+#define MEMORY_BLOCK_SIZE    4096
 
-/// Small stack, equal to one stack block (4096 bytes = 4kb)
-#define STACK_SIZE_SMALL    1
-
-/// Medium stack, equal to 4 stack blocks (16,384 bytes = 16kb)
-#define STACK_SIZE_MEDIUM   4
-
-/// Large stack, equal to 64 stack blocks (262,144 bytes = 256 kb)
-#define STACK_SIZE_LARGE    64
+/// The memoryblock count
+#define MEMORY_BLOCK_COUNT  TASK_COUNT
 
 
 /// The terminal i/o buffer size

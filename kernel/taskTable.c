@@ -15,7 +15,7 @@ S32 taskTableInit(TaskTable* table)
         queueU8Push(&(table->allocationQueue), i);
     }
 
-    stackAllocatorInit(&table->stackAllocator, (U32*)(0x01000000));
+    memoryAllocatorInit(&table->memoryAllocator, (U32*)(0x01000000));
     return 0;
 }
 
@@ -23,7 +23,6 @@ S32 taskTableAlloc(TaskTable* table,
                    const U8 priority,
                    const U32 entryAddr,
                    const U32 exitAddr,
-                   const U32 size,
                    const TaskID pid)
 {
     if (table->allocationQueue.count == 0)
@@ -35,7 +34,7 @@ S32 taskTableAlloc(TaskTable* table,
     queueU8Pop(&(table->allocationQueue), &index);
 
     TaskDescriptor* desc = &(table->descriptors[index]);
-    U32* stack = stackAllocatorAlloc(&table->stackAllocator, size);
+    U32* stack = memoryAllocatorAlloc(&table->memoryAllocator);
     *(stack) = entryAddr;
     *(stack-14) = exitAddr;
     *(stack-15) = 0x10;
@@ -71,7 +70,7 @@ S32 taskTableFree(TaskTable* table, const TaskID tid)
     desc->pid.value = 0;
     desc->state = eZombie;
 
-    stackAllocatorFree(&table->stackAllocator, desc->stack + 15);
+    memoryAllocatorFree(&table->memoryAllocator, desc->stack + 15);
 
     return 0;
 }

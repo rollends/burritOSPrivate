@@ -4,7 +4,7 @@
 #include "common/common.h"
 
 #include "kernel/config.h"
-#include "kernel/stackAllocator.h"
+#include "kernel/memoryAllocator.h"
 #include "kernel/taskDescriptor.h"
 
 /**
@@ -21,8 +21,8 @@ typedef struct
     /// Backing data for the descriptor queue
     U8 allocationTable[TASK_COUNT];
 
-    /// Stack allocation table
-    StackAllocator stackAllocator;
+    /// Stack and block allocation table
+    MemoryAllocator memoryAllocator;
 
     /// Backing data for the send queue
     U16 sendQueueTable[TASK_COUNT*SEND_QUEUE_LENGTH];
@@ -44,7 +44,6 @@ S32 taskTableInit(TaskTable* table);
  * @param   priority    The priority to assign to the descriptor
  * @param   entryAddr   The entry point (pc) of the task
  * @param   exitAddr    The exit point (lr) of the task
- * @param   size        The stack size, one of .._SMALL, .._MEDIUM, or .._LARGE
  * @param   pid         The parent task id
  *
  * @return  TaskID on success, else an error code
@@ -53,7 +52,6 @@ S32 taskTableAlloc(TaskTable* table,
                    const U8 priority,
                    const U32 entryAddr,
                    const U32 exitAddr,
-                   const U32 size,
                    const TaskID pid);
 
 /**
