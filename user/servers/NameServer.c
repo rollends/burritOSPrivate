@@ -1,5 +1,7 @@
+#include "kernel/kernel.h"
 #include "user/messageTypes.h"
-#include "user/NameServer.h"
+#include "user/servers/NameServer.h"
+#include "user/services/nameService.h"
 
 S32 nsRegister( TaskName name )
 {
@@ -9,23 +11,19 @@ S32 nsRegister( TaskName name )
     return sysSend(2, &envelope, &envelope);
 }
 
-S32 nsWhoIs( TaskName name, TaskID* sid )
+TaskID nsWhoIs( TaskName name )
 {
+    TaskID result;
+
     MessageEnvelope envelope;
     envelope.type = MESSAGE_NAMESERVER_WHOIS;
     envelope.message.MessageU8.body = name; 
     sysSend( 2, &envelope, &envelope );
+    
+    assert( envelope.type == MESSAGE_NAMESERVER_RESPONSE );
 
-    switch( envelope.type )
-    {
-    case MESSAGE_NAMESERVER_RESPONSE:
-    {
-        sid->value = envelope.message.MessageU16.body;
-        return 0;
-    }
-    default:
-        return -1;
-    }
+    result.value = envelope.message.MessageU16.body;
+    return result;
 }
 
 
@@ -34,6 +32,8 @@ void NameServer()
     MessageEnvelope envelope;
     U16             nameTable[ TaskNameCount ];
     TaskID          fTid;
+
+    assert( sysTid() == 2 );
 
     {
         U16             whoIsClientsBacking[ 32 ];

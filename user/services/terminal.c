@@ -1,7 +1,7 @@
 #include "common/string.h"
 #include "kernel/kernel.h"
 #include "user/messageTypes.h"
-#include "user/terminal.h"
+#include "user/services/terminal.h"
 
 void putc(TaskID server, char c)
 {

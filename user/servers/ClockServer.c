@@ -1,6 +1,6 @@
 #include "user/messageTypes.h"
-#include "user/NameServer.h"
-#include "user/ClockNotifier.h"
+#include "user/servers/ClockNotifier.h"
+#include "user/services/nameService.h"
 
 typedef struct DelayedTask
 {

@@ -1,8 +1,8 @@
 #include "kernel/kernel.h"
 
 #include "user/messageTypes.h"
-#include "user/NameServer.h"
-#include "user/TerminalInputDriver.h"
+#include "user/servers/TerminalInputDriver.h"
+#include "user/services/nameService.h"
 
 void TerminalInputNotifier(void);
 

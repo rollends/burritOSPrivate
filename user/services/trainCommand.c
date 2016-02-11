@@ -1,6 +1,5 @@
 #include "common/string.h"
-#include "user/trainCommand.h"
-#include "user/TrainDriver.h"
+#include "user/services/trainCommand.h"
 
 S32 dispatchTrainCommand(TaskID server, String string)
 {

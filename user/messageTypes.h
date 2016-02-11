@@ -31,4 +31,6 @@
 #define     MESSAGE_TRAIN_GO                    0x60 // 96
 #define     MESSAGE_TRAIN_STOP                  0x61 // 97
 #define     MESSAGE_TRAIN_GET_SENSOR            0xC0 // 192
+
 #endif
+

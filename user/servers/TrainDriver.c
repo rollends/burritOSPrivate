@@ -1,10 +1,8 @@
 #include "kernel/kernel.h"
 
 #include "user/messageTypes.h"
-#include "user/NameServer.h"
-#include "user/TrainDriver.h"
-#include "user/ClockServer.h"
-#include "user/terminal.h"
+#include "user/services/services.h"
+#include "user/servers/TrainDriver.h"
 
 void trainStop(TaskID server)
 {
@@ -32,7 +30,7 @@ void trainReverseDirection(TaskID server, U8 train, U8 newSpeed)
     assert( train <= 80 && train >= 1 );
     assert( newSpeed < 15 );
 
-    TaskID clock; nsWhoIs(Clock, &clock);
+    TaskID clock = nsWhoIs(Clock);
 
     trainSetSpeed(server, train, 0);
     clockDelayBy(clock, 200);
@@ -59,7 +57,7 @@ void trainSetSpeed(TaskID server, U8 train, U8 speed)
 
 void trainSwitch(TaskID server, U8 switchAddress, SwitchState sw)
 {
-    TaskID clock; nsWhoIs(Clock, &clock);
+    TaskID clock = nsWhoIs(Clock);
     
     MessageEnvelope env;
     env.type = sw;
@@ -122,11 +120,6 @@ void TrainDriver(void)
     queueU16Init(&blockedTasks, blockedTasksBacking, 16);
 
     U8 isOutputWaiting = 0;
-    TaskID stdio, clock; 
-    
-    nsWhoIs(TerminalOutput, &stdio);
-    nsWhoIs(Clock, &clock);
-
     while( sysRunning() != 0 )
     {
         sysReceive(&rcvID.value, &rcvMessage);
@@ -203,16 +196,13 @@ void TrainDriver(void)
 
 void TrainOutputNotifier(void)
 {
-    TaskID server, clock;
+    TaskID server;
     MessageEnvelope notif;
 
-    nsWhoIs(Clock, &clock);
     server.value = sysPid();
 
     notif.type = DRIVER_MESSAGE_TX_TRAIN;
     
-    TaskID cout;
-    nsWhoIs(TerminalOutput, &cout);
     while( sysRunning() != 0 )
     {
         sysSend(server.value, &notif, &notif);

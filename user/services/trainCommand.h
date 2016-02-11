@@ -1,6 +1,7 @@
-#ifndef TRAIN_DRIVER_H
-#define TRAIN_DRIVER_H
+#ifndef TRAIN_COMMAND_H
+#define TRAIN_COMMAND_H
 
+#include "common/types.h"
 #include "kernel/kernel.h"
 
 typedef enum
@@ -16,6 +17,6 @@ void trainSolenoidOff(TaskID train);
 void trainReverseDirection(TaskID server, U8 train, U8 newSpeed);
 void trainSetSpeed(TaskID server, U8 train, U8 speed);
 
-void TrainDriver(void);
+S32 dispatchTrainCommand(TaskID id, String string);
 
 #endif

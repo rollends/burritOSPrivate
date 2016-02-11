@@ -3,8 +3,8 @@
 #include "kernel/kernel.h"
 
 #include "user/messageTypes.h"
-#include "user/NameServer.h"
-#include "user/TerminalOutputDriver.h"
+#include "user/servers/TerminalOutputDriver.h"
+#include "user/services/nameService.h"
 
 void TerminalOutputWarehouse(void);
 void TerminalOutputCourier(void);
