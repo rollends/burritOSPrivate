@@ -8,7 +8,10 @@
  *
  * @param   timer   The timer to initialize
  */
-inline S32 timerInit(const U32 timer);
+inline S32 timerEnable(const U32 timer,
+                       const U32 enable,
+                       const U32 mode,
+                       const U32 clk);
 
 /**
  * Clears any active interrupts from the given timer

@@ -4,21 +4,22 @@
 
 void InitialTask()
 {
-    sysWrite(PORT_TRAIN, 0x60);
+    sysWrite(EVENT_TRAIN_WRITE, 0x60);
+
     while (1)
     {
-        sysRead(PORT_TERMINAL);
+        sysRead(EVENT_TERMINAL_READ);
 
-        sysWrite(PORT_TRAIN, 0x85);
-        sysWrite(PORT_TRAIN, 0x00);
+        sysWrite(EVENT_TRAIN_WRITE, 0x85);
+        sysWrite(EVENT_TRAIN_WRITE, 0x00);
         
         U32 i;
         for (i = 0; i < 10; i++)
         {
-            sysWrite(PORT_TERMINAL, sysRead(PORT_TRAIN) + 'a');
+            sysWrite(EVENT_TERMINAL_WRITE, sysRead(EVENT_TRAIN_READ) + 'a');
         }
 
-        sysWrite(PORT_TERMINAL, '\r');
-        sysWrite(PORT_TERMINAL, '\n');
+        sysWrite(EVENT_TERMINAL_WRITE, '\r');
+        sysWrite(EVENT_TERMINAL_WRITE, '\n');
     }
 }

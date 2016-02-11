@@ -165,62 +165,30 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                                   kernel.perfState.total);
         }
 
+        case SYS_CALL_WRITE_ID:
+        {
+            switch (arg0)
+            {
+                case EVENT_TERMINAL_WRITE:
+                    uartInterruptTX(UART_2, 1);
+                    break;
 
+                case EVENT_TRAIN_WRITE:
+                    uartInterruptTX(UART_1, 1);
+                    break;
+
+                default:
+                    return -1;
+            }
+        }
         case SYS_CALL_AWAIT_ID:
+        case SYS_CALL_READ_ID:
         {
             kernel.eventTable[arg0] = desc->tid;
             desc->state = eEventBlocked;
             break;
         }
 
-        case SYS_CALL_READ_ID:
-        {
-            U8 byte;
-            switch (arg0)
-            {
-                case PORT_TERMINAL:
-                    if (queueU8Pop(&kernel.terminalInput, &byte) != 0)
-                    {
-                        kernel.eventTable[EVENT_TERMINAL_READ] = desc->tid;
-                        desc->state = eEventBlocked;
-                    }
-                    break;
-
-                case PORT_TRAIN:
-                    kernel.eventTable[EVENT_TRAIN_READ] = desc->tid;
-                    desc->state = eEventBlocked;
-                    break;
-
-                default:
-                    return -1;
-            }
-
-            return byte;
-        }
-
-        case SYS_CALL_WRITE_ID:
-        {
-            switch (arg0)
-            {
-                case PORT_TERMINAL:
-                    uartInterruptTX(UART_2, 1);
-                    kernel.eventTable[EVENT_TERMINAL_WRITE] = desc->tid;
-                    break;
-
-                case PORT_TRAIN:
-                    uartInterruptTX(UART_1, 1);
-                    kernel.eventTable[EVENT_TRAIN_WRITE] = desc->tid;
-                    break;
-
-                default:
-                    return -1;
-            }
-
-            desc->state = eEventBlocked;
-
-            return 0;
-        }
-        
         case SYS_CALL_ALLOC_ID:
         {
             return (U32)(memoryAllocatorAlloc(&kernel.tasks.memoryAllocator));

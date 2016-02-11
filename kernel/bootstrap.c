@@ -22,17 +22,17 @@ U32* bootstrap()
     assertOk(uartConfig(UART_1, 0, 1, 0));
     
     // Start the 10ms timer and clear the IRQ
-    assertOk(timerInit(TIMER_1));
+    assertOk(timerEnable(TIMER_1, 1, 1, 1));
     assertOk(timerSetValue(TIMER_1, 5080));
     assertOk(timerClear(TIMER_1));
 
-    // Start the 100 ms timer and clear the IRQ
-    assertOk(timerInit(TIMER_2));
-    assertOk(timerSetValue(TIMER_2, 50800));
+    // Start the 150 ms timer and clear the IRQ
+    assertOk(timerEnable(TIMER_2, 1, 1, 0));
+    assertOk(timerSetValue(TIMER_2, 300));
     assertOk(timerClear(TIMER_2));
 
     // Start the 983 kHz debug timer
-    assertOk(timerInit(TIMER_4));
+    assertOk(timerEnable(TIMER_4, 1, 0, 0));
 
     // Enable timer, UART2_TX and UART2_RX interrupts
     assertOk(interruptEnable(INT_1, 0x06000030));

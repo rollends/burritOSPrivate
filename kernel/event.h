@@ -8,7 +8,7 @@
 #define EVENT_10MS_TICK         1
 
 /// 100 millisecond timer event
-#define EVENT_100MS_TICK        2
+#define EVENT_150MS_TICK        2
 
 /// UART 2 input event
 #define EVENT_TERMINAL_READ     3
@@ -23,13 +23,6 @@
 #define EVENT_TRAIN_WRITE       6
 
 /// Event table size 
-#define EVENT_TABLE_SIZE        7
-
-
-/// The terminal IO port 
-#define PORT_TERMINAL           0
-
-/// The train IO port
-#define PORT_TRAIN              1
+#define EVENT_TABLE_SIZE        7 
 
 #endif

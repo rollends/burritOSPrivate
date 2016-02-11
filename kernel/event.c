@@ -92,7 +92,7 @@ void eventHandler()
 
     if (status1 & 0x20)
     {
-        TaskID tid = kernel.eventTable[EVENT_100MS_TICK];
+        TaskID tid = kernel.eventTable[EVENT_150MS_TICK];
 
         if (tid.value != 0)
         {
@@ -103,7 +103,7 @@ void eventHandler()
                               desc->priority,
                               desc->tid.value);
 
-            kernel.eventTable[EVENT_100MS_TICK] = VAL_TO_ID(0);
+            kernel.eventTable[EVENT_150MS_TICK] = VAL_TO_ID(0);
         }
 
         timerClear(TIMER_2);
@@ -114,19 +114,15 @@ void eventHandler()
         TaskID tid = kernel.eventTable[EVENT_TERMINAL_READ];
         U8 byte;
         uartReadByte(UART_2, &byte);
-        queueU8Push(&kernel.terminalInput, byte);
 
         if (tid.value != 0)
         {
             TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
-
-            queueU8Pop(&kernel.terminalInput, &byte);
-            TASK_RETURN(desc) = byte;
-
             desc->state = eReady;
             priorityQueuePush(&kernel.queue,
                               desc->priority,
                               desc->tid.value);
+            TASK_RETURN(desc) = byte;
 
             kernel.eventTable[EVENT_TERMINAL_READ] = VAL_TO_ID(0);
         }

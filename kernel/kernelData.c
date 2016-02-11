@@ -9,9 +9,6 @@ S32 kernelDataInit()
 
     assertOk(priorityQueueInit(&(kernel.queue)));
     assertOk(taskTableInit(&(kernel.tasks)));
-    assertOk(queueU8Init(&kernel.terminalInput,
-             kernel.terminalInputData,
-             TERM_BUFFER));
 
     U32 i;
     for (i = 0; i < EVENT_TABLE_SIZE; i++)

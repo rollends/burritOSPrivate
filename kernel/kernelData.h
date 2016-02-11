@@ -30,12 +30,7 @@ typedef struct
     /// The system running flag
     U8                  systemRunning;
 
-    /// Terminal input queue
-    QueueU8             terminalInput;
-    
-    /// Backing data for the terminal input buffer
-    U8                  terminalInputData[TERM_BUFFER];
-
+    /// The CTS flag for UART_1
     U8                  cts;
 } KernelData;
 

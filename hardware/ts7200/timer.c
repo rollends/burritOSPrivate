@@ -2,19 +2,26 @@
 #include "hardware/timer.h"
 #include "hardware/ts7200/ts7200.h"
 
-S32 timerInit(const U32 timer)
+S32 timerEnable(const U32 timer,
+                const U32 enable,
+                const U32 mode,
+                const U32 clk)
 {
     RWRegister control = (RWRegister)(timer + CRTL_OFFSET);
+    U32 value = __ldr(control);
+
     if (timer != TIMER_4)
     {
-        __str(control, 0xc8);
+        value = (enable ? value | ENABLE_MASK : value & ~ENABLE_MASK);
+        value = (mode ? value | MODE_MASK : value & ~MODE_MASK);
+        value = (clk ? value | CLKSEL_MASK : value & ~CLKSEL_MASK);
     }
     else
     {
-        U32 controlValue = __ldr(control);
-        controlValue |= DEBUG_MASK;
-        __str(control, controlValue);
+        value = (enable ? enable | DEBUG_MASK : value & ~DEBUG_MASK);
     }
+
+    __str(control, value);
 
     return 0;
 }
