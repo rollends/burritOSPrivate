@@ -1,9 +1,10 @@
+#include "common/string.h"
+
 #include "kernel/kernel.h"
 
 #include "user/messageTypes.h"
 #include "user/NameServer.h"
 #include "user/TerminalOutputDriver.h"
-#include "user/terminal.h"
 
 void TerminalOutputWarehouse(void);
 void TerminalOutputCourier(void);

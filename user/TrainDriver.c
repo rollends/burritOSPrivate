@@ -27,16 +27,53 @@ void trainSolenoidOff(TaskID server)
     sysSend(server.value, &env, &env);
 }
 
-void trainSwitch(TaskID server, SwitchState sw, U8 switchAddress)
+void trainReverseDirection(TaskID server, U8 train, U8 newSpeed)
 {
+    assert( train <= 80 && train >= 1 );
+    assert( newSpeed < 15 );
+
+    TaskID clock; nsWhoIs(Clock, &clock);
+
+    trainSetSpeed(server, train, 0);
+    clockDelayBy(clock, 200);
+
+    MessageEnvelope env;
+    env.type = MESSAGE_TRAIN_REVERSE;
+    env.message.MessageU16.body = (train << 8) | 0x0F;
+    sysSend(server.value, &env, &env);
+
+    clockDelayBy(clock, 100);
+    trainSetSpeed(server, train, newSpeed);
+}
+
+void trainSetSpeed(TaskID server, U8 train, U8 speed)
+{
+    assert( speed < 15 );
+    assert( train <= 80 && train >= 1 );
+
+    MessageEnvelope env;
+    env.type = MESSAGE_TRAIN_SET_SPEED;
+    env.message.MessageU16.body = (train << 8) | speed;
+    sysSend(server.value, &env, &env);
+}
+
+void trainSwitch(TaskID server, U8 switchAddress, SwitchState sw)
+{
+    TaskID clock; nsWhoIs(Clock, &clock);
+    
     MessageEnvelope env;
     env.type = sw;
     env.message.MessageU8.body = switchAddress;
     sysSend(server.value, &env, &env);
+
+    clockDelayBy(clock, 16);
+    trainSolenoidOff(server);
 }
 
 static U8 getTrainDriverMessageType(U16 inMsgType)
 {
+    if( (inMsgType & 0x00FF) <= 0x0F ) return DRIVER_MESSAGE_TX_TRAIN_MULTI_BYTE;
+
     switch(inMsgType & 0x00FF)
     {
     case MESSAGE_TRAIN_SWITCH_STRAIGHT:
@@ -94,10 +131,15 @@ void TrainDriver(void)
     {
         sysReceive(&rcvID.value, &rcvMessage);
 
-        
-
         switch( rcvMessage.type )
         {
+        case MESSAGE_TRAIN_REVERSE:
+        case MESSAGE_TRAIN_SET_SPEED:
+        {
+            rcvMessage.type = rcvMessage.message.MessageU16.body & 0xFF;
+            rcvMessage.message.MessageU8.body = rcvMessage.message.MessageU16.body >> 8;
+        }
+
         case MESSAGE_TRAIN_SWITCH_STRAIGHT:
         case MESSAGE_TRAIN_SWITCH_CURVED:
         case MESSAGE_TRAIN_GO:

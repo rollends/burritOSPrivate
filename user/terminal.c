@@ -1,18 +1,7 @@
+#include "common/string.h"
 #include "kernel/kernel.h"
 #include "user/messageTypes.h"
 #include "user/terminal.h"
-
-void strcpy(char *d, char const *s)
-{
-    while( (*(d++) = *(s++)) );
-}
-
-U32 strlen( char const * str )
-{
-    char const *c = str;
-    while( *c ) c++;
-    return c - str;
-}
 
 void putc(TaskID server, char c)
 {
@@ -30,7 +19,7 @@ char getc(TaskID server)
     return envelope.message.MessageU8.body;
 }
 
-static int putStr(TaskID server, char const * str)
+static int putStr(TaskID server, ConstString str)
 {
     MessageEnvelope envelope;
     envelope.type = MESSAGE_IO_PUTSTR;
@@ -49,7 +38,7 @@ static char _x2c(int c)
     return 'a' + c - 10;
 }
 
-static int _printDecimal(char **output, U32 value, U32 width, const char delim, const char comma)
+static int _printDecimal(String* output, U32 value, U32 width, const char delim, const char comma)
 {
     char buffer[16];
     U8 i = 0;
@@ -79,8 +68,8 @@ static int _printDecimal(char **output, U32 value, U32 width, const char delim, 
     return 0;
 }
 
-static int _printHex(char **output, U32 value)
-{
+static int _printHex(String* output, U32 value)
+{ 
     int byte;
     char chh, chl;
     unsigned char *str = (unsigned char*)&value;
@@ -101,7 +90,7 @@ static int _printHex(char **output, U32 value)
     return 0;
 }
 
-static int _printHexByte( char* *output, U8 value)
+static int _printHexByte(String *output, U8 value)
 {
     *((*output)++) = '0';
     *((*output)++) = 'x';
@@ -110,7 +99,7 @@ static int _printHexByte( char* *output, U8 value)
     return 0;
 }
 
-static int _printStringNoFormat( char** output, char const * str)
+static int _printStringNoFormat(String* output, char const * str)
 {
     char c;
     while( (c = *(str++)) )
@@ -118,15 +107,14 @@ static int _printStringNoFormat( char** output, char const * str)
     return 0;
 }
 
-#include "kernel/print.h"
-S32 printf(TaskID server, char const * format, ...)
+S32 printf(TaskID server, ConstString format, ...)
 {    
     enum { PLAIN, FORMAT, ESCAPE } state = PLAIN;
 	U32 widthFlag = 0;
     char ch;
     
     char OutputBuffer[512];
-    char* OutputBufferI = OutputBuffer;
+    String OutputBufferI = OutputBuffer;
 
     assert( strlen(format) <= 512 );
 
@@ -172,7 +160,7 @@ S32 printf(TaskID server, char const * format, ...)
                     break;
 
                 case 's':
-                    _printStringNoFormat(&OutputBufferI, va_arg(va, char const *) );
+                    _printStringNoFormat(&OutputBufferI, va_arg(va, ConstString) );
                     break;
 
                 case 'c':

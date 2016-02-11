@@ -19,6 +19,11 @@ typedef unsigned int    U32;
 /// Signed 32 bit integer
 typedef signed int      S32;
 
+/// String
+typedef char *          String;
+
+/// Constant String 
+typedef char const *    ConstString;
 
 /// Read/write register
 typedef volatile U32 * const RWRegister;
