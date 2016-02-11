@@ -219,9 +219,9 @@ void TrainOutputNotifier(void)
         
         assert(!(notif.message.MessageU16.body & 0x0080));
 
-        sysWrite(PORT_TRAIN, notif.message.MessageU16.body & 0x00FF);
+        sysWrite(EVENT_TRAIN_WRITE, notif.message.MessageU16.body & 0x00FF);
         if(notif.type == DRIVER_MESSAGE_TX_TRAIN_MULTI_BYTE)
-            sysWrite(PORT_TRAIN, notif.message.MessageU16.body >> 8);
+            sysWrite(EVENT_TRAIN_WRITE, notif.message.MessageU16.body >> 8);
     }
 }
 
@@ -234,8 +234,8 @@ void TrainInputNotifier(void)
     server.value = sysPid();
     while( sysRunning() != 0 )
     {
-        notif.message.MessageU16.body = sysRead(PORT_TRAIN) << 8;
-        notif.message.MessageU16.body |= sysRead(PORT_TRAIN);
+        notif.message.MessageU16.body = sysRead(EVENT_TRAIN_READ) << 8;
+        notif.message.MessageU16.body |= sysRead(EVENT_TRAIN_READ);
         sysSend( server.value, &notif, &notif ); 
     }
 }

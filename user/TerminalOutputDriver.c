@@ -217,7 +217,7 @@ void TerminalOutputNotifier(void)
     for(;;)
     {
         sysSend( server.value, &notif, &notif );
-        sysWrite( PORT_TERMINAL, notif.message.MessageU8.body );
+        sysWrite( EVENT_TERMINAL_WRITE, notif.message.MessageU8.body );
     }
 }
 

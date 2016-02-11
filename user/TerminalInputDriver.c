@@ -77,7 +77,7 @@ void TerminalInputNotifier(void)
     server.value = sysPid();
     while( sysRunning() != 0 )
     {
-        notif.message.MessageU8.body = sysRead(PORT_TERMINAL);
+        notif.message.MessageU8.body = sysRead(EVENT_TERMINAL_READ);
         sysSend( server.value, &notif, &notif ); 
     }
 
