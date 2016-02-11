@@ -1,6 +1,7 @@
 #include "common/common.h"
 #include "hardware/hardware.h"
 
+#include "kernel/assert.h"
 #include "kernel/event.h"
 #include "kernel/kernelData.h"
 #include "kernel/message.h"
@@ -43,7 +44,7 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                                         arg1,
                                         (U32)(&__taskExit),
                                         desc->tid);
-            priorityQueuePush(&kernel.queue, arg0, result);
+            assertOk(priorityQueuePush(&kernel.queue, arg0, result));
             return result;
         }
 
@@ -73,9 +74,9 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                 desc->state = eReplyBlocked;
                 receiver->state = eReady;
 
-                priorityQueuePush(&kernel.queue,
-                                  receiver->priority,
-                                  receiver->tid.value);
+                assertOk(priorityQueuePush(&kernel.queue,
+                                           receiver->priority,
+                                           receiver->tid.value));
                 return result;
             }
             else
@@ -121,9 +122,9 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             TASK_RETURN(replyTo) = result;
 
             replyTo->state = eReady;
-            priorityQueuePush(&kernel.queue,
-                              replyTo->priority,
-                              replyTo->tid.value);
+            assertOk(priorityQueuePush(&kernel.queue,
+                                       replyTo->priority,
+                                       replyTo->tid.value));
             return result;
         }
 

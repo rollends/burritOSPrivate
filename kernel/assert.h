@@ -5,7 +5,7 @@
 
 #ifdef ASSERT_BUILD
     #define assert(expr) do {if (!(expr)) {assertHandler(__LINE__, __FILE__);}} while(0)
-    #define assertOk(expr) assert((expr) == OK)
+    #define assertOk(expr) assert((expr) >= OK)
 #else
     #define assert(expr) expr
     #define assertOk(expr) expr

@@ -1,6 +1,7 @@
 #include "common/common.h"
 #include "hardware/hardware.h"
 
+#include "kernel/assert.h"
 #include "kernel/kernelData.h"
 #include "kernel/taskDescriptor.h"
 
@@ -12,9 +13,11 @@ U32* scheduler(U32* sp)
 
     if (desc->state == eReady)
     {
-        if (priorityQueuePushPop(&kernel.queue,
-                                 desc->priority,
-                                 &(tid.value)) == 1)
+        S32 result = priorityQueuePushPop(&kernel.queue,
+                                          desc->priority,
+                                          &(tid.value));
+        assertOk(result);
+        if (result == 1)
         {
             goto ExitScheduler;
         }
@@ -26,10 +29,14 @@ U32* scheduler(U32* sp)
             taskTableFree(&kernel.tasks, tid);
         }
 
-        if (priorityQueuePop(&kernel.queue, &(tid.value)) != 0)
+        S32 empty = priorityQueueEmpty(&kernel.queue);
+        assertOk(empty);
+        if (empty == 1)
         {
             return 0;
         }
+        
+        assertOk(priorityQueuePop(&kernel.queue, &(tid.value)));
     }
 
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, tid);

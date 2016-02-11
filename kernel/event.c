@@ -1,9 +1,9 @@
 #include "common/common.h"
 #include "hardware/hardware.h"
 
+#include "kernel/assert.h"
 #include "kernel/event.h"
 #include "kernel/kernelData.h"
-#include "kernel/print.h"
 
 void eventHandler()
 {
@@ -36,9 +36,9 @@ void eventHandler()
             {
                 TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
                 desc->state = eReady;
-                priorityQueuePush(&kernel.queue,
-                                  desc->priority,
-                                  desc->tid.value);
+                assertOk(priorityQueuePush(&kernel.queue,
+                                           desc->priority,
+                                           desc->tid.value));
 
                 U8 byte = (U8)(TASK_ARG_1(desc));
                 uartWriteByte(UART_1, byte);
@@ -62,9 +62,9 @@ void eventHandler()
 
                 TASK_RETURN(desc) = byte;
                 desc->state = eReady;
-                priorityQueuePush(&kernel.queue,
-                                  desc->priority,
-                                  desc->tid.value);
+                assertOk(priorityQueuePush(&kernel.queue,
+                                           desc->priority,
+                                           desc->tid.value));
 
                 kernel.eventTable[EVENT_TRAIN_READ] = VAL_TO_ID(0);
             }
@@ -80,9 +80,9 @@ void eventHandler()
             TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
 
             desc->state = eReady;
-            priorityQueuePush(&kernel.queue,
-                              desc->priority,
-                              desc->tid.value);
+            assertOk(priorityQueuePush(&kernel.queue,
+                                       desc->priority,
+                                       desc->tid.value));
 
             kernel.eventTable[EVENT_10MS_TICK] = VAL_TO_ID(0);
         }
@@ -99,9 +99,9 @@ void eventHandler()
             TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
 
             desc->state = eReady;
-            priorityQueuePush(&kernel.queue,
-                              desc->priority,
-                              desc->tid.value);
+            assertOk(priorityQueuePush(&kernel.queue,
+                                       desc->priority,
+                                       desc->tid.value));
 
             kernel.eventTable[EVENT_150MS_TICK] = VAL_TO_ID(0);
         }
@@ -119,9 +119,9 @@ void eventHandler()
         {
             TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
             desc->state = eReady;
-            priorityQueuePush(&kernel.queue,
-                              desc->priority,
-                              desc->tid.value);
+            assertOk(priorityQueuePush(&kernel.queue,
+                                       desc->priority,
+                                       desc->tid.value));
             TASK_RETURN(desc) = byte;
 
             kernel.eventTable[EVENT_TERMINAL_READ] = VAL_TO_ID(0);
@@ -136,9 +136,9 @@ void eventHandler()
         {
             TaskDescriptor* desc = taskGetDescriptor(&kernel.tasks, tid);
             desc->state = eReady;
-            priorityQueuePush(&kernel.queue,
-                              desc->priority,
-                              desc->tid.value);
+            assertOk(priorityQueuePush(&kernel.queue,
+                                       desc->priority,
+                                       desc->tid.value));
 
             U8 byte = (U8)(TASK_ARG_1(desc));
             uartWriteByte(UART_2, byte);

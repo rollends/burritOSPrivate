@@ -2,9 +2,10 @@
 #include "common/priorityQueue.h"
 #include "common/utils.h"
 
-S32 priorityQueueInit(PriorityQueue* queue)
+RETURN priorityQueueInit(PriorityQueue* queue)
 {
     IS_NOT_NULL(queue);
+    IS_IN_RANGE(queue);
     
     U8 i;
     for (i = 0; i < PRIORITY_COUNT; i++)
@@ -14,24 +15,45 @@ S32 priorityQueueInit(PriorityQueue* queue)
 
     queue->priorityBits = 0;
 
-    return OK;
+    IS_OK();
 }
 
-S32 priorityQueuePush(PriorityQueue* queue, const U8 priority, const U16 value)
+RETURN priorityQueuePush(PriorityQueue* queue,
+                         const U8 priority,
+                         const U16 value)
 {
+    IS_NOT_NULL(queue);
+    IS_IN_RANGE(queue);
+
+#ifdef BOUNDS_CHECK
+    if (priority >= PRIORITY_COUNT ||
+            ((queue->priorityBits & (1 << priority)) &&
+            queue->tail[priority] == queue->head[priority]))
+    {
+        return ERROR_FULL;
+    }
+#endif
+
     queue->data[queue->tail[priority] + priority * PRIORITY_LENGTH] = value;
     queue->tail[priority] = (queue->tail[priority] + 1) & (PRIORITY_LENGTH - 1);
     queue->priorityBits |= (1 << priority);
 
-    return OK;
+    IS_OK();
 }
 
-S32 priorityQueuePop(PriorityQueue* queue, U16* dest)
+RETURN priorityQueuePop(PriorityQueue* queue, U16* dest)
 {
+    IS_NOT_NULL(queue);
+    IS_IN_RANGE(queue);
+    IS_NOT_NULL(dest);
+    IS_IN_RANGE(dest);
+
+#ifdef BOUNDS_CHECK
     if (queue->priorityBits == 0)
     {
-        return -1;
+        return ERROR_EMPTY;
     }
+#endif
 
     U32 priority = __ctz(queue->priorityBits);
 
@@ -40,11 +62,16 @@ S32 priorityQueuePop(PriorityQueue* queue, U16* dest)
     queue->priorityBits ^=
         (queue->head[priority] == queue->tail[priority] ? 1 : 0) << (priority);
 
-    return OK;
+    IS_OK();
 }
 
 S32 priorityQueuePushPop(PriorityQueue* queue, const U8 priority, U16* value)
 {
+    IS_NOT_NULL(queue);
+    IS_IN_RANGE(queue);
+    IS_NOT_NULL(value);
+    IS_IN_RANGE(value);
+
     U32 free = __ctz(queue->priorityBits);
 
     if (priority < free)
@@ -52,9 +79,25 @@ S32 priorityQueuePushPop(PriorityQueue* queue, const U8 priority, U16* value)
         return 1;
     }
 
+#ifdef BOUNDS_CHECK
+    if (priority >= PRIORITY_COUNT ||
+            ((queue->priorityBits & (1 << priority)) &&
+            queue->tail[priority] == queue->head[priority]))
+    {
+        return ERROR_FULL;
+    }
+#endif
+
     queue->data[queue->tail[priority] + priority * PRIORITY_LENGTH] = *value;
     queue->tail[priority] = (queue->tail[priority] + 1) & (PRIORITY_LENGTH - 1);
     queue->priorityBits |= (1 << (priority));
+
+#ifdef BOUNDS_CHECK
+    if (queue->priorityBits == 0)
+    {
+        return ERROR_EMPTY;
+    }
+#endif
 
     *value = queue->data[queue->head[free] + free * PRIORITY_LENGTH];
     queue->head[free] = (queue->head[free] + 1) & (PRIORITY_LENGTH - 1);

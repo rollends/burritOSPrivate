@@ -26,4 +26,12 @@ typedef volatile U32 * const RWRegister;
 /// Read-only register
 typedef volatile U32 const * const RORegister;
 
+
+/// Function return type
+#ifdef RETURN_CODES
+    #define RETURN      S32
+#else
+    #define RETURN      void
+#endif
+
 #endif

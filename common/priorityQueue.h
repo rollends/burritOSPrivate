@@ -31,7 +31,7 @@ typedef struct
  *
  * @return  0 on success, else an error code
  */
-S32 priorityQueueInit(PriorityQueue* queue);
+RETURN priorityQueueInit(PriorityQueue* queue);
 
 /**
  * Appends a value onto the queue at a given priority
@@ -42,7 +42,9 @@ S32 priorityQueueInit(PriorityQueue* queue);
  *
  * @return  0 on success, else an error code
  */
-S32 priorityQueuePush(PriorityQueue* queue, const U8 priority, const U16 value);
+RETURN priorityQueuePush(PriorityQueue* queue,
+                         const U8 priority,
+                         const U16 value);
 
 /**
  * Removes the first element in the queue
@@ -52,7 +54,7 @@ S32 priorityQueuePush(PriorityQueue* queue, const U8 priority, const U16 value);
  *
  * @return  0 on success, else an error code
  */
-S32 priorityQueuePop(PriorityQueue* queue, U16* dest);
+RETURN priorityQueuePop(PriorityQueue* queue, U16* dest);
 
 /**
  * Performs a combined push and pop operation that minimizes the amount of
@@ -66,5 +68,20 @@ S32 priorityQueuePop(PriorityQueue* queue, U16* dest);
  * @return  0 on success, else an error code
  */
 S32 priorityQueuePushPop(PriorityQueue* queue, const U8 priority, U16* value);
+
+/**
+ * Checks if the priority queue is empty
+ *
+ * @param   queue   The priority queue to check
+ * 
+ * @return  1 if the queue is empty, else 0
+ */
+static inline U32 priorityQueueEmpty(PriorityQueue* queue)
+{
+    IS_NOT_NULL(queue);
+    IS_IN_RANGE(queue);
+    
+    return queue->priorityBits == 0;
+}
 
 #endif
