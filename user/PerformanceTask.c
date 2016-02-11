@@ -6,9 +6,13 @@
 
 void PerformanceTask()
 {
+    printBlocking("yoyo\r\n");
+#ifdef KERNEL_PERF
     TaskID clock;
+    printBlocking("yoyoma\r\n");
     nsWhoIs( Clock, &clock );
 
+    printBlocking("Performance starting, blocked on clock...\r\n");
     clockDelayBy(clock, 250);
 
     printBlocking("\r\nPerformance summary:\r\n");
@@ -49,5 +53,5 @@ void PerformanceTask()
                                                         totalms / 1000,
                                                         totalms % 1000);
 
-    sysShutdown();
+#endif
 }

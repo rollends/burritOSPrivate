@@ -7,9 +7,11 @@
 
 void eventHandler()
 {
-    TaskDescriptor* desc = kernel.activeTask;
-    desc->performance[ePerfTask] += timerSample(TIMER_4, &kernel.perfState);
-    
+    #ifdef KERNEL_PERF
+        TaskDescriptor* desc = kernel.activeTask;
+        desc->performance[ePerfTask] += timerSample(TIMER_4, &kernel.perfState);
+    #endif
+        
     U32 status1 = interruptStatus(INT_1);
     U32 status2 = interruptStatus(INT_2);
     if (status2 & 0x00100000)

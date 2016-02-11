@@ -31,9 +31,11 @@ U32* bootstrap()
     assertOk(timerSetValue(TIMER_2, 300));
     assertOk(timerClear(TIMER_2));
 
+#ifdef KERNEL_PERF
     // Start the 983 kHz debug timer
     assertOk(timerEnable(TIMER_4, 1, 0, 0));
-
+#endif
+    
     // Enable timer, UART2_TX and UART2_RX interrupts
     assertOk(interruptEnable(INT_1, 0x06000030));
 

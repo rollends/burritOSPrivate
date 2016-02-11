@@ -17,9 +17,11 @@
 #define SYS_CALL_RECEIVE_ID         8
 #define SYS_CALL_REPLY_ID           9
 
-#define SYS_CALL_PERF_RESET_ID      10
-#define SYS_CALL_PERF_QUERYP_ID     11
-#define SYS_CALL_PERF_QUERYT_ID     12
+#ifdef KERNEL_PERF
+      #define SYS_CALL_PERF_RESET_ID      10
+      #define SYS_CALL_PERF_QUERYP_ID     11
+      #define SYS_CALL_PERF_QUERYT_ID     12
+#endif
 
 #define SYS_CALL_AWAIT_ID           13
 #define SYS_CALL_READ_ID            14
@@ -48,12 +50,16 @@
             __sysCall2((U32)SYS_CALL_RECEIVE_ID, (U32)ptid, (U32)pmsg)
 #define sysReply(tid, preply) \
             __sysCall2((U32)SYS_CALL_REPLY_ID, (U32)tid, (U32)preply)
-#define sysPerfReset() \
-            __sysCall0((U32)SYS_CALL_PERF_RESET_ID)
-#define sysPerfQueryP(tid, mode) \
-            __sysCall2((U32)SYS_CALL_PERF_QUERYP_ID, (U32)tid, (U32)mode)
-#define sysPerfQueryT(tid, mode) \
-            __sysCall2((U32)SYS_CALL_PERF_QUERYT_ID, (U32)tid, (U32)mode)
+
+#ifdef KERNEL_PERF
+      #define sysPerfReset() \
+                  __sysCall0((U32)SYS_CALL_PERF_RESET_ID)
+      #define sysPerfQueryP(tid, mode) \
+                  __sysCall2((U32)SYS_CALL_PERF_QUERYP_ID, (U32)tid, (U32)mode)
+      #define sysPerfQueryT(tid, mode) \
+                  __sysCall2((U32)SYS_CALL_PERF_QUERYT_ID, (U32)tid, (U32)mode)
+#endif
+                  
 #define sysAwait(event) \
             __sysCall1((U32)SYS_CALL_AWAIT_ID, (U32)event)
 #define sysRead(port) \

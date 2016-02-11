@@ -24,8 +24,10 @@ typedef struct
     /// Event table data
     TaskID              eventTable[EVENT_TABLE_SIZE];
 
+#ifdef KERNEL_PERF
     /// Performance timer state struct
     TimerState          perfState;
+#endif
     
     /// The system running flag
     U8                  systemRunning;

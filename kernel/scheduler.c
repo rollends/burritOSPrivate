@@ -43,6 +43,10 @@ U32* scheduler(U32* sp)
     sp = kernel.activeTask->stack;
 
 ExitScheduler:
-    desc->performance[ePerfKernel] += timerSample(TIMER_4, &kernel.perfState);
+    #ifdef KERNEL_PERF
+        desc->performance[ePerfKernel] +=
+            timerSample(TIMER_4, &kernel.perfState);
+    #endif
+
     return sp;
 }

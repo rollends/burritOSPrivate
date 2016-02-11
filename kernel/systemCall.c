@@ -11,8 +11,11 @@
 U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
 {
     TaskDescriptor* desc = kernel.activeTask;
-    desc->performance[ePerfTask] += timerSample(TIMER_4, &kernel.perfState);
 
+    #ifdef KERNEL_PERF
+        desc->performance[ePerfTask] += timerSample(TIMER_4, &kernel.perfState);
+    #endif
+        
     switch (id)
     {
         case SYS_CALL_EXIT_ID:
@@ -128,6 +131,7 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             return result;
         }
 
+#ifdef KERNEL_PERF
         case SYS_CALL_PERF_RESET_ID:
         {
             timerStart(TIMER_4, &kernel.perfState);
@@ -165,7 +169,8 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                                   arg1,
                                   kernel.perfState.total);
         }
-
+#endif
+        
         case SYS_CALL_WRITE_ID:
         {
             switch (arg0)
