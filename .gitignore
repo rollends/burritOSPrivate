@@ -1,5 +1,4 @@
 build/
 bin/
-doc/
 *.sublime-workspace
 doc_warnings.log

@@ -25,7 +25,7 @@ _OBJDIRS = $(dir $(_OBJS))
 _OUT = $(OUTDIR)/$(OUT)
 _OUT += $(OUTDIR)/$(basename $(OUT)).lst
 
-all: directories $(_OUT)  
+all: directories $(_OUT)
 
 $(BLDDIR)/%.s: %.c $(HSOURCE)
 	$(XCC) -S -I./ $(CFLAGS) $(PREFLAGS) $< -o $@
@@ -45,7 +45,7 @@ $(OUTDIR)/%.bin: $(OUTDIR)/%.elf
 $(OUTDIR)/%.lst: $(OUTDIR)/%.elf
 	$(DM) -D $^ > $@
 
-install: directories $(TARGET)_install
+install: directories $(_OUT) $(TARGET)_install
 
 directories:
 	mkdir -p $(BLDDIR)
@@ -56,16 +56,9 @@ clean:
 	rm -rf $(BLDDIR)
 	rm -rf $(OUTDIR)
 
-clean_doc:
-	rm -rf doc
-
-clean_all: clean_doc clean
-
 doc:
-	doxygen doxygen.cfg
-	$(MAKE) -C doc/latex
-	cp doc/latex/refman.pdf doc/doc.pdf
+	$(MAKE) -C doc/
 
 .SUFFIXES:
 .SECONDARY:
-.PHONY: clean clean_all clean_doc directories doc install
+.PHONY: clean directories doc install

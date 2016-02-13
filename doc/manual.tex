@@ -1,0 +1,80 @@
+\documentclass[twoside,a4paper]{refart}
+\usepackage{makeidx}
+\usepackage{ifthen}
+
+\def\bs{\char'134 }
+\newcommand{\ie}{i.\,e.,}
+\newcommand{\eg}{e.\,g..}
+\DeclareRobustCommand\cs[1]{\texttt{\char`\\#1}}
+
+\title{burritOS System Manual}
+\author{Rollen D'Souza (20418141) \\
+rs2dsouz@uwaterloo.ca \\
+Taylor Petrick (20413951) \\
+tpetrick@uwaterloo.ca \\}
+
+\date{\textbf{CS 452 - Kernel 4 \\ \today}}
+\emergencystretch1em  %
+
+\pagestyle{myfootings}
+\markboth{burritOS System Manual}%
+         {burritOS System Manual}
+
+\makeindex 
+\setcounter{tocdepth}{2}
+\begin{document}
+\maketitle
+
+Changes summary....
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin pulvinar euismod ipsum, quis egestas sem cursus eget. Morbi dignissim porttitor vehicula. Vestibulum iaculis, odio eget sagittis luctus, lectus magna iaculis sem, non rhoncus lorem urna id dui. Etiam augue lacus, ullamcorper vel orci ut, tempus semper leo. Praesent malesuada mauris dolor, et laoreet est ullamcorper at. Suspendisse tincidunt semper euismod. Sed ac vulputate lorem. Pellentesque lectus justo, suscipit at velit et, finibus aliquam libero.
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut sed placerat neque. Ut ornare diam a bibendum egestas. Phasellus quis venenatis odio, ac consequat eros. Sed condimentum mauris et dolor tempor commodo. Vivamus eu ex metus. Ut suscipit dui orci, sit amet ornare magna auctor facilisis. Morbi id feugiat metus.
+
+Nam luctus odio at luctus hendrerit. Mauris molestie, purus quis maximus rhoncus, massa purus auctor felis, ac venenatis ex nunc ut arcu. Nam luctus, tellus non tempus ornare, turpis mi finibus sapien, ut bibendum ante risus sed metus. Sed porta nec turpis sit amet accumsan. Maecenas accumsan consectetur nisl, id pellentesque urna. Mauris vel fringilla velit, semper interdum magna. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Praesent ac tempor sem, a cursus purus. In id dui quis lectus ultricies pellentesque. Nunc eget tincidunt dolor. Curabitur placerat pulvinar ex, at maximus diam ultricies vitae. Quisque sit amet tempor mi.
+
+\newpage
+\tableofcontents
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Compiling and Running}
+
+\section{Common Libraries}
+\subsection{Type Interface}
+\subsection{Data Structures}
+\subsection{Utilities}
+
+\section{Hardware Interface}
+\subsection{Memory}
+\subsection{Timers}
+\subsection{UARTs}
+\subsection{Interrupts}
+
+\section{Kernel Design}
+\subsection{Memory Layout}
+\subsection{Data Structures}
+\subsection{Control Flow}
+\subsection{Event Handling}
+\subsection{Message Passing}
+\subsection{Performance}
+
+\section{System Calls}
+\subsection{System State}
+\subsection{Task Management}
+\subsection{Messaging}
+\subsection{Performance}
+\subsection{Events}
+\subsection{Memory}
+
+\section{Userspace}
+\subsection{Services}
+\subsection{Tasks}
+
+\section{Known Issues}
+\section{File Listings}
+
+\printindex
+
+\end{document}
