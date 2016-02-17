@@ -33,6 +33,7 @@ U32* scheduler(U32* sp)
         assertOk(empty);
         if (empty == 1)
         {
+            assert(!kernel.systemRunning);
             return 0;
         }
         

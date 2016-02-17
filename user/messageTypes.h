@@ -25,12 +25,18 @@
 #define     DRIVER_MESSAGE_TX_TRAIN_MULTI_BYTE  21
 #define     MESSAGE_TRAIN_SET_SPEED             22
 #define     MESSAGE_TRAIN_REVERSE               23
+#define     MESSAGE_NOTIFY                      24
 #define     MESSAGE_TRAIN_SOLENOID_OFF          0x20 // 32
 #define     MESSAGE_TRAIN_SWITCH_STRAIGHT       0x21 // 33
 #define     MESSAGE_TRAIN_SWITCH_CURVED         0x22 // 34
 #define     MESSAGE_TRAIN_GO                    0x60 // 96
 #define     MESSAGE_TRAIN_STOP                  0x61 // 97
-#define     MESSAGE_TRAIN_GET_SENSOR            0xC0 // 192
-
+#define     MESSAGE_TRAIN_GET_SENSOR            0xC0 // (192, 224) is reserved
+#define     MESSAGE_TRAIN_GET_SENSOR_A          0xC1
+#define     MESSAGE_TRAIN_GET_SENSOR_B          0xC2
+#define     MESSAGE_TRAIN_GET_SENSOR_C          0xC3
+#define     MESSAGE_TRAIN_GET_SENSOR_D          0xC4
+#define     MESSAGE_TRAIN_GET_SENSOR_E          0xC5
+#define     MESSAGE_TRAIN_GET_SENSOR_F          0xC6
 #endif
 

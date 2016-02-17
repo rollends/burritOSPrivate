@@ -43,6 +43,17 @@ S32 queueU8Pop(QueueU8* queue, U8* value)
     return OK;
 }
 
+S32 queueU8Peek(QueueU8* queue, U8* value)
+{
+    if (queue->count == 0)
+    {
+        return -1;
+    }
+
+    *value = queue->data[queue->head];
+    return OK;
+}
+
 S32 queueU16Init(QueueU16* queue, U16* data, const U32 length)
 {
     IS_NOT_NULL(queue);
@@ -82,5 +93,16 @@ S32 queueU16Pop(QueueU16* queue, U16* value)
     *value = queue->data[queue->head];
     queue->head = (queue->head + 1) & (queue->length-1);
 
+    return OK;
+}
+
+S32 queueU16Peek(QueueU16* queue, U16* value)
+{
+    if (queue->count == 0)
+    {
+        return -1;
+    }
+
+    *value = queue->data[queue->head];
     return OK;
 }

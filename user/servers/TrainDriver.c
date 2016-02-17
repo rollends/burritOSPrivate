@@ -4,70 +4,6 @@
 #include "user/services/services.h"
 #include "user/servers/TrainDriver.h"
 
-void trainStop(TaskID server)
-{
-    MessageEnvelope env;
-    env.type = MESSAGE_TRAIN_STOP;
-    sysSend(server.value, &env, &env);
-}
-
-void trainGo(TaskID server)
-{
-    MessageEnvelope env;
-    env.type = MESSAGE_TRAIN_GO;
-    sysSend(server.value, &env, &env);
-}
-
-void trainSolenoidOff(TaskID server)
-{
-    MessageEnvelope env;
-    env.type = MESSAGE_TRAIN_SOLENOID_OFF;
-    sysSend(server.value, &env, &env);
-}
-
-void trainReverseDirection(TaskID server, U8 train, U8 newSpeed)
-{
-    assert( train <= 80 && train >= 1 );
-    assert( newSpeed < 15 );
-
-    TaskID clock = nsWhoIs(Clock);
-
-    trainSetSpeed(server, train, 0);
-    clockDelayBy(clock, 200);
-
-    MessageEnvelope env;
-    env.type = MESSAGE_TRAIN_REVERSE;
-    env.message.MessageU16.body = (train << 8) | 0x0F;
-    sysSend(server.value, &env, &env);
-
-    clockDelayBy(clock, 100);
-    trainSetSpeed(server, train, newSpeed);
-}
-
-void trainSetSpeed(TaskID server, U8 train, U8 speed)
-{
-    assert( speed < 15 );
-    assert( train <= 80 && train >= 1 );
-
-    MessageEnvelope env;
-    env.type = MESSAGE_TRAIN_SET_SPEED;
-    env.message.MessageU16.body = (train << 8) | speed;
-    sysSend(server.value, &env, &env);
-}
-
-void trainSwitch(TaskID server, U8 switchAddress, SwitchState sw)
-{
-    TaskID clock = nsWhoIs(Clock);
-    
-    MessageEnvelope env;
-    env.type = sw;
-    env.message.MessageU8.body = switchAddress;
-    sysSend(server.value, &env, &env);
-
-    clockDelayBy(clock, 16);
-    trainSolenoidOff(server);
-}
-
 static U8 getTrainDriverMessageType(U16 inMsgType)
 {
     if( (inMsgType & 0x00FF) <= 0x0F ) return DRIVER_MESSAGE_TX_TRAIN_MULTI_BYTE;
@@ -81,6 +17,12 @@ static U8 getTrainDriverMessageType(U16 inMsgType)
     case MESSAGE_TRAIN_GET_SENSOR:
         return DRIVER_MESSAGE_TX_TRAIN_MULTI_BYTE;
     
+    case MESSAGE_TRAIN_GET_SENSOR_A:
+    case MESSAGE_TRAIN_GET_SENSOR_B:
+    case MESSAGE_TRAIN_GET_SENSOR_C:
+    case MESSAGE_TRAIN_GET_SENSOR_D:
+    case MESSAGE_TRAIN_GET_SENSOR_E:
+    case MESSAGE_TRAIN_GET_SENSOR_F:
     case MESSAGE_TRAIN_GO:
     case MESSAGE_TRAIN_STOP:
     case MESSAGE_TRAIN_SOLENOID_OFF:
@@ -107,32 +49,61 @@ void TrainDriver(void)
 
     MessageEnvelope rcvMessage, commandMsg;
     TaskID rcvID;
-
-    U16 commandBacking[16];
-    QueueU16 commands;
-    queueU16Init(&commands, commandBacking, 16);
-   
+  
     U16 blockedTaskCommandsBacking[16];
     U16 blockedTasksBacking[16];
+    U8 blockedTaskOriginalTypeBacking[16];
     QueueU16 blockedTaskCommands;
     QueueU16 blockedTasks;
+    QueueU8 blockedTaskOriginalType;
     queueU16Init(&blockedTaskCommands, blockedTaskCommandsBacking, 16);
     queueU16Init(&blockedTasks, blockedTasksBacking, 16);
+    queueU8Init(&blockedTaskOriginalType, blockedTaskOriginalTypeBacking, 16);
 
     U8 isOutputWaiting = 0;
+
+    U16 activeSensorRequestId = 0;
     while( sysRunning() != 0 )
     {
         sysReceive(&rcvID.value, &rcvMessage);
 
+        U8 oldType = rcvMessage.type;
+        
+        // Some commands need priming. That is, the multi-byte commands and the 
+        // sensor request need some extra information.
         switch( rcvMessage.type )
         {
+        case MESSAGE_TRAIN_GET_SENSOR_A:
+        case MESSAGE_TRAIN_GET_SENSOR_B:
+        case MESSAGE_TRAIN_GET_SENSOR_C:
+        case MESSAGE_TRAIN_GET_SENSOR_D:
+        case MESSAGE_TRAIN_GET_SENSOR_E:
+        case MESSAGE_TRAIN_GET_SENSOR_F:
+        {
+            assert(activeSensorRequestId == 0);
+            activeSensorRequestId = rcvID.value;
+            break;
+        }
         case MESSAGE_TRAIN_REVERSE:
         case MESSAGE_TRAIN_SET_SPEED:
         {
             rcvMessage.type = rcvMessage.message.MessageU16.body & 0xFF;
             rcvMessage.message.MessageU8.body = rcvMessage.message.MessageU16.body >> 8;
+            break;
+        }
         }
 
+        // Actual Message Processing.
+        switch(oldType)
+        {
+        case MESSAGE_TRAIN_GET_SENSOR_A:
+        case MESSAGE_TRAIN_GET_SENSOR_B:
+        case MESSAGE_TRAIN_GET_SENSOR_C:
+        case MESSAGE_TRAIN_GET_SENSOR_D:
+        case MESSAGE_TRAIN_GET_SENSOR_E:
+        case MESSAGE_TRAIN_GET_SENSOR_F:
+        case MESSAGE_TRAIN_REVERSE:
+        case MESSAGE_TRAIN_SET_SPEED: 
         case MESSAGE_TRAIN_SWITCH_STRAIGHT:
         case MESSAGE_TRAIN_SWITCH_CURVED:
         case MESSAGE_TRAIN_GO:
@@ -144,18 +115,19 @@ void TrainDriver(void)
             {
                 commandMsg.type = getTrainDriverMessageType(fullCmd);
                 commandMsg.message.MessageU16.body = fullCmd;
+                
                 sysReply(output.value, &commandMsg);
-                sysReply(rcvID.value, &rcvMessage);
+                if( oldType < MESSAGE_TRAIN_GET_SENSOR )
+                {
+                    sysReply(rcvID.value, &rcvMessage);
+                }
                 isOutputWaiting = 0;
-            }
-            else if( queueU16Push(&commands, fullCmd) >= 0 )
-            {
-                sysReply(rcvID.value, &rcvMessage);
-            }
+            } 
             else
             {
                 queueU16Push(&blockedTaskCommands, fullCmd);
                 queueU16Push(&blockedTasks, rcvID.value);
+                queueU8Push(&blockedTaskOriginalType, oldType);
             }
             break;
         } 
@@ -163,20 +135,26 @@ void TrainDriver(void)
         case DRIVER_MESSAGE_TX_TRAIN:
         case DRIVER_MESSAGE_TX_TRAIN_MULTI_BYTE:
         {
-            if( queueU16Pop(&commands, &commandMsg.message.MessageU16.body) >= 0 )
+            if( queueU16Pop(&blockedTaskCommands, &commandMsg.message.MessageU16.body) >= 0 )
             {
                 commandMsg.type = getTrainDriverMessageType(commandMsg.message.MessageU16.body);
                 sysReply(output.value, &commandMsg);
 
-                U16 val;
-                if( queueU16Pop(&blockedTaskCommands, &val) >= 0 )
+                U16 id;
+                U8 oldType;
+                assertOk(queueU16Pop(&blockedTasks, &id));
+                assertOk(queueU8Pop(&blockedTaskOriginalType, &oldType));
+
+                rcvMessage.type = oldType;
+                rcvMessage.message.MessageU32.body = 0;
+                
+                if( oldType < MESSAGE_TRAIN_GET_SENSOR )
                 {
-                    U16 id;
-                    queueU16Pop(&blockedTasks, &id);
-                    rcvMessage.type = val;
-                    rcvMessage.message.MessageU32.body = val;
                     sysReply(id, &rcvMessage);
-                    queueU16Push(&commands, val);
+                }
+                else
+                {
+                    assert(id == activeSensorRequestId);
                 }
             }
             else
@@ -186,9 +164,16 @@ void TrainDriver(void)
             break;
         }
 
+        case DRIVER_MESSAGE_RCV_SENSORS:
+        {
+            sysReply(rcvID.value, &rcvMessage);
+            sysReply(activeSensorRequestId, &rcvMessage);
+            activeSensorRequestId = 0;
+            break;
+        }
 
         default:
-            sysReply( rcvID.value, &rcvMessage );
+            assert(0);
             break;
         }
     }
@@ -207,8 +192,6 @@ void TrainOutputNotifier(void)
     {
         sysSend(server.value, &notif, &notif);
         
-        assert(!(notif.message.MessageU16.body & 0x0080));
-
         sysWrite(EVENT_TRAIN_WRITE, notif.message.MessageU16.body & 0x00FF);
         if(notif.type == DRIVER_MESSAGE_TX_TRAIN_MULTI_BYTE)
             sysWrite(EVENT_TRAIN_WRITE, notif.message.MessageU16.body >> 8);

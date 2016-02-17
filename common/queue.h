@@ -78,6 +78,19 @@ S32 queueU8Push(QueueU8* queue, const U8 value);
  */
 S32 queueU8Pop(QueueU8* queue, U8* value);
 
+/**
+ * Peeks at the value at the head of the U8 Queue.
+ * Does not change the queue. Will not change the 
+ * return value (2nd parameter) if there is nothing
+ * at the head.
+ *
+ * @param   queue   The queue to peek in.
+ * @param   value   The destination to load the value 
+ *                  *if* there is a value to load.
+ * 
+ * @return  0 on success, else an error code (if nothing to load)
+ */
+S32 queueU8Peek(QueueU8* queue, U8* value);
 
 /**
  * Initializes a U16 queue
@@ -110,4 +123,18 @@ S32 queueU16Push(QueueU16* queue, const U16 value);
  */
 S32 queueU16Pop(QueueU16* queue, U16* value);
 
+
+/**
+ * Peeks at the value at the head of the U16 Queue.
+ * Does not change the queue. Will not change the 
+ * return value (2nd parameter) if there is nothing
+ * at the head.
+ *
+ * @param   queue   The queue to peek in.
+ * @param   value   The destination to load the value 
+ *                  *if* there is a value to load.
+ * 
+ * @return  0 on success, else an error code (if nothing to load)
+ */
+S32 queueU16Peek(QueueU16* queue, U16* value);
 #endif

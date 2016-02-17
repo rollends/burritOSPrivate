@@ -17,7 +17,9 @@ typedef enum
     TerminalInput     = 1,
     TerminalOutput    = 2,
     Train             = 3,
-    TaskNameCount     = 4,
+    TrainSwitches     = 4,
+    TrainSensors      = 5,
+    TaskNameCount     = 6,
 } TaskName;
 
 /** Nameserver Registration Method

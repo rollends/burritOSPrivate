@@ -1,7 +1,8 @@
 #include "common/string.h"
-#include "user/services/trainCommand.h"
+#include "user/messageTypes.h"
+#include "user/services/services.h"
 
-S32 dispatchTrainCommand(TaskID server, String string)
+S32 dispatchTrainCommand(String string)
 {
     U32 len = strlen(string);
 
@@ -10,6 +11,8 @@ S32 dispatchTrainCommand(TaskID server, String string)
     strtolower(string);
     ConstString cstring = (ConstString)string;
 
+    TaskID  sTrain      = nsWhoIs(Train),
+            sSwitch     = nsWhoIs(TrainSwitches);
 
     if( cstring[0] == 't' && cstring[1] == 'r' )
     {
@@ -19,14 +22,14 @@ S32 dispatchTrainCommand(TaskID server, String string)
         strskipws(&cstring);
         U8 speed = stratoui(&cstring);
         
-        trainSetSpeed(server, train, speed);
+        trainSetSpeed(sTrain, train, speed);
     }
     else if( cstring[0] == 'r' && cstring[1] == 'v' )
     {
         cstring += 2;
         strskipws(&cstring);
         U8 train = stratoui(&cstring);
-        trainReverseDirection(server, train, 0);
+        trainReverseDirection(sTrain, train, 0);
     }
     else if( cstring[0] == 's' && cstring[1] == 'w' )
     {
@@ -45,11 +48,81 @@ S32 dispatchTrainCommand(TaskID server, String string)
         default:
             return -1;
         }
-        trainSwitch(server, switchId, sw);
+        trainSwitch(sSwitch, switchId, sw);
     }
     else
     {
         return -1;
     }
     return 0;
+}
+
+void trainStop(TaskID server)
+{
+    MessageEnvelope env;
+    env.type = MESSAGE_TRAIN_STOP;
+    sysSend(server.value, &env, &env);
+}
+
+void trainGo(TaskID server)
+{
+    MessageEnvelope env;
+    env.type = MESSAGE_TRAIN_GO;
+    sysSend(server.value, &env, &env);
+}
+
+void trainSolenoidOff(TaskID server)
+{
+    MessageEnvelope env;
+    env.type = MESSAGE_TRAIN_SOLENOID_OFF;
+    sysSend(server.value, &env, &env);
+}
+
+void trainReverseDirection(TaskID server, U8 train, U8 newSpeed)
+{
+    assert( train <= 80 && train >= 1 );
+    assert( newSpeed < 15 );
+
+    TaskID clock = nsWhoIs(Clock);
+
+    trainSetSpeed(server, train, 0);
+    clockDelayBy(clock, 200);
+
+    MessageEnvelope env;
+    env.type = MESSAGE_TRAIN_REVERSE;
+    env.message.MessageU16.body = (train << 8) | 0x0F;
+    sysSend(server.value, &env, &env);
+
+    clockDelayBy(clock, 100);
+    trainSetSpeed(server, train, newSpeed);
+}
+
+void trainSetSpeed(TaskID server, U8 train, U8 speed)
+{
+    assert( speed < 15 );
+    assert( train <= 80 && train >= 1 );
+
+    MessageEnvelope env;
+    env.type = MESSAGE_TRAIN_SET_SPEED;
+    env.message.MessageU16.body = (train << 8) | speed;
+    sysSend(server.value, &env, &env);
+}
+
+U8 trainReadSensorGroup(TaskID sensorServer, U8 sensorGroup)
+{
+    assert( sensorGroup >= 1 && sensorGroup <= 32 );
+
+    MessageEnvelope env;
+    env.type = MESSAGE_TRAIN_GET_SENSOR;
+    env.message.MessageU8.body = sensorGroup;
+    sysSend(sensorServer.value, &env, &env);
+    return env.message.MessageU16.body;
+}
+
+void trainSwitch(TaskID switchServer, U8 switchAddress, SwitchState sw)
+{
+    MessageEnvelope env;
+    env.type = sw;
+    env.message.MessageU8.body = switchAddress;
+    sysSend(switchServer.value, &env, &env);
 }

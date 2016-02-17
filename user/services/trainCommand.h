@@ -16,7 +16,8 @@ void trainSwitch(TaskID server, U8 address, SwitchState state);
 void trainSolenoidOff(TaskID train);
 void trainReverseDirection(TaskID server, U8 train, U8 newSpeed);
 void trainSetSpeed(TaskID server, U8 train, U8 speed);
+U8 trainReadSensorGroup(TaskID sensorServer, U8 sensorGroup);
 
-S32 dispatchTrainCommand(TaskID id, String string);
+S32 dispatchTrainCommand(String string);
 
 #endif

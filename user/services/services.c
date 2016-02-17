@@ -13,4 +13,6 @@ void setupUserServices(void)
     sysCreate(1, &TerminalInputDriver);
     sysCreate(1, &TerminalOutputDriver);
     sysCreate(1, &TrainDriver);
+    sysCreate(1, &TrainSwitchServer);
+    sysCreate(1, &TrainSensorServer);
 }
