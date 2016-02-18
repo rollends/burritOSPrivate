@@ -26,11 +26,15 @@
 #define     MESSAGE_TRAIN_SET_SPEED             22
 #define     MESSAGE_TRAIN_REVERSE               23
 #define     MESSAGE_NOTIFY                      24
+#define     MESSAGE_CLOCKSERVER_NOTIFY_LORES    25
+#define     MESSAGE_CLOCKSERVER_LONG_DELAY_BY   26
 #define     MESSAGE_TRAIN_SOLENOID_OFF          0x20 // 32
 #define     MESSAGE_TRAIN_SWITCH_STRAIGHT       0x21 // 33
 #define     MESSAGE_TRAIN_SWITCH_CURVED         0x22 // 34
 #define     MESSAGE_TRAIN_GO                    0x60 // 96
 #define     MESSAGE_TRAIN_STOP                  0x61 // 97
+#define     MESSAGE_TRAIN_SENSOR_RESET_OFF      0x80 // 128
+#define     MESSAGE_TRAIN_GET_SENSOR_ABCDE      0x85 // 133
 #define     MESSAGE_TRAIN_GET_SENSOR            0xC0 // (192, 224) is reserved
 #define     MESSAGE_TRAIN_GET_SENSOR_A          0xC1
 #define     MESSAGE_TRAIN_GET_SENSOR_B          0xC2

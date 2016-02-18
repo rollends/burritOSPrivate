@@ -14,9 +14,10 @@ static U8 getTrainDriverMessageType(U16 inMsgType)
     case MESSAGE_TRAIN_SWITCH_CURVED:
     case MESSAGE_TRAIN_SET_SPEED:
     case MESSAGE_TRAIN_REVERSE:
-    case MESSAGE_TRAIN_GET_SENSOR:
         return DRIVER_MESSAGE_TX_TRAIN_MULTI_BYTE;
-    
+   
+    case MESSAGE_TRAIN_SENSOR_RESET_OFF:
+    case MESSAGE_TRAIN_GET_SENSOR:
     case MESSAGE_TRAIN_GET_SENSOR_A:
     case MESSAGE_TRAIN_GET_SENSOR_B:
     case MESSAGE_TRAIN_GET_SENSOR_C:
@@ -80,6 +81,8 @@ void TrainDriver(void)
         case MESSAGE_TRAIN_GET_SENSOR_E:
         case MESSAGE_TRAIN_GET_SENSOR_F:
         {
+            // 0 is a special value meaning no active request. should be 
+            // fine since there is no idle task requests.
             assert(activeSensorRequestId == 0);
             activeSensorRequestId = rcvID.value;
             break;
@@ -96,6 +99,8 @@ void TrainDriver(void)
         // Actual Message Processing.
         switch(oldType)
         {
+        case MESSAGE_TRAIN_SENSOR_RESET_OFF:
+        case MESSAGE_TRAIN_GET_SENSOR: // Actually does a memory reset!
         case MESSAGE_TRAIN_GET_SENSOR_A:
         case MESSAGE_TRAIN_GET_SENSOR_B:
         case MESSAGE_TRAIN_GET_SENSOR_C:
@@ -117,7 +122,7 @@ void TrainDriver(void)
                 commandMsg.message.MessageU16.body = fullCmd;
                 
                 sysReply(output.value, &commandMsg);
-                if( oldType < MESSAGE_TRAIN_GET_SENSOR )
+                if( oldType <= MESSAGE_TRAIN_GET_SENSOR )
                 {
                     sysReply(rcvID.value, &rcvMessage);
                 }
@@ -148,12 +153,14 @@ void TrainDriver(void)
                 rcvMessage.type = oldType;
                 rcvMessage.message.MessageU32.body = 0;
                 
-                if( oldType < MESSAGE_TRAIN_GET_SENSOR )
+                if( oldType <= MESSAGE_TRAIN_GET_SENSOR )
                 {
                     sysReply(id, &rcvMessage);
                 }
                 else
                 {
+                    // Get REKT. More than one sensor request is happening; did the
+                    // sensor request server get ****ed?
                     assert(id == activeSensorRequestId);
                 }
             }
@@ -167,8 +174,11 @@ void TrainDriver(void)
         case DRIVER_MESSAGE_RCV_SENSORS:
         {
             sysReply(rcvID.value, &rcvMessage);
-            sysReply(activeSensorRequestId, &rcvMessage);
-            activeSensorRequestId = 0;
+            if(activeSensorRequestId)
+            {
+                sysReply(activeSensorRequestId, &rcvMessage);
+                activeSensorRequestId = 0;
+            }
             break;
         }
 

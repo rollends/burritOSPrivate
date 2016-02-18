@@ -38,6 +38,7 @@ void TrainSensorServer(void)
     
     U16 activeTask = 0; 
     U8 activeRequest = 0;
+ 
     for(;;)
     {
         sysReceive(&rcvId.value, &rcvEnv);

@@ -11,7 +11,7 @@ typedef struct DelayedTask
 
 typedef struct
 {
-    DelayedTask     buffer[16];
+    DelayedTask     buffer[32];
     DelayedTask*    freeList;
     DelayedTask*    queue;
 } DelayQueue;
@@ -21,20 +21,24 @@ void delayQueueInit( DelayQueue* dq );
 
 void ClockServer()
 {
+    nsRegister( Clock );
+    
     U32 absoluteTime = 0;
 
-    DelayQueue dqueue;
+    DelayQueue          dqueue,
+                        dqueueLoRes;
+    MessageEnvelope     response, 
+                        respondTime;
+ 
     delayQueueInit( &dqueue );
-
-    MessageEnvelope response;
+    delayQueueInit( &dqueueLoRes );
+    
     response.type = MESSAGE_CLOCKSERVER_WAKE;
-
-    MessageEnvelope respondTime;
     respondTime.type = MESSAGE_CLOCKSERVER_WAKE;
 
     sysCreate(0, &ClockNotifier);
+    sysCreate(1, &ClockLoResNotifier);
 
-    nsRegister( Clock );
     for(;;)
     {
         MessageEnvelope envelope;
@@ -46,6 +50,10 @@ void ClockServer()
         {
         case MESSAGE_CLOCKSERVER_DELAY_BY:
             delayQueuePush( &dqueue, id, envelope.message.MessageU32.body );
+            break;
+        
+        case MESSAGE_CLOCKSERVER_LONG_DELAY_BY:
+            delayQueuePush( &dqueueLoRes, id, envelope.message.MessageU32.body );
             break;
 
         case MESSAGE_CLOCKSERVER_GET_TIME:
@@ -77,6 +85,26 @@ void ClockServer()
             break;
         }
 
+        case MESSAGE_CLOCKSERVER_NOTIFY_LORES:
+        {
+            sysReply( id.value, &envelope );
+
+            if( !dqueueLoRes.queue )
+            {
+                break;
+            }
+
+            dqueueLoRes.queue->delay--;
+            while( dqueueLoRes.queue && dqueueLoRes.queue->delay <= 0 )
+            {
+                sysReply( dqueueLoRes.queue->tid.value, &response );
+                DelayedTask* free = dqueueLoRes.queue;
+                dqueueLoRes.queue = free->next;
+                free->next = dqueueLoRes.freeList;
+                dqueueLoRes.freeList = free;
+            }
+            break;
+        }
         default:
             break;
         }

@@ -10,6 +10,14 @@ void clockDelayBy( TaskID clockId, U32 ticks )
     sysSend( clockId.value, &envelope, &envelope );
 }
 
+void clockLongDelayBy( TaskID clockId, U32 mult150ms )
+{
+    MessageEnvelope envelope;
+    envelope.type = MESSAGE_CLOCKSERVER_LONG_DELAY_BY;
+    envelope.message.MessageU32.body = mult150ms;
+    sysSend( clockId.value, &envelope, &envelope );
+}
+
 U32 clockTime( TaskID clock )
 {
     MessageEnvelope envelope;
