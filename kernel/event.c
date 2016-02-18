@@ -14,23 +14,23 @@ void eventHandler()
     #endif
         
     U32 status1, status2;
-    interruptStatus(INT_1, &status1);
-    interruptStatus(INT_2, &status2);
+    assertOk(interruptStatus(INT_1, &status1));
+    assertOk(interruptStatus(INT_2, &status2));
     
     if (status2 & 0x00100000)
     {
         U32 status;
-        uartInterruptStatus(UART_1, &status);
+        assertOk(uartInterruptStatus(UART_1, &status));
         if (status & 0x1)
         {
-            uartCTS(UART_1, &kernel.cts);
+            assertOk(uartCTS(UART_1, &kernel.cts));
             if (kernel.cts == 0)
             {
-                uartInterruptTX(UART_1, 0);
+                assertOk(uartInterruptTX(UART_1, 0));
             }
             else
             {
-                uartInterruptTX(UART_1, 1);
+                assertOk(uartInterruptTX(UART_1, 1));
             }
         }
 
@@ -47,12 +47,11 @@ void eventHandler()
                                            desc->tid.value));
 
                 U8 byte = (U8)(TASK_ARG_1(desc));
-                uartWriteByte(UART_1, byte);
-                
+                assertOk(uartWriteByte(UART_1, byte));
                 kernel.eventTable[EVENT_TRAIN_WRITE] = VAL_TO_ID(0);
             }
 
-            uartInterruptTX(UART_1, 0);
+            assertOk(uartInterruptTX(UART_1, 0));
         }
 
         if (status & 0x2)
@@ -60,7 +59,7 @@ void eventHandler()
             TaskID tid = kernel.eventTable[EVENT_TRAIN_READ];
 
             U8 byte;
-            uartReadByte(UART_1, &byte);
+            assertOk(uartReadByte(UART_1, &byte));
 
             if (tid.value != 0)
             {
@@ -119,7 +118,7 @@ void eventHandler()
     {
         TaskID tid = kernel.eventTable[EVENT_TERMINAL_READ];
         U8 byte;
-        uartReadByte(UART_2, &byte);
+        assertOk(uartReadByte(UART_2, &byte));
 
         if (tid.value != 0)
         {
@@ -147,11 +146,11 @@ void eventHandler()
                                        desc->tid.value));
 
             U8 byte = (U8)(TASK_ARG_1(desc));
-            uartWriteByte(UART_2, byte);
+            assertOk(uartWriteByte(UART_2, byte));
             
             kernel.eventTable[EVENT_TERMINAL_WRITE] = VAL_TO_ID(0);
         }
 
-        uartInterruptTX(UART_2, 0);
+        assertOk(uartInterruptTX(UART_2, 0));
     }
 }

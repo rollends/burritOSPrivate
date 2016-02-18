@@ -74,7 +74,7 @@ S32 taskTableFree(TaskTable* table, const TaskID tid)
     desc->pid.value = 0;
     desc->state = eZombie;
 
-    memoryAllocatorFree(&table->memoryAllocator, desc->stack + 15);
+    assertOk(memoryAllocatorFree(&table->memoryAllocator, desc->stack + 15));
 
     return 0;
 }

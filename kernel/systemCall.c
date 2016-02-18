@@ -177,11 +177,11 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             switch (arg0)
             {
                 case EVENT_TERMINAL_WRITE:
-                    uartInterruptTX(UART_2, 1);
+                    assertOk(uartInterruptTX(UART_2, 1));
                     break;
 
                 case EVENT_TRAIN_WRITE:
-                    uartInterruptTX(UART_1, 1);
+                    assertOk(uartInterruptTX(UART_1, 1));
                     break;
 
                 default:
