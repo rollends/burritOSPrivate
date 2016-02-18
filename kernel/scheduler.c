@@ -44,8 +44,8 @@ U32* scheduler(U32* sp)
 
 ExitScheduler:
     #ifdef KERNEL_PERF
-        desc->performance[ePerfKernel] +=
-            timerSample(TIMER_4, &kernel.perfState);
+        assertOk(timerSample(TIMER_4, &kernel.perfState));
+        desc->performance[ePerfKernel] += kernel.perfState.delta;
     #endif
 
     return sp;

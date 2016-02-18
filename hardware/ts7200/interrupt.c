@@ -2,27 +2,28 @@
 #include "hardware/memory.h"
 #include "hardware/ts7200/ts7200.h"
 
-S32 interruptEnable(const U32 interrupt, const U32 bits)
+RETURN interruptEnable(const U32 interrupt, const U32 bits)
 {
     RWRegister enable = (RWRegister)(interrupt + ENABLE_OFFSET);
     U32 values = __ldr(enable);
     values |= bits;
     __str(enable, values);
 
-    return 0;
+    IS_OK();
 }
 
-S32 interruptClear(const U32 interrupt, const U32 bits)
+RETURN interruptClear(const U32 interrupt, const U32 bits)
 {
     RWRegister clear = (RWRegister)(interrupt + EN_CLEAR_OFFSET);
-
     __str(clear, bits);
 
-    return 0;
+    IS_OK();
 }
 
-U32 interruptStatus(const U32 interrupt)
+RETURN interruptStatus(const U32 interrupt, U32* status)
 {
-    RORegister status = (RORegister)(interrupt + STATUS_OFFSET);
-    return __ldr(status);
+    RORegister stat = (RORegister)(interrupt + STATUS_OFFSET);
+    *status = __ldr(stat);
+
+    IS_OK();
 }

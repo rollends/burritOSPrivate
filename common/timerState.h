@@ -14,6 +14,9 @@ typedef struct
     /// The last recorded time
     U32 last;
 
+    /// The last time delta
+    U32 delta;
+    
     /// The total running time
     U32 total;
 } TimerState;

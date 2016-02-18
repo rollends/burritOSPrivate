@@ -9,17 +9,21 @@ void eventHandler()
 {
     #ifdef KERNEL_PERF
         TaskDescriptor* desc = kernel.activeTask;
-        desc->performance[ePerfTask] += timerSample(TIMER_4, &kernel.perfState);
+        assertOk(timerSample(TIMER_4, &kernel.perfState));
+        desc->performance[ePerfTask] += kernel.perfState.delta;
     #endif
         
-    U32 status1 = interruptStatus(INT_1);
-    U32 status2 = interruptStatus(INT_2);
+    U32 status1, status2;
+    interruptStatus(INT_1, &status1);
+    interruptStatus(INT_2, &status2);
+    
     if (status2 & 0x00100000)
     {
-        U32 status = uartInterruptStatus(UART_1);
+        U32 status;
+        uartInterruptStatus(UART_1, &status);
         if (status & 0x1)
         {
-            kernel.cts = uartCTS(UART_1);
+            uartCTS(UART_1, &kernel.cts);
             if (kernel.cts == 0)
             {
                 uartInterruptTX(UART_1, 0);

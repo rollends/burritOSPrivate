@@ -6,10 +6,8 @@
 
 void PerformanceTask()
 {
-    printBlocking("yoyo\r\n");
 #ifdef KERNEL_PERF
     TaskID clock;
-    printBlocking("yoyoma\r\n");
     nsWhoIs( Clock, &clock );
 
     printBlocking("Performance starting, blocked on clock...\r\n");

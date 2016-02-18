@@ -2,11 +2,21 @@
 #include "hardware/timer.h"
 #include "hardware/ts7200/ts7200.h"
 
-S32 timerEnable(const U32 timer,
-                const U32 enable,
-                const U32 mode,
-                const U32 clk)
+#ifdef DEVICE_CHECK
+    #define IS_DEVICE(d) \
+        do { if (d!=TIMER_1 && d!=TIMER_2 && d!=TIMER_3 && d!=TIMER_4) \
+                return ERROR_DEVICE; } while(0)
+#else
+    #define IS_DEVICE(d)
+#endif
+
+RETURN timerEnable(const U32 timer,
+                   const U32 enable,
+                   const U32 mode,
+                   const U32 clk)
 {
+    IS_DEVICE(timer);
+
     RWRegister control = (RWRegister)(timer + CRTL_OFFSET);
     U32 value = __ldr(control);
 
@@ -23,80 +33,104 @@ S32 timerEnable(const U32 timer,
 
     __str(control, value);
 
-    return 0;
+    IS_OK();
 }
 
-S32 timerClear(const U32 timer)
+RETURN timerClear(const U32 timer)
 {
+    IS_DEVICE(timer);
+
     if (timer != TIMER_4)
     {
         RWRegister value = (RWRegister)(timer + CLR_OFFSET);
         __str(value, 1);
     }
 
-    return 0;
+    IS_OK();
 }
 
-U32 timerGetValue(const U32 timer)
+RETURN timerGetValue(const U32 timer, U32* value)
 {
+    IS_DEVICE(timer);
+    IS_NOT_NULL(value);
+    IS_IN_RANGE(value);
+    
     RORegister rvalue = (RWRegister)(timer + VAL_OFFSET);
-    return *rvalue;
+    *value = __ldr(rvalue);
+
+    IS_OK();
 }
 
-S32 timerSetValue(const U32 timer, const U32 value)
+RETURN timerSetValue(const U32 timer, const U32 value)
 {
+    IS_DEVICE(timer);
+
     if (timer != TIMER_4)
     {
         RWRegister load = (RWRegister)(timer + LDR_OFFSET);
         __str(load, value);
     }
 
-    return 0;
+    IS_OK();
 }
 
-U32 timerStart(const U32 timer, TimerState* state)
+RETURN timerStart(const U32 timer, TimerState* state)
 {
-    state->start = timerGetValue(timer);
+    IS_DEVICE(timer);
+    IS_NOT_NULL(state);
+    IS_IN_RANGE(state);
+    
+    RORegister rvalue = (RWRegister)(timer + VAL_OFFSET);
+    state->start = __ldr(rvalue);
     state->last = state->start;
     state->total = 0;
     
-    return state->last;
+    IS_OK();
 }
 
-U32 timerSample(const U32 timer, TimerState * state)
+RETURN timerSample(const U32 timer, TimerState* state)
 {
-    U32 value = timerGetValue(timer);
-    U32 result;
+    IS_DEVICE(timer);
+    IS_NOT_NULL(state);
+    IS_IN_RANGE(state);
+
+    RORegister rvalue = (RWRegister)(timer + VAL_OFFSET);
+    U32 value = __ldr(rvalue);
+
+    U32 delta;
 
     if (timer == TIMER_4)
     {
         if (value < state->last)
         {
-            result = value + (0xFFFFFFFF - state->last);
+            delta = value + (0xFFFFFFFF - state->last);
         }   
         else
         {
-            result = value - state->last;
+            delta = value - state->last;
         }
     }
     else if (value > state->last)
     {
         if (timer == TIMER_3)
         {
-            result = state->last + (0xFFFFFFFF - value);
+            delta = state->last + (0xFFFFFFFF - value);
         }
         else
         {
-            result = state->last + (0x0000FFFF - value);
+            delta = state->last + (0x0000FFFF - value);
         }
     }   
     else
     {
-        result = state->last - value;
+        delta = state->last - value;
     }
 
     state->last = value;
-    state->total += result;
+    state->delta = delta;
+    state->total += delta;
 
-    return result;
+    IS_OK();
 }
+
+#undef IS_DEVICE

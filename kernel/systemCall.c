@@ -13,7 +13,8 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
     TaskDescriptor* desc = kernel.activeTask;
 
     #ifdef KERNEL_PERF
-        desc->performance[ePerfTask] += timerSample(TIMER_4, &kernel.perfState);
+        assertOk(timerSample(TIMER_4, &kernel.perfState));
+        desc->performance[ePerfTask] += kernel.perfState.delta;
     #endif
         
     switch (id)

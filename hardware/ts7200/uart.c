@@ -2,13 +2,23 @@
 #include "hardware/uart.h"
 #include "hardware/ts7200/ts7200.h"
 
-S32 uartEnable(const U32 uart,
-               const U32 enable,
-               const U32 timeout,
-               const U32 trans,
-               const U32 rcv,
-               const U32 modem)
+#ifdef DEVICE_CHECK
+    #define IS_DEVICE(d) \
+        do { if (d!=UART_1 && d!=UART_2) \
+                return ERROR_DEVICE; } while(0)
+#else
+    #define IS_DEVICE(d)
+#endif
+
+RETURN uartEnable(const U32 uart,
+                  const U32 enable,
+                  const U32 timeout,
+                  const U32 trans,
+                  const U32 rcv,
+                  const U32 modem)
 {
+    IS_DEVICE(uart);
+
     RWRegister control = (RWRegister)(uart + UART_CTLR_OFFSET);
     
     U32 value = __ldr(control);
@@ -19,25 +29,29 @@ S32 uartEnable(const U32 uart,
     value = (timeout ? value | RTIEN_MASK : value & ~RTIEN_MASK);
     __str(control, value);
 
-    return 0;
+    IS_OK();
 }
 
-S32 uartSpeed(const U32 uart, const U32 speed)
+RETURN uartSpeed(const U32 uart, const U32 speed)
 {
+    IS_DEVICE(uart);
+
     RWRegister mid = (RWRegister)(uart + UART_LCRM_OFFSET);
     RWRegister low = (RWRegister)(uart + UART_LCRL_OFFSET);
 
     __str(mid, 0x0);
     __str(low, speed);
 
-    return 0;
+    IS_OK();
 }
 
-S32 uartConfig(const U32 uart,
-               const U32 fifo,
-               const U32 stp,
-               const U32 pen)
+RETURN uartConfig(const U32 uart,
+                  const U32 fifo,
+                  const U32 stp,
+                  const U32 pen)
 {
+    IS_DEVICE(uart);
+
     RWRegister high = (RWRegister)(uart + UART_LCRH_OFFSET);
 
     U32 value = __ldr(high);
@@ -47,11 +61,13 @@ S32 uartConfig(const U32 uart,
     value = value | WLEN_MASK;
     __str(high, value);
     
-    return 0;
+    IS_OK();
 }
 
-S32 uartWriteByteBlock(const U32 uart, const U8 byte)
+RETURN uartWriteByteBlock(const U32 uart, const U8 byte)
 {
+    IS_DEVICE(uart);
+
     RWRegister flags = (RWRegister)(uart + UART_FLAG_OFFSET);
     RWRegister data = (RWRegister)(uart + UART_DATA_OFFSET);
 
@@ -60,18 +76,26 @@ S32 uartWriteByteBlock(const U32 uart, const U8 byte)
     }
 
     __strb(data, byte);
-    return 0;
+
+    IS_OK();
 }
 
-S32 uartWriteByte(const U32 uart, const U8 byte)
+RETURN uartWriteByte(const U32 uart, const U8 byte)
 {
+    IS_DEVICE(uart);
+
     RWRegister data = (RWRegister)(uart + UART_DATA_OFFSET);
     __strb(data, byte);
-    return 0;
+
+    IS_OK();
 }
 
-S32 uartReadByteBlock(const U32 uart, U8* byte)
+RETURN uartReadByteBlock(const U32 uart, U8* byte)
 {
+    IS_DEVICE(uart);
+    IS_NOT_NULL(byte);
+    IS_IN_RANGE(byte);
+
     RWRegister flags = (RWRegister)(uart + UART_FLAG_OFFSET);
     RWRegister data = (RWRegister)(uart + UART_DATA_OFFSET);
 
@@ -80,39 +104,59 @@ S32 uartReadByteBlock(const U32 uart, U8* byte)
     }
 
     *byte = __ldr(data);
-    return 0;
+
+    IS_OK();
 }
 
-S32 uartReadByte(const U32 uart, U8* byte)
+RETURN uartReadByte(const U32 uart, U8* byte)
 {
+    IS_DEVICE(uart);
+    IS_NOT_NULL(byte);
+    IS_IN_RANGE(byte);
+
     RWRegister data = (RWRegister)(uart + UART_DATA_OFFSET);
     *byte = __ldr(data);
-    return 0;
+
+    IS_OK();
 }
 
-U32 uartCTS(const U32 uart)
+RETURN uartCTS(const U32 uart, U8* cts)
 {
+    IS_DEVICE(uart);
+    IS_NOT_NULL(cts);
+    IS_IN_RANGE(cts);
+
     RWRegister flags = (RWRegister)(uart + UART_FLAG_OFFSET);
 
-    return __ldr(flags) & CTS_MASK;
+    *cts = __ldr(flags) & CTS_MASK;
+
+    IS_OK();
 }
 
-S32 uartInterruptTX(const U32 uart, const U8 enable)
+RETURN uartInterruptTX(const U32 uart, const U8 enable)
 {
+    IS_DEVICE(uart);
+
     RWRegister control = (RWRegister)(uart + UART_CTLR_OFFSET);
     
     U32 value = __ldr(control);
     value = (enable ? value | TIEN_MASK : value & ~TIEN_MASK);
     __str(control, value);
 
-    return 0;
+    IS_OK();
 }
 
-U8 uartInterruptStatus(const U32 uart)
+RETURN uartInterruptStatus(const U32 uart, U32* status)
 {
-    RWRegister status = (RWRegister)(uart + UART_INTR_OFFSET);
-    U8 result = __ldr(status) & 0xF;
-    __str(status, 0);
+    IS_DEVICE(uart);
+    IS_NOT_NULL(status);
+    IS_IN_RANGE(status);
 
-    return result;
+    RWRegister stat = (RWRegister)(uart + UART_INTR_OFFSET);
+    *status = __ldr(stat) & 0xF;
+    __str(stat, 0);
+
+    IS_OK();
 }
+
+#undef IS_DEVICE

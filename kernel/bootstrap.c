@@ -41,7 +41,7 @@ U32* bootstrap()
 
     // Enable the UART1_OR interrupt and clear the IRQ
     assertOk(interruptEnable(INT_2, 0x00100000));
-    uartInterruptStatus(UART_1);
+    U32 status; uartInterruptStatus(UART_1, &status);
 
     // Initialize the kernel data
     assertOk(kernelDataInit());

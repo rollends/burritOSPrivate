@@ -9,6 +9,7 @@
 #define ERROR_FULL      -4
 #define ERROR_EMPTY     -5
 #define ERROR_RANGE     -6
+#define ERROR_DEVICE    -7
 
 #ifdef NULL_CHECK
     #define IS_NOT_NULL(x) do {if ((x) == 0) return ERROR_NULL;} while(0);

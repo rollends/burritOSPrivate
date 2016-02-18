@@ -38,8 +38,8 @@ void PerfTestTask()
         {
             sysSend( timingId, &env, &env );
         }
-        printBlocking("%x\r\n", timerGetValue(TIMER_3));
-        printBlocking("Timed receive-first message at %x\r\n", timerSample(TIMER_3, &state ) );
+        timerSample(TIMER_3, &state);
+        printBlocking("Timed receive-first message at %x\r\n", state.delta);
         env.type = 0;
         sysSend(timingId, &env, &env);
     }
@@ -49,15 +49,20 @@ void InitialTask()
 {
     sysCreate(0, &Nameserver);
     sysCreate(1, &ClockServer);
-    sysCreate(0, &PerformanceTask);
+    sysCreate(2, &PerformanceTask);
 
     sysWrite(EVENT_TRAIN_WRITE, 0x60);
     sysCreate(0, &PerfTestTask);
 
     while (1)
     {
-        sysRead(EVENT_TERMINAL_READ);
+        U8 byte = sysRead(EVENT_TERMINAL_READ);
 
+        if (byte == 'q')
+        {
+            sysShutdown();
+        }
+        
         sysWrite(EVENT_TRAIN_WRITE, 0x85);
         sysWrite(EVENT_TRAIN_WRITE, 0x00);
         
