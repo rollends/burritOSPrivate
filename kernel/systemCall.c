@@ -85,7 +85,7 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             }
             else
             {
-                queueU16Push(&receiver->sendQueue, desc->tid.value);
+                assertOk(queueU16Push(&receiver->sendQueue, desc->tid.value));
                 desc->state = eReceiveBlocked;
             }
 
@@ -105,6 +105,7 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                 messageCopy((MessageEnvelope*)arg1,
                             (MessageEnvelope const *)TASK_ARG_1(sender));
 
+                assert(sender->state == eReceiveBlocked);
                 sender->state = eReplyBlocked;
                 desc->state = eReady;
             }
@@ -125,6 +126,7 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                                      (MessageEnvelope const *)arg1);
             TASK_RETURN(replyTo) = result;
 
+            assert(replyTo->state == eReplyBlocked);
             replyTo->state = eReady;
             assertOk(priorityQueuePush(&kernel.queue,
                                        replyTo->priority,

@@ -1,3 +1,5 @@
+#include "hardware/hardware.h"
+
 #include "kernel/assert.h"
 #include "kernel/kernelData.h"
 
@@ -16,7 +18,7 @@ S32 kernelDataInit()
         kernel.eventTable[i].value = 0;
     }
 
-    kernel.cts = 1;
+    kernel.cts = uartCTS(UART_1);
 
     return OK;
 }

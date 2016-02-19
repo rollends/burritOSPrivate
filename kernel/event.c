@@ -49,6 +49,7 @@ void eventHandler()
                 U8 byte = (U8)(TASK_ARG_1(desc));
                 assertOk(uartWriteByte(UART_1, byte));
                 kernel.eventTable[EVENT_TRAIN_WRITE] = VAL_TO_ID(0);
+                kernel.cts = 0;
             }
 
             assertOk(uartInterruptTX(UART_1, 0));

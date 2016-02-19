@@ -146,9 +146,9 @@ void TerminalOutputDriver(void)
     U8 isCourierReady = 0;
     U8 extraBuffer = 0;
 
-    U8 bufferBacking[32];
+    U8 bufferBacking[1024];
     QueueU8 buffer;
-    queueU8Init(&buffer, bufferBacking, 32);
+    queueU8Init(&buffer, bufferBacking, 1024);
 
     MessageEnvelope rcvMessage;
     TaskID rcvID;

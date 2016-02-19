@@ -9,9 +9,9 @@ void DigitalClock(void)
     U16     millis  = 0;
     for(;;)
     {
-        clockDelayBy(clock, 1);
+        clockDelayBy(clock, 10);
         
-        millis += 10;
+        millis += 100;
         seconds += (millis / 1000);
         minutes += (seconds / 60);
 
@@ -19,9 +19,9 @@ void DigitalClock(void)
         seconds = seconds % 60;
         
         printf( output,
-                "\033[s\033[H%2d:%2d.%2d\033[u", 
+                "\033[s\033[H%2d:%2d.%1d\033[u", 
                 minutes,
                 seconds,
-                millis / 10 );
+                millis / 100 );
     }
 }

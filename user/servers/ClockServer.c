@@ -159,11 +159,11 @@ void delayQueuePush( DelayQueue* dq, TaskID id, U32 delay )
 void delayQueueInit( DelayQueue* dq )
 {
     U8 i = 0;
-    for(; i < 15; i++)
+    for(; i < 31; i++)
     {
         dq->buffer[i].next = dq->buffer + i + 1;
     }
-    dq->buffer[15].next = 0;
+    dq->buffer[31].next = 0;
     dq->queue = 0;
     dq->freeList = dq->buffer;
 }

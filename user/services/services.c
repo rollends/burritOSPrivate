@@ -10,9 +10,9 @@ void setupUserServices(void)
 {
     sysCreate(0, &NameServer);
     sysCreate(1, &ClockServer);
-    sysCreate(3, &TerminalInputDriver);
-    sysCreate(2, &TerminalOutputDriver);
-    sysCreate(1, &TrainDriver);
-    sysCreate(2, &TrainSwitchServer);
-    sysCreate(2, &TrainSensorServer);
+    sysCreate(1, &TerminalInputDriver);
+    sysCreate(1, &TerminalOutputDriver);
+    sysCreate(2, &TrainDriver);
+    sysCreate(3, &TrainSwitchServer);
+    sysCreate(3, &TrainSensorServer);
 }

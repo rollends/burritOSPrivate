@@ -16,14 +16,9 @@ static U8 getTrainDriverMessageType(U16 inMsgType)
     case MESSAGE_TRAIN_REVERSE:
         return DRIVER_MESSAGE_TX_TRAIN_MULTI_BYTE;
    
+    case MESSAGE_TRAIN_GET_SENSOR_ABCDE:
     case MESSAGE_TRAIN_SENSOR_RESET_OFF:
     case MESSAGE_TRAIN_GET_SENSOR:
-    case MESSAGE_TRAIN_GET_SENSOR_A:
-    case MESSAGE_TRAIN_GET_SENSOR_B:
-    case MESSAGE_TRAIN_GET_SENSOR_C:
-    case MESSAGE_TRAIN_GET_SENSOR_D:
-    case MESSAGE_TRAIN_GET_SENSOR_E:
-    case MESSAGE_TRAIN_GET_SENSOR_F:
     case MESSAGE_TRAIN_GO:
     case MESSAGE_TRAIN_STOP:
     case MESSAGE_TRAIN_SOLENOID_OFF:
@@ -45,8 +40,8 @@ void TrainDriver(void)
     
     TaskID output,input;
 
-    input.value = sysCreate(0, &TrainInputNotifier);
-    output.value = sysCreate(0, &TrainOutputNotifier);
+    input.value = sysCreate(2, &TrainInputNotifier);
+    output.value = sysCreate(2, &TrainOutputNotifier);
 
     MessageEnvelope rcvMessage, commandMsg;
     TaskID rcvID;
@@ -64,6 +59,8 @@ void TrainDriver(void)
     U8 isOutputWaiting = 0;
 
     U16 activeSensorRequestId = 0;
+    U32 sensorBuffer[5];
+    U8 sensorReceivedCount = 0;
     while( sysRunning() != 0 )
     {
         sysReceive(&rcvID.value, &rcvMessage);
@@ -74,19 +71,14 @@ void TrainDriver(void)
         // sensor request need some extra information.
         switch( rcvMessage.type )
         {
-        case MESSAGE_TRAIN_GET_SENSOR_A:
-        case MESSAGE_TRAIN_GET_SENSOR_B:
-        case MESSAGE_TRAIN_GET_SENSOR_C:
-        case MESSAGE_TRAIN_GET_SENSOR_D:
-        case MESSAGE_TRAIN_GET_SENSOR_E:
-        case MESSAGE_TRAIN_GET_SENSOR_F:
+        case MESSAGE_TRAIN_GET_SENSOR_ABCDE:
         {
-            // 0 is a special value meaning no active request. should be 
-            // fine since there is no idle task requests.
             assert(activeSensorRequestId == 0);
             activeSensorRequestId = rcvID.value;
+            sensorReceivedCount = 0;
             break;
         }
+        
         case MESSAGE_TRAIN_REVERSE:
         case MESSAGE_TRAIN_SET_SPEED:
         {
@@ -101,12 +93,7 @@ void TrainDriver(void)
         {
         case MESSAGE_TRAIN_SENSOR_RESET_OFF:
         case MESSAGE_TRAIN_GET_SENSOR: // Actually does a memory reset!
-        case MESSAGE_TRAIN_GET_SENSOR_A:
-        case MESSAGE_TRAIN_GET_SENSOR_B:
-        case MESSAGE_TRAIN_GET_SENSOR_C:
-        case MESSAGE_TRAIN_GET_SENSOR_D:
-        case MESSAGE_TRAIN_GET_SENSOR_E:
-        case MESSAGE_TRAIN_GET_SENSOR_F:
+        case MESSAGE_TRAIN_GET_SENSOR_ABCDE:
         case MESSAGE_TRAIN_REVERSE:
         case MESSAGE_TRAIN_SET_SPEED: 
         case MESSAGE_TRAIN_SWITCH_STRAIGHT:
@@ -122,7 +109,7 @@ void TrainDriver(void)
                 commandMsg.message.MessageU16.body = fullCmd;
                 
                 sysReply(output.value, &commandMsg);
-                if( oldType <= MESSAGE_TRAIN_GET_SENSOR )
+                if( oldType != MESSAGE_TRAIN_GET_SENSOR_ABCDE )
                 {
                     sysReply(rcvID.value, &rcvMessage);
                 }
@@ -153,7 +140,7 @@ void TrainDriver(void)
                 rcvMessage.type = oldType;
                 rcvMessage.message.MessageU32.body = 0;
                 
-                if( oldType <= MESSAGE_TRAIN_GET_SENSOR )
+                if( oldType != MESSAGE_TRAIN_GET_SENSOR_ABCDE )
                 {
                     sysReply(id, &rcvMessage);
                 }
@@ -176,8 +163,13 @@ void TrainDriver(void)
             sysReply(rcvID.value, &rcvMessage);
             if(activeSensorRequestId)
             {
-                sysReply(activeSensorRequestId, &rcvMessage);
-                activeSensorRequestId = 0;
+                sensorBuffer[sensorReceivedCount++] = (U32)rcvMessage.message.MessageU16.body;
+                if(sensorReceivedCount == 5)
+                {
+                    rcvMessage.message.MessageArbitrary.body = sensorBuffer;
+                    sysReply(activeSensorRequestId, &rcvMessage);
+                    activeSensorRequestId = 0;
+                }
             }
             break;
         }
@@ -205,6 +197,8 @@ void TrainOutputNotifier(void)
         sysWrite(EVENT_TRAIN_WRITE, notif.message.MessageU16.body & 0x00FF);
         if(notif.type == DRIVER_MESSAGE_TX_TRAIN_MULTI_BYTE)
             sysWrite(EVENT_TRAIN_WRITE, notif.message.MessageU16.body >> 8);
+        //else if((notif.message.MessageU16.body & 0x00FF) == MESSAGE_TRAIN_GET_SENSOR_ABCDE)
+        //    sysWrite(EVENT_TRAIN_WRITE, 0);
     }
 }
 
