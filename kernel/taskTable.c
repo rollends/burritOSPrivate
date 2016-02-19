@@ -26,7 +26,8 @@ S32 taskTableAlloc(TaskTable* table,
                    const U8 priority,
                    const U32 entryAddr,
                    const U32 exitAddr,
-                   const TaskID pid)
+                   const TaskID pid,
+                   ConstString name)
 {
     if (table->allocationQueue.count == 0)
     {
@@ -49,6 +50,7 @@ S32 taskTableAlloc(TaskTable* table,
     desc->priority = priority;
     desc->performance[ePerfKernel] = 0;
     desc->performance[ePerfTask] = 0;
+    desc->name = name;
 
     assertOk(queueU16Init(&desc->sendQueue,
                           table->sendQueueTable + index*SEND_QUEUE_LENGTH,

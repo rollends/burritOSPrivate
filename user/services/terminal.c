@@ -99,10 +99,10 @@ static int _printHexByte(String *output, U8 value)
     return 0;
 }
 
-static int _printStringNoFormat(String* output, char const * str)
+static int _printStringNoFormat(String* output, char const * str, U32 len)
 {
     char c;
-    while( (c = *(str++)) )
+    while( (c = *(str++)) && len--)
         *((*output)++) = c;
     return 0;
 }
@@ -160,7 +160,7 @@ S32 tprintf(TaskID server, ConstString format, ...)
                     break;
 
                 case 's':
-                    _printStringNoFormat(&OutputBufferI, va_arg(va, ConstString) );
+                    _printStringNoFormat(&OutputBufferI, va_arg(va, ConstString), widthFlag);
                     break;
 
                 case 'c':

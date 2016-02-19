@@ -19,9 +19,9 @@ void PerformanceTask()
         printf("\r\nPerformance summary: %d\r\n", tid.value);
     
         U32 i;
-        printf("\tTaskId\tTsk %%\tKrnl %%\tTtl %%\tTsk us\t\tKrnl us\t\tTtl us\r\n");
+        printf("\tTaskId\t\tTsk %%\tKrnl %%\tTtl %%\tTsk us\t\tKrnl us\t\tTtl us\r\n");
 
-        for (i = 0; i <= 8; i++)
+        for (i = 0; i <= 12; i++)
         {
             if (i == 0)
             {
@@ -36,7 +36,9 @@ void PerformanceTask()
             U32 ku = sysPerfQueryT(i, ePerfKernel);
             U32 tu = sysPerfQueryT(i, ePerfBoth);
      
-            printf("\t%b\t%2d.%2d\t%2d.%2d\t%2d.%2d\t%9n\t%9n\t%9n\r\n", i,
+            ConstString str = (ConstString)sysName(i);
+
+            printf("\t%14s\t%2d.%2d\t%2d.%2d\t%2d.%2d\t%9n\t%9n\t%9n\r\n", str,
                                                                up / 100, up % 100,
                                                                kp / 100, kp % 100,
                                                                tp / 100, tp % 100,

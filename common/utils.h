@@ -15,4 +15,6 @@ static inline U32 __ctz(U32 v)
     return c;
 }
 
+#define STRINGIFY(s) #s
+
 #endif

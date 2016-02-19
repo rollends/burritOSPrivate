@@ -47,9 +47,15 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                                         arg0,
                                         arg1,
                                         (U32)(&__taskExit),
-                                        desc->tid);
+                                        desc->tid,
+                                        (ConstString)(arg2));
             assertOk(priorityQueuePush(&kernel.queue, arg0, result));
             return result;
+        }
+
+        case SYS_CALL_NAME_ID:
+        {
+            return (U32)(taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0))->name);
         }
 
         case SYS_CALL_PID_ID:

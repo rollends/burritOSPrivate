@@ -103,6 +103,9 @@ typedef struct
 
     /// The cummulative performance since the last clear
     U32 performance[ePerfCount];
+
+    /// Task string name
+    ConstString name;
 } TaskDescriptor;
 
 #endif

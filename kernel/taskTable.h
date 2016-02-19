@@ -45,6 +45,7 @@ S32 taskTableInit(TaskTable* table);
  * @param   entryAddr   The entry point (pc) of the task
  * @param   exitAddr    The exit point (lr) of the task
  * @param   pid         The parent task id
+ * @param   name        The nice task name
  *
  * @return  TaskID on success, else an error code
  */
@@ -52,7 +53,8 @@ S32 taskTableAlloc(TaskTable* table,
                    const U8 priority,
                    const U32 entryAddr,
                    const U32 exitAddr,
-                   const TaskID pid);
+                   const TaskID pid,
+                   ConstString name);
 
 /**
  * Frees a task descriptor

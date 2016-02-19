@@ -52,7 +52,8 @@ U32* bootstrap()
                                 PRIORITY_COUNT - 1,
                                 (U32)(&IdleTask),
                                 (U32)(&__taskExit),
-                                VAL_TO_ID(0));
+                                VAL_TO_ID(0),
+                                "&IdleTask");
 
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));
     return kernel.activeTask->stack;
