@@ -18,7 +18,7 @@ S32 kernelDataInit()
         kernel.eventTable[i].value = 0;
     }
 
-    kernel.cts = uartCTS(UART_1);
+    assertOk(uartCTS(UART_1, &kernel.cts));
 
     return OK;
 }
