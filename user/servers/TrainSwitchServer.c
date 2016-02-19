@@ -42,7 +42,8 @@ void TrainSwitchServer(void)
 {
     nsRegister(TrainSwitches);
     
-    TaskID  courier = { sysCreate(2, &TrainSwitchCourier) };
+    assert(sysPriority() >= 1);
+    TaskID  courier = { sysCreate(sysPriority() - 1, &TrainSwitchCourier) };
     
     TaskID rcvId;
     MessageEnvelope rcvEnv;

@@ -17,8 +17,9 @@ void TerminalOutputCourier(void)
     
     TaskID warehouse; 
     TaskID server;
-    
-    warehouse.value = sysCreate(3, &TerminalOutputWarehouse);
+ 
+    assert(sysPriority() < 31);
+    warehouse.value = sysCreate(sysPriority() + 1, &TerminalOutputWarehouse);
     server.value = sysPid();
     
     for(;;)
@@ -138,9 +139,10 @@ void TerminalOutputDriver(void)
 {
     TaskID notifier;
     TaskID courier; 
-    
-    notifier.value = sysCreate(0, &TerminalOutputNotifier);
-    courier.value = sysCreate(2, &TerminalOutputCourier);
+   
+    assert(sysPriority() >= 1 && sysPriority() < 31);
+    notifier.value = sysCreate(sysPriority() - 1, &TerminalOutputNotifier);
+    courier.value = sysCreate(sysPriority() + 1, &TerminalOutputCourier);
 
     U8 isNotifierReady = 0;
     U8 isCourierReady = 0;

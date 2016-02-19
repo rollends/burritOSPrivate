@@ -36,8 +36,9 @@ void ClockServer()
     response.type = MESSAGE_CLOCKSERVER_WAKE;
     respondTime.type = MESSAGE_CLOCKSERVER_WAKE;
 
-    sysCreate(0, &ClockNotifier);
-    sysCreate(1, &ClockLoResNotifier);
+    assert(sysPriority() >= 2);
+    sysCreate(sysPriority() - 2, &ClockNotifier);
+    sysCreate(sysPriority() - 1, &ClockLoResNotifier);
 
     for(;;)
     {

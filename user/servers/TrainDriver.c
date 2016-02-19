@@ -40,8 +40,9 @@ void TrainDriver(void)
     
     TaskID output,input;
 
-    input.value = sysCreate(2, &TrainInputNotifier);
-    output.value = sysCreate(2, &TrainOutputNotifier);
+    assert(sysPriority() >= 1);
+    input.value = sysCreate(sysPriority()-1, &TrainInputNotifier);
+    output.value = sysCreate(sysPriority()-1, &TrainOutputNotifier);
 
     MessageEnvelope rcvMessage, commandMsg;
     TaskID rcvID;

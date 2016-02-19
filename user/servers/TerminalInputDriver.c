@@ -9,7 +9,8 @@ void TerminalInputNotifier(void);
 void TerminalInputDriver(void)
 {
     nsRegister(TerminalInput);
-    sysCreate(0, &TerminalInputNotifier);
+    assert(sysPriority() >= 1);
+    sysCreate(sysPriority() - 1, &TerminalInputNotifier);
 
     // Create Input Buffer
     U8 inputBufferBacking[32];

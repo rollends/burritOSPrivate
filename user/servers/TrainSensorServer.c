@@ -24,7 +24,8 @@ void TrainSensorServer(void)
 {
     nsRegister(TrainSensors);
 
-    sysCreate(2, &TrainSensorCourier);
+    assert(sysPriority() >= 1);
+    sysCreate(sysPriority()-1, &TrainSensorCourier);
     TaskID          rcvId;
     MessageEnvelope rcvEnv;
     U32             sensorBuffer[5];
