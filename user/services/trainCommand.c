@@ -2,6 +2,8 @@
 #include "user/messageTypes.h"
 #include "user/services/services.h"
 
+static U8 trainSpeedHack[80];
+
 S32 dispatchTrainCommand(String string)
 {
     U32 len = strlen(string);
@@ -29,7 +31,7 @@ S32 dispatchTrainCommand(String string)
         cstring += 2;
         strskipws(&cstring);
         U8 train = stratoui(&cstring);
-        trainReverseDirection(sTrain, train, 0);
+        trainReverseDirection(sTrain, train);
     }
     else if( cstring[0] == 's' && cstring[1] == 'w' )
     {
@@ -78,29 +80,31 @@ void trainSolenoidOff(TaskID server)
     sysSend(server.value, &env, &env);
 }
 
-void trainReverseDirection(TaskID server, U8 train, U8 newSpeed)
+void trainReverseDirection(TaskID server, U8 train)
 {
     assert( train <= 80 && train >= 1 );
-    assert( newSpeed < 15 );
 
     TaskID clock = nsWhoIs(Clock);
 
+    U8 oldSpeed = trainSpeedHack[train];
+
     trainSetSpeed(server, train, 0);
-    clockDelayBy(clock, 200);
+    clockDelayBy(clock, 100 + oldSpeed * 15);
 
     MessageEnvelope env;
     env.type = MESSAGE_TRAIN_REVERSE;
     env.message.MessageU16.body = (train << 8) | 0x0F;
     sysSend(server.value, &env, &env);
 
-    clockDelayBy(clock, 100);
-    trainSetSpeed(server, train, newSpeed);
+    trainSetSpeed(server, train, oldSpeed);
 }
 
 void trainSetSpeed(TaskID server, U8 train, U8 speed)
 {
     assert( speed < 15 );
     assert( train <= 80 && train >= 1 );
+
+    trainSpeedHack[train] = speed;
 
     MessageEnvelope env;
     env.type = MESSAGE_TRAIN_SET_SPEED;
