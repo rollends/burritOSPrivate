@@ -1,7 +1,7 @@
 #include "kernel/kernel.h"
 #include "user/messageTypes.h"
 
-void ClockNotifier()
+void ClockNotifier(void)
 {
     MessageEnvelope envelope;
     TaskID id = { sysPid() };
@@ -15,7 +15,7 @@ void ClockNotifier()
     }
 }
 
-void ClockLoResNotifier()
+void ClockLoResNotifier(void)
 {
     MessageEnvelope envelope;
     TaskID id = { sysPid() };

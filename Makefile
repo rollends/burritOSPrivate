@@ -1,10 +1,15 @@
 OUTDIR	= bin
 BLDDIR	= build
+UNTY_F  = unity.c
 
 .DEFAULT_GOAL = all
 
 ifndef TARGET
-    TARGET=ts7200
+    TARGET = ts7200
+endif
+
+ifndef UNITY
+	UNITY = 1
 endif
 
 include make/preprocessor.make
@@ -18,6 +23,13 @@ HSOURCE += $(shell find hardware/$(HRDWR) -type f -name *.h)
 SSOURCE := $(shell find common kernel user -type f -name *.s)
 SSOURCE += $(shell find hardware/$(HRDWR) -type f -name *.s)
 
+ifeq ($(UNITY), 1)
+$(BLDDIR)/$(UNTY_F): $(CSOURCE)
+	cat $^ > $@
+
+CSOURCE = $(BLDDIR)/$(UNTY_F)
+endif
+
 _OBJS = $(addprefix $(BLDDIR)/, $(CSOURCE:.c=.o))
 _OBJS += $(addprefix $(BLDDIR)/, $(SSOURCE:.s=.o))
 _OBJDIRS = $(dir $(_OBJS))
@@ -27,7 +39,7 @@ _OUT += $(OUTDIR)/$(basename $(OUT)).lst
 
 all: directories $(_OUT)
 
-$(BLDDIR)/%.s: %.c $(HSOURCE)
+$(BLDDIR)/%.s: %.c $(HSOURCE) make/preprocessor.make
 	$(XCC) -S -I./ $(CFLAGS) $(PREFLAGS) $< -o $@
 
 $(BLDDIR)/%.o: $(BLDDIR)/%.s
