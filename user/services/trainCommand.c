@@ -123,6 +123,14 @@ U8 trainReadSensorGroup(TaskID sensorServer, U8 sensorGroup)
     return env.message.MessageU16.body;
 }
 
+void trainReadAllSensors(TaskID sensorServer, U32* sensorArray)
+{
+    MessageEnvelope env;
+    env.type = MESSAGE_TRAIN_GET_SENSOR_ABCDE;
+    env.message.MessageArbitrary.body = sensorArray;
+    sysSend(sensorServer.value, &env, &env);
+}
+
 void trainSwitch(TaskID switchServer, U8 switchAddress, SwitchState sw)
 {
     MessageEnvelope env;

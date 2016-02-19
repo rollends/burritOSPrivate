@@ -107,7 +107,7 @@ static int _printStringNoFormat(String* output, char const * str)
     return 0;
 }
 
-S32 printf(TaskID server, ConstString format, ...)
+S32 tprintf(TaskID server, ConstString format, ...)
 {    
     enum { PLAIN, FORMAT, ESCAPE } state = PLAIN;
 	U32 widthFlag = 0;

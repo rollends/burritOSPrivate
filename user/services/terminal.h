@@ -10,7 +10,9 @@
  * @param   str     The format string 
  * @param   va_args Optional args that match the print string
  */
-S32 printf(TaskID server, ConstString str, ...);
+S32 tprintf(TaskID server, ConstString str, ...);
+
+#define printf(a, ...) tprintf(nsWhoIs(TerminalOutput), a,## __VA_ARGS__)
 
 void putc(TaskID server, char c);
 

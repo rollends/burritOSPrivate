@@ -2,8 +2,7 @@
 
 void DigitalClock(void)
 {
-    TaskID  clock   = nsWhoIs(Clock),
-            output  = nsWhoIs(TerminalOutput);
+    TaskID  clock   = nsWhoIs(Clock);
     U16     minutes = 0;
     U16     seconds = 0;
     U16     millis  = 0;
@@ -18,8 +17,7 @@ void DigitalClock(void)
         millis = millis % 1000;
         seconds = seconds % 60;
         
-        printf( output,
-                "\033[s\033[H%2d:%2d.%1d\033[u", 
+        printf( "\033[s\033[H%2d:%2d.%1d\033[u", 
                 minutes,
                 seconds,
                 millis / 100 );

@@ -15,7 +15,6 @@ void InitialTask()
 
     sysCreate(2, &PerformanceTask);
     sysCreate(4, &DigitalClock);
-    sysCreate(4, &SensorDisplay);
 
 
     TaskID  clock   = nsWhoIs(Clock),
@@ -46,12 +45,16 @@ void InitialTask()
         trainSwitch(sSwitch, i, eCurved);
     }
 
+    clockLongDelayBy(clock, 20);
+
+    sysCreate(4, &SensorDisplay);
+
     for(;;)
     {
         char buffer[256];
         String ibuffer = buffer;
         
-        printf(stdout, "\033[20;1H\033[2K> ");
+        printf("\033[40;1H\033[2K> ");
 
         // Fill our buffer til carriage return
         while( '\r' != (*ibuffer = getc(stdin)) )
@@ -59,7 +62,7 @@ void InitialTask()
             if(*ibuffer == '\b')
             {   
                 if( ibuffer == buffer ) continue;
-                printf(stdout, "\x1B[1D \x1B[1D");
+                printf("\x1B[1D \x1B[1D");
                 --ibuffer;
             }
             else
@@ -71,7 +74,7 @@ void InitialTask()
         
         *ibuffer = '\0';
 
-        printf(stdout, "\r\n");
+        printf("\r\n");
 
         if( buffer[0] == 'q' ) 
         {
@@ -84,7 +87,7 @@ void InitialTask()
     }
     trainStop(train);
     
-    printf(stdout, "Finished playing with trains... :)\r\n");
+    printf("Finished playing with trains... :)\r\n");
     clockLongDelayBy(clock, 3);
     sysShutdown();
 }
