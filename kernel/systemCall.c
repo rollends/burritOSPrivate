@@ -62,6 +62,11 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             return desc->tid.value;
         }
 
+        case SYS_CALL_PRIORITY_ID:
+        {
+            return desc->priority;
+        }
+
         case SYS_CALL_SEND_ID:
         {
             TaskDescriptor* receiver =

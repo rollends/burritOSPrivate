@@ -5,10 +5,8 @@
 
 void PerformanceTask()
 {
-<<<<<<< HEAD
 #ifdef KERNEL_PERF
-    TaskID  clock   = nsWhoIs(Clock),
-            stdio   = nsWhoIs(TerminalOutput);
+    TaskID  clock   = nsWhoIs(Clock);
 
 #ifdef KERNEL_PERF_VERBOSE
     TaskID tid = { sysTid() };

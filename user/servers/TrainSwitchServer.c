@@ -15,8 +15,26 @@ void TrainSwitchCourier(void)
     {
         env.type = MESSAGE_COURIER;
         sysSend(parent.value, &env, &env);
+
+        U8 sensor = env.message.MessageU8.body;
+        U8 type = env.type;
+
         sysSend(train.value, &env, &env);
         clockDelayBy(clock, 16);
+
+        if (type == MESSAGE_TRAIN_SWITCH_STRAIGHT
+            || type == MESSAGE_TRAIN_SWITCH_CURVED)
+        {
+            U8 id = sensor;
+            if (id > 18)
+            {
+                id = (id - 0x99) + 19;
+            }
+
+            printf("\033[s\033[%d;17H%c\033[u",
+                   8 + id,
+                   type == MESSAGE_TRAIN_SWITCH_STRAIGHT ? 'S' : 'C');
+        }
     }
 }
 
