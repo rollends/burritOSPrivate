@@ -1,28 +1,24 @@
-# Kernel 3
+# Kernel 4
 A compiled version of the source code in this repository can be found at the
 following URL:
 ```
-/u/cs452/tftp/ARM/tpetrick/k3.elf
+/u/cs452/tftp/ARM/tpetrick/k4.elf
 ```
 Alternatively, the source code can be compiled using GNU make by running
 `make` in the top level directory (the same one as this README). This will
-produce the ELF binary file `./bin/k3.elf`.
+produce the ELF binary file `./bin/k4.elf`.
 
 The binary can be loaded on the board by running the following command in
-Reboot:
+Redboot:
 ```
-load -b 0x00218000 -h 10.15.167.5 "/u/cs452/tftp/ARM/tpetrick/k3.elf"
+load -b 0x50000 -h 10.15.167.5 "/u/cs452/tftp/ARM/tpetrick/k3.elf"
 ```
-It can then be run by issuing the `go` command. The test tasks will use
-the clock server and notifier to test delay commands. It the dumps
-performance data for all processes. The Idle Task is highlighted.
 
-The expected output can be found in clockTestOutput.txt.
+It can then be run by issuing the `go` command. An interface similar to the A0 submission will appear, including a wall clock, sensor list and switch list. The percentage of time spent in the idle task will be printed underneath the clock. The following commands to control the trains can be entered:
 
-0     idle task
-1     initial task
-2     name server
-3     clock server
-4     clock notifier
-5     performance task
-6-9   delay test tasks
+* tr id speed   Set train id to speed 
+* sw id S|C     Set switch id to Straight or Curved
+* rv id         Reverse train id
+* q             Quit the program
+
+Sensor state is continuously polled and updates the UI every time a new sensor is triggered. The UI will also show the current state (S or C) of each switch.
