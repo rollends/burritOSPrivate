@@ -32,7 +32,7 @@ void TrainSwitchCourier(void)
             }
 
             printf("\033[s\033[%d;17H%c\033[u",
-                   8 + id,
+                   5 + id,
                    type == MESSAGE_TRAIN_SWITCH_STRAIGHT ? 'S' : 'C');
         }
     }

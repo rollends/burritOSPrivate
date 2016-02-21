@@ -17,7 +17,7 @@ static void updateSensorUi( U8* recentList, U8 recentHead )
         if( val == 0xFF )
             return;
 	
-        printf("\033[s\033[%d;3H%c%2d\033[u", 9 + i, 'A' + (val >> 4), 1 + (val & 0x0F));
+        printf("\033[s\033[%d;3H%c%2d\033[u", 6 + i, 'A' + (val >> 4), 1 + (val & 0x0F));
         recentHead = decmod(recentHead, 10);
 	}
 }
@@ -31,15 +31,15 @@ void SensorDisplay(void)
 
     TaskID  sSwitch = nsWhoIs(TrainSwitches);
 
-    printf("\033[s\033[6;1H*----------*----------*\033[u");
-    printf("\033[s\033[7;1H|  SENSOR  | SWITCHES |\033[u");
-	printf("\033[s\033[8;1H|~~~~~~~~~~|~~~~~~~~~~|\033[u");
-	for(i = 0; i <= 21; ++i )
-	{
-	    printf("\033[s\033[%d;1H|          |          |\033[u", 9 + i);
-	}
-	printf("\033[s\033[19;1H|----------|          |\033[u", 9 + i);
-	printf("\033[s\033[31;1H*~~~~~~~~~~*~~~~~~~~~~*\033[u");
+    printf("\033[s\033[3;1H*----------*----------*\033[u");
+    printf("\033[s\033[4;1H|  SENSOR  | SWITCHES |\033[u");
+    printf("\033[s\033[5;1H|~~~~~~~~~~|~~~~~~~~~~|\033[u");
+    for(i = 0; i <= 21; ++i )
+    {
+        printf("\033[s\033[%d;1H|          |          |\033[u", 6 + i);
+    }
+    printf("\033[s\033[16;1H|----------|          |\033[u");
+    printf("\033[s\033[28;1H*~~~~~~~~~~*~~~~~~~~~~*\033[u");
 
     for(i = 0; i < 10; i++) buffer[i] = 0xFF;
     
@@ -60,7 +60,7 @@ void SensorDisplay(void)
 
       if( row >= SwitchCount ) continue;
     
-        trainSwitch(sSwitch, i, eStraight);
+        trainSwitch(sSwitch, i, eCurved);
     }
 
     for(;;)

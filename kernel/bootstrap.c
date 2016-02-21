@@ -63,4 +63,6 @@ void cleanup()
 {
     assertOk(interruptClear(INT_1, 0xFFFFFFFF));
     assertOk(interruptClear(INT_2, 0xFFFFFFFF));
+
+    printBlocking("%c[2J", 27);
 }
