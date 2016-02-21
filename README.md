@@ -16,9 +16,9 @@ load -b 0x50000 -h 10.15.167.5 "/u/cs452/tftp/ARM/tpetrick/k3.elf"
 
 It can then be run by issuing the `go` command. An interface similar to the A0 submission will appear, including a wall clock, sensor list and switch list. The percentage of time spent in the idle task will be printed underneath the clock. The following commands to control the trains can be entered:
 
-* tr id speed   Set train id to speed 
-* sw id S|C     Set switch id to Straight or Curved
-* rv id         Reverse train id
-* q             Quit the program
+* `tr id speed`   Set train id to speed 
+* `sw id S|C`     Set switch id to Straight or Curved
+* `rv id`         Reverse train id
+* `q`             Quit the program
 
 Sensor state is continuously polled and updates the UI every time a new sensor is triggered. The UI will also show the current state (S or C) of each switch.
