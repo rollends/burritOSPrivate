@@ -1,4 +1,5 @@
 #include "user/services/services.h"
+#define SwitchCount 22
 
 static U32 decmod(U32 val, U32 mod)
 {

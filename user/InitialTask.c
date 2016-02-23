@@ -19,8 +19,7 @@ void InitialTask()
 
     TaskID  clock   = nsWhoIs(Clock),
             train   = nsWhoIs(Train),
-            stdout  = nsWhoIs(TerminalOutput), 
-            stdin   = nsWhoIs(TerminalInput);
+            stdio   = nsWhoIs(Terminal);
 
     trainStop(train);
     trainGo(train);
@@ -34,7 +33,7 @@ void InitialTask()
         printf("\033[40;1H\033[2K> ");
 
         // Fill our buffer til carriage return
-        while( '\r' != (*ibuffer = getc(stdin)) )
+        while( '\r' != (*ibuffer = getc(stdio)) )
         {
             if(*ibuffer == '\b')
             {   
@@ -44,7 +43,7 @@ void InitialTask()
             }
             else
             {
-                putc(stdout, *ibuffer);
+                printf("%c", *ibuffer);
                 ++ibuffer;
             }
         }

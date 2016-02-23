@@ -14,12 +14,11 @@
 typedef enum
 {
     Clock             = 0,
-    TerminalInput     = 1,
-    TerminalOutput    = 2,
-    Train             = 3,
-    TrainSwitches     = 4,
-    TrainSensors      = 5,
-    TaskNameCount     = 6,
+    Terminal          = 1,
+    Train             = 2,
+    TrainSwitches     = 3,
+    TrainSensors      = 4,
+    TaskNameCount     = 5,
 } TaskName;
 
 /** Nameserver Registration Method

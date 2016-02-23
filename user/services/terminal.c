@@ -3,14 +3,6 @@
 #include "user/messageTypes.h"
 #include "user/services/terminal.h"
 
-void putc(TaskID server, char c)
-{
-    MessageEnvelope envelope;
-    envelope.type = MESSAGE_IO_PUTC;
-    envelope.message.MessageU8.body = c;
-    sysSend(server.value, &envelope, &envelope);
-}
-
 char getc(TaskID server)
 {
     MessageEnvelope envelope;

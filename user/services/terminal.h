@@ -12,7 +12,7 @@
  */
 S32 tprintf(TaskID server, ConstString str, ...);
 
-#define printf(a, ...) tprintf(nsWhoIs(TerminalOutput), a,## __VA_ARGS__)
+#define printf(a, ...) tprintf(nsWhoIs(Terminal), a,## __VA_ARGS__)
 
 void putc(TaskID server, char c);
 
