@@ -38,10 +38,10 @@ void TrainDriver(void)
 {
     nsRegister(Train);
     
-    TaskID output,input;
+    TaskID output;
 
     assert(sysPriority() >= 1);
-    input.value = sysCreate(sysPriority()-1, &TrainInputNotifier);
+    sysCreate(sysPriority()-1, &TrainInputNotifier);
     output.value = sysCreate(sysPriority()-1, &TrainOutputNotifier);
 
     MessageEnvelope rcvMessage, commandMsg;
