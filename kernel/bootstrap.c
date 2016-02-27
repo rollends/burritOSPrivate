@@ -8,6 +8,8 @@
 
 #include "user/IdleTask.h"
 
+#ifndef CALIBRATION_BUILD
+
 U32* bootstrap()
 {
     // Initialize UART 2 (for terminal io) and clear the screen
@@ -58,6 +60,7 @@ U32* bootstrap()
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, VAL_TO_ID(taskID));
     return kernel.activeTask->stack;
 }
+#endif
 
 void cleanup()
 {

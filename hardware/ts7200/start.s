@@ -19,6 +19,9 @@ _start:
     bl      _vectorLoad             @ Load the vector table
     bl      bootstrap               @ Boostrap the kernel
 
+    cmp     r0, #0                  @ Early exit if necessary
+    beq     kernelEnd               @ Branch to the kernel exit handler
+
 @
 @ Entry point for a user task. R0 should contain the stack pointer for the task
 @ [r0 0] is the PSR, [r0 1] is the task LR and [r0 2] - [r0 15] are r0-r12, pc.
