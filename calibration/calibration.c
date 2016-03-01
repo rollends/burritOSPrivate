@@ -60,28 +60,68 @@ U32* bootstrap()
                 U8 byte1, byte2;
                 uartReadByteBlock(UART_1, &byte1);
                 uartReadByteBlock(UART_1, &byte2);
-                if (byte2 == 0x02)
+                if (byte2 == 0x80)
                 {
                     break;
                 }
             }
 
+            if (speed == 14)
+            {   
+                while (1)
+                {
+                    trainByte(0xC3);
+                    U8 byte1, byte2;
+                    uartReadByteBlock(UART_1, &byte1);
+                    uartReadByteBlock(UART_1, &byte2);
+                    if (byte2 == 0x00)
+                    {
+                        break;
+                    }
+                }
+
+                while (1)
+                {
+                    trainByte(0xC3);
+                    U8 byte1, byte2;
+                    uartReadByteBlock(UART_1, &byte1);
+                    uartReadByteBlock(UART_1, &byte2);
+                    if (byte2 == 0x80)
+                    {
+                        break;
+                    }
+                }
+            }
+
             timerGetValue(TIMER_4, &start);
+
             while (1)
             {
-                trainByte(0xC5);
+                trainByte(0xC3);
+                U8 byte1, byte2;
+                uartReadByteBlock(UART_1, &byte1);
+                uartReadByteBlock(UART_1, &byte2);
+                if (byte2 == 0x00)
+                {
+                    break;
+                }
+            }
+
+            while (1)
+            {
+                trainByte(0xC3);
                 U8 byte1, byte2;
                 uartReadByteBlock(UART_1, &byte1);
                 uartReadByteBlock(UART_1, &byte2);
 
-                if (byte2 == 0x20)
+                if (byte2 == 0x80)
                 {
                     break;
                 }
             }
             timerGetValue(TIMER_4, &end);
-            printBlocking("%d\r\n", end-start);
 
+            printBlocking("%d\r\n", end-start);
             speed--;
         }
 
