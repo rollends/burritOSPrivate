@@ -40,7 +40,7 @@ U32* bootstrap()
 
     while (1)
     {
-        U8 speed = 14;
+        U8 speed = 8;
         while (speed > 2)
         {
             trainByte(speed);
@@ -52,80 +52,68 @@ U32* bootstrap()
             {
                 vol++;
             }
-         
-            U32 start, end;
+        
             while (1)
             {
                 trainByte(0xC3);
                 U8 byte1, byte2;
                 uartReadByteBlock(UART_1, &byte1);
                 uartReadByteBlock(UART_1, &byte2);
-                if (byte2 == 0x80)
+
+                if (byte1 == 0x08)
                 {
                     break;
                 }
             }
 
-            if (speed == 14)
-            {   
-                while (1)
-                {
-                    trainByte(0xC3);
-                    U8 byte1, byte2;
-                    uartReadByteBlock(UART_1, &byte1);
-                    uartReadByteBlock(UART_1, &byte2);
-                    if (byte2 == 0x00)
-                    {
-                        break;
-                    }
-                }
+            trainByte(0 + 16);
+            trainByte(68);
 
-                while (1)
+            for (delay = 0; delay < 50000; delay++)
+            {
+                vol++;
+            }
+
+            while (1)
+            {
+                trainByte(0xC4);
+                U8 byte1, byte2;
+                uartReadByteBlock(UART_1, &byte1);
+                uartReadByteBlock(UART_1, &byte2);
+
+                if (byte2 == 0x08)
                 {
-                    trainByte(0xC3);
-                    U8 byte1, byte2;
-                    uartReadByteBlock(UART_1, &byte1);
-                    uartReadByteBlock(UART_1, &byte2);
-                    if (byte2 == 0x80)
-                    {
-                        break;
-                    }
+                    break;
                 }
             }
 
+            trainByte(8);
+            trainByte(68);
+
+            U32 start, end;
             timerGetValue(TIMER_4, &start);
 
+            for (delay = 0; delay < 50000; delay++)
+            {
+                vol++;
+            }
+ 
             while (1)
             {
-                trainByte(0xC3);
+                trainByte(0xC5);
                 U8 byte1, byte2;
                 uartReadByteBlock(UART_1, &byte1);
                 uartReadByteBlock(UART_1, &byte2);
-                if (byte2 == 0x00)
+
+                if (byte2 == 0x20)
                 {
                     break;
                 }
             }
 
-            while (1)
-            {
-                trainByte(0xC3);
-                U8 byte1, byte2;
-                uartReadByteBlock(UART_1, &byte1);
-                uartReadByteBlock(UART_1, &byte2);
-
-                if (byte2 == 0x80)
-                {
-                    break;
-                }
-            }
             timerGetValue(TIMER_4, &end);
-
             printBlocking("%d\r\n", end-start);
-            speed--;
         }
-
-        printBlocking("\r\n");
     }
 
     return 0;
