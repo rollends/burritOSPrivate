@@ -40,11 +40,11 @@ U32* bootstrap()
 
     while (1)
     {
-        U8 speed = 10;
-        U8 incspeed = 11;
+        U8 speed = 9;
+        U8 incspeed = 8;
         U32 start, end;
 
-        while (incspeed < 14)
+        while (incspeed > 2)
         {
             trainByte(speed);
             trainByte(62);
@@ -101,7 +101,7 @@ U32* bootstrap()
             {
                 vol++;
             }
-            incspeed++;
+            incspeed--;
         }
 
         printBlocking("\r\n");
