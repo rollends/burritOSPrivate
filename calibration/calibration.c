@@ -40,8 +40,8 @@ U32* bootstrap()
 
     while (1)
     {
-        U8 speed = 8;
-        U8 incspeed = 9;
+        U8 speed = 10;
+        U8 incspeed = 11;
         U32 start, end;
 
         while (incspeed < 14)
