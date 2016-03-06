@@ -2,20 +2,23 @@
 #include "kernel/kernel.h"
 
 #include "user/services/services.h"
+#include "user/trains/trains.h"
+
 #include "user/DigitalClock.h"
 #include "user/PerformanceTask.h"
 #include "user/SensorDisplay.h"
+#include "user/Locomotive.h"
 
 #define SwitchCount 22
 
 void InitialTask()
 {
     setupUserServices();
+    setupTrainServices();
 
     sysCreate(2, &PerformanceTask);
     sysCreate(4, &DigitalClock);
     sysCreate(4, &SensorDisplay);
-
 
     TaskID  clock   = nsWhoIs(Clock),
             train   = nsWhoIs(Train),
@@ -24,6 +27,12 @@ void InitialTask()
     trainStop(train);
     trainGo(train);
     clockLongDelayBy(clock, 20);
+
+    {
+        MessageEnvelope env;
+        env.message.MessageU8.body = 62;
+        sysSend(sysCreate(4, &Locomotive), &env, &env);
+    }
 
     for(;;)
     {
@@ -58,7 +67,13 @@ void InitialTask()
         }
         else
         {
-            dispatchTrainCommand(buffer);
+            if( dispatchSystemCommand(buffer) != OK )
+            {
+                // Well Shit?
+                printf("\033[41;1H\033[2KThe command you sent could not be completed! Try again later...");
+            }
+            else
+                printf("\033[41;1H\033[2K");
         }
     }
     trainStop(train);

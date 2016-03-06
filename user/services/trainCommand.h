@@ -19,6 +19,6 @@ void trainSetSpeed(TaskID server, U8 train, U8 speed);
 U8 trainReadSensorGroup(TaskID sensorServer, U8 sensorGroup);
 void trainReadAllSensors(TaskID sensorServer, U32* sensorArray);
 
-S32 dispatchTrainCommand(String string);
+S32 dispatchSystemCommand(String string);
 
 #endif

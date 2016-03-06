@@ -28,6 +28,10 @@
 #define     MESSAGE_NOTIFY                      24
 #define     MESSAGE_CLOCKSERVER_NOTIFY_LORES    25
 #define     MESSAGE_CLOCKSERVER_LONG_DELAY_BY   26
+#define     MESSAGE_WORKER                      27
+#define     MESSAGE_SWITCH_ALLOCATE             28
+#define     MESSAGE_SWITCH_READ                 29
+#define     MESSAGE_FAILURE                     30
 #define     MESSAGE_TRAIN_SOLENOID_OFF          0x20 // 32
 #define     MESSAGE_TRAIN_SWITCH_STRAIGHT       0x21 // 33
 #define     MESSAGE_TRAIN_SWITCH_CURVED         0x22 // 34

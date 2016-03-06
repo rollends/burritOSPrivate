@@ -106,3 +106,45 @@ S32 queueU16Peek(QueueU16* queue, U16* value)
     *value = queue->data[queue->head];
     return OK;
 }
+
+S32 queuePU32Init(QueuePU32* queue, U32** data, const U32 length)
+{
+    IS_NOT_NULL(queue);
+    IS_NOT_NULL(data);
+    IS_POW_2(length);
+    IS_NOT_ZERO(length);
+
+    queue->head = queue->tail = queue->count = 0;
+    queue->data = data;
+    queue->length = length;
+
+    return OK;
+}
+
+S32 queuePU32Push(QueuePU32* queue, U32 * const value)
+{
+    if (queue->count == queue->length)
+    {
+        return -1;
+    }
+    
+    queue->data[queue->tail] = value;
+    queue->tail = (queue->tail + 1) & (queue->length-1);
+    queue->count++;
+
+    return OK;
+}
+
+S32 queuePU32Pop(QueuePU32* queue, U32** value)
+{
+    if (queue->count == 0)
+    {
+        return -1;
+    }
+
+    queue->count--;
+    *value = queue->data[queue->head];
+    queue->head = (queue->head + 1) & (queue->length-1);
+
+    return OK;
+}
