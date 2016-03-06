@@ -40,7 +40,7 @@ U32* bootstrap()
 
     while (1)
     {
-        U8 speed = 14;
+        U8 speed = 8;
         while (speed > 2)
         {
             trainByte(14);
