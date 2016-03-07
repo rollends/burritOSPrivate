@@ -15,12 +15,12 @@ endif
 include make/preprocessor.make
 include make/$(TARGET).make
 
-CSOURCE := $(shell find common kernel user -type f -name *.c)
+CSOURCE := $(shell find common kernel user trains -type f -name *.c)
 CSOURCE += $(shell find hardware/$(HRDWR) -type f -name *.c)
-HSOURCE := $(shell find common kernel user -type f -name *.h)
+HSOURCE := $(shell find common kernel user trains -type f -name *.h)
 HSOURCE += $(shell find hardware -maxdepth 1 -type f -name *.h)
 HSOURCE += $(shell find hardware/$(HRDWR) -type f -name *.h)
-SSOURCE := $(shell find common kernel user -type f -name *.s)
+SSOURCE := $(shell find common kernel user trains -type f -name *.s)
 SSOURCE += $(shell find hardware/$(HRDWR) -type f -name *.s)
 
 ifeq ($(UNITY), 1)
