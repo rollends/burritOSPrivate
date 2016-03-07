@@ -2,6 +2,7 @@
 #include "user/services/services.h"
 #include "user/trackData.h"
 #include "user/messageTypes.h"
+#include "user/TrainYard.h"
 
 static void LocomotiveSensor(void);
 static void LocomotiveRadio(void);
@@ -15,16 +16,20 @@ void Locomotive(void)
     TaskID from;
     MessageEnvelope env;
 
-    TaskID tGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &LocomotiveSensor));
-    sysSend(tGPS.value, &env, &env);
-    TrackNode* graph = (TrackNode*)env.message.MessageArbitrary.body;
-
     // Find out the ID of the train I'm driving around.
     sysReceive(&from.value, &env);
     assert(from.value == parent.value);
     sysReply(from.value, &env);
     U8 train = env.message.MessageU8.body;
     
+    // Register ourselves.
+    trainRegister(train);
+    
+    // Start Train 'GPS'
+    TaskID tGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &LocomotiveSensor));
+    sysSend(tGPS.value, &env, &env);
+    TrackNode* graph = (TrackNode*)env.message.MessageArbitrary.body;
+
     TaskID sTrainDriver = nsWhoIs(Train);
     TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
     TaskID sClock = nsWhoIs(Clock);

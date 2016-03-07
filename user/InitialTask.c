@@ -7,6 +7,7 @@
 #include "user/SensorDisplay.h"
 #include "user/Locomotive.h"
 #include "user/SwitchOffice.h"
+#include "user/TrainYard.h"
 
 #define SwitchCount 22
 
@@ -14,6 +15,7 @@ void InitialTask()
 {
     setupUserServices();
 
+    sysCreate(2, &TrainYardServer);
     sysCreate(2, &PerformanceTask);
     sysCreate(4, &DigitalClock);
     sysCreate(4, &SensorDisplay);

@@ -80,7 +80,7 @@ void SwitchExecutive(void)
 
             cNode->next = switchFreeList;
             switchFreeList = cNode;
-            switches[i] = request->direction;
+            switches[cid] = request->direction;
             
             sysReply(person.value, &env);
             break;
