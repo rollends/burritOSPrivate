@@ -13,7 +13,7 @@ void train62(TrainPhysics* physics)
     trainPhysicsInit(physics);
     trainPhysicsSpeedMap(physics,
                          133476,
-                         169915,
+                         169916,
                          222645,
                          275814,
                          334307,

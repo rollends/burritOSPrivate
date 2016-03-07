@@ -1,3 +1,4 @@
+#include "trains/trainMath.h"
 #include "trains/trainPhysics.h"
 
 void trainPhysicsInit(TrainPhysics* physics)
@@ -122,7 +123,19 @@ U32 trainPhysicsGetTime(TrainPhysics* physics, const S32 dx)
         // x > dx
         else
         {
-            return 0;
+            // 0.5at^2 + vt = dx
+            // t = (-v + sqrt(v^2 - 2adx))/a
+            S32 vsqr = (physics->velocity / 100);
+            vsqr *= vsqr;
+            vsqr /= 100;
+
+            S32 ac = 2 * physics->acceleration * dx;
+            ac /= 1000;
+
+            U32 disc = intSqrt(vsqr + ac);
+            
+            ticks = (1000 * (-physics->velocity + disc*1000));
+            ticks /= physics->acceleration;
         }
     }
 
