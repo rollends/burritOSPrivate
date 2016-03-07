@@ -29,7 +29,7 @@ void InitialTask()
 
     {
         MessageEnvelope env;
-        env.message.MessageU8.body = 68;
+        env.message.MessageU8.body = 63;
         sysSend(sysCreate(4, &Locomotive), &env, &env);
     }
 

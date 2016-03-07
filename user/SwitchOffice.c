@@ -89,7 +89,7 @@ void SwitchExecutive(void)
         case MESSAGE_SWITCH_READ:
         {
             env.message.MessageU8.body = (U8)switches[env.message.MessageU8.body];
-            sysReply(person.value, &env, &env);
+            sysReply(person.value, &env);
             break;
         }
 

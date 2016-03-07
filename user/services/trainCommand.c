@@ -62,7 +62,7 @@ S32 dispatchTrainCommand(String string)
         U8 switchId = stratoui(&cstring);
         strskipws(&cstring);
         SwitchState sw = eStraight;
-        switch(*cstring)
+        switch(*cstring++)
         {
         case 'c':
             sw = eCurved;
@@ -74,14 +74,15 @@ S32 dispatchTrainCommand(String string)
         }
         strskipws(&cstring);
         U32 timeSeconds = stratoui(&cstring);
-        
+ 
         SwitchRequest request;
         request.startTime = clockTime(clock) + timeSeconds * 100;
         request.endTime = request.startTime + 300;
         request.direction = sw;
         request.branchId = switchId;
-        request.indBranchNode = 79 + switchId; 
+        request.indBranchNode = 79 + (2 * switchId - 1); 
         MessageEnvelope env;
+        env.type = MESSAGE_SWITCH_ALLOCATE;
         env.message.MessageArbitrary.body = (U32*)&request;
         sysSend(sSwitchOffice.value, &env, &env);
     }
