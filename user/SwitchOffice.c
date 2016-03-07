@@ -16,6 +16,7 @@ static void SwitchWorker(void)
     MessageEnvelope env;
     
     sysReceive(&task.value, &env);
+    env.type = MESSAGE_WORKER;
     SwitchRequest request = *(SwitchRequest*)(env.message.MessageArbitrary.body);
     sysReply(task.value, &env);
 
@@ -27,46 +28,6 @@ static void SwitchWorker(void)
 
     sysSend(sysPid(), &env, &env);
 }
-/*
-static void SwitchReceptionist(void)
-{
-    TaskID phone = VAL_TO_ID( sysPid() );
-    TaskID task;
-
-    MessageEnvelope env;
-    U8 phoneWaiting = 0;
-
-    for(;;)
-    {
-        sysReceive(&task.value, &env);
-        switch(env.type)
-        {
-        case MESSAGE_COURIER:
-        {
-            
-            break;
-        }
-
-        }
-    }
-}
-
-static void SwitchExecutivePhone(void)
-{
-    assert(sysPriority() >= 1);
-    
-    MessageEnvelope env;
-    
-    // Create The Receptionist
-    TaskID reception = VAL_TO_ID( sysCreate(sysPriority() - 1, &SwitchReceptionist) );
-    TaskID executive = VAL_TO_ID( sysPid() );
-    for(;;)
-    {
-        sysSend(reception.value, &env, &env);
-        sysSend(executive.value, &env, &env);
-    }
-}
-*/
 
 void SwitchExecutive(void)
 {
@@ -82,6 +43,7 @@ void SwitchExecutive(void)
     IntervalNode switchIntervalNodes[32];
     IntervalNode *switchFreeList = switchIntervalNodes;
     IntervalNode *switchCalendar[22];
+    SwitchState switches[22];
 
     init_tracka(graph);
 
@@ -90,7 +52,10 @@ void SwitchExecutive(void)
     switchIntervalNodes[i].next = 0;
     
     for(i = 0; i < 22; ++i)
+    {
         switchCalendar[i] = 0;
+        switches[i] = eCurved;
+    }
 
     nsRegister(TrainSwitchOffice);
     for(;;)
@@ -105,7 +70,7 @@ void SwitchExecutive(void)
         {
             // Pop Node ( SHOULD ALWAYS BE HEAD! )
             SwitchRequest* request = (SwitchRequest*)env.message.MessageArbitrary.body;
-            U16 cid = request->indBranchNode - 80; // Get Calendar Index
+            U16 cid = (request->indBranchNode - 80) / 2; // Get Calendar Index
             IntervalNode* cNode = switchCalendar[cid];
             
             switchCalendar[cid] = cNode->next;
@@ -115,16 +80,25 @@ void SwitchExecutive(void)
 
             cNode->next = switchFreeList;
             switchFreeList = cNode;
+            switches[i] = request->direction;
+            
             sysReply(person.value, &env);
             break;
         }
 
-        default:
+        case MESSAGE_SWITCH_READ:
+        {
+            env.message.MessageU8.body = (U8)switches[env.message.MessageU8.body];
+            sysReply(person.value, &env, &env);
+            break;
+        }
+
+        case MESSAGE_SWITCH_ALLOCATE:
         {
             //assert(phone.value == person.value);
             
             SwitchRequest* request = (SwitchRequest*)env.message.MessageArbitrary.body;
-            U16 cid = request->indBranchNode - 80; // Get Calendar Index
+            U16 cid = (request->indBranchNode - 80) / 2; // Get Calendar Index
             IntervalNode* cNode = switchCalendar[cid];
             
             if(!cNode)

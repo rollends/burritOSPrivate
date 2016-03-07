@@ -33,8 +33,8 @@ static U16 waitForTrain()
 
 void Locomotive(void)
 {
-    const char * strFoundTrain = "\033[s\033[43;1HFound Train %2d at Location %c%2d.\033[u";
-    const char * strPredictTrain = "\033[s\033[44;1HPredict Train %2d at Location %c%2d next.\033[u";
+    const char * strFoundTrain = "\033[s\033[43;1HFound Train %2d at Location %c%2d with time %d.\033[u";
+    const char * strPredictTrain = "\033[s\033[44;1HPredict Train %2d at Location %c%2d next with time %d.\033[u";
 
     TaskID parent = VAL_TO_ID( sysPid() );
     TaskID from;
@@ -50,11 +50,13 @@ void Locomotive(void)
     U8 train = env.message.MessageU8.body;
     
     TaskID sTrainDriver = nsWhoIs(Train);
-    
+    TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
+    TaskID sClock = nsWhoIs(Clock);
+
     // Find Train by moving forward and waiting for a sensor.
     trainSetSpeed(sTrainDriver, train, 8);
     U16 currentSensor = waitForTrain();
-    //trainSetSpeed(sTrainDriver, train, 0);
+    U32 currentTime = clockTime(sClock);
 
     for(;;)
     {
@@ -64,11 +66,7 @@ void Locomotive(void)
              nextSensorId = sensorId;
 
         // Result
-        printf( strFoundTrain, 
-                train, 
-                sensorGroup, 
-                sensorId
-        );
+        printf(strFoundTrain, train, sensorGroup, sensorId, currentTime);
 
         // Predict
         TrackNode* nextNode = graph + 16 * (sensorGroup - 'A') + (sensorId - 1);
@@ -76,25 +74,24 @@ void Locomotive(void)
         {
             if(nextNode->type == eNodeBranch)
             {
-                // assume curved cuz lazy.
-                nextNode = nextNode->edge[DIR_CURVED].dest;
+                MessageEnvelope env;
+                env.message.MessageU8.body = (nextNode - &graph[80]) / 2 + 1;
+                env.type = MESSAGE_SWITCH_READ;
+                sysSend(sSwitchOffice.value, &env, &env);
+
+                SwitchState sw = (SwitchState)env.message.MessageU8.body;
+                nextNode = nextNode->edge[sw == eCurved ? DIR_CURVED : DIR_STRAIGHT].dest;
             }
             else
-            {
                 nextNode = nextNode->edge[DIR_AHEAD].dest;
-            }
         } while( nextNode->type != eNodeSensor );
 
         nextSensorGroup = nextNode->name[0];
         nextSensorId = (nextNode - graph) % 16 + 1;
 
-        printf( strPredictTrain, 
-                train, 
-                nextSensorGroup, 
-                nextSensorId
-        );
+        printf(strPredictTrain, train, nextSensorGroup, nextSensorId, 0);
 
         // Wait
-        currentSensor = waitForTrain();     
+        currentSensor = waitForTrain();
     }
 }
