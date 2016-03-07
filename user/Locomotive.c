@@ -29,7 +29,7 @@ void Locomotive(void)
     sysSend(sysCreate(sysPriority()+1, &LocomotiveRadio), &env, &env);
 
     // Register ourselves.
-    //trainRegister(train);
+    trainRegister(train);
     
     // Start Train 'GPS'
     TaskID tGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &LocomotiveSensor));
@@ -43,7 +43,8 @@ void Locomotive(void)
     // Find Train by moving forward and waiting for a sensor.
     trainSetSpeed(sTrainDriver, train, 8);
     U32 currentTime = 0;
-       
+    S16 throttle = 8;
+
     for(;;)
     {
         sysReceive(&from.value, &env);
@@ -84,6 +85,16 @@ void Locomotive(void)
             nextSensorId = (nextNode - graph) % 16 + 1;
 
             printf(strPredictTrain, train, nextSensorGroup, nextSensorId, 0);
+        }
+        else
+        {
+            switch(env.type)
+            {
+            case MESSAGE_TRAIN_SET_SPEED:
+                throttle = env.message.MessageU8.body;
+                trainSetSpeed(sTrainDriver, train, throttle);
+                break;
+            }
         }
     }
 }
@@ -205,6 +216,7 @@ static void LocomotiveSensor(void)
         }
     
         // REVERSE PROJECTION - See if its a sensor behind us?
+        /*
         ip = position->reverse;
         i = 0;
         while(i < MaxSearchDepth)
@@ -242,6 +254,6 @@ static void LocomotiveSensor(void)
             env.message.MessageU8.body = position - graph;
             sysSend(parent.value, &env, &env);
             continue;
-        }
+        }*/
     }
 }

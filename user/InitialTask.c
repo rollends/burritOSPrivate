@@ -67,7 +67,11 @@ void InitialTask()
         }
         else
         {
-            dispatchSystemCommand(buffer);
+            if( dispatchSystemCommand(buffer) != OK )
+            {
+                // Well Shit?
+                printf("\033[41;1H\033[2KThe command you sent could not be completed! Try again later...");
+            }
         }
     }
     trainStop(train);
