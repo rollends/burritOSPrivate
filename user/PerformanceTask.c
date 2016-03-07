@@ -64,8 +64,9 @@ void PerformanceTask()
         clockLongDelayBy(clock, 2);
         
         U32 totalIdlePercent = sysPerfQueryP(0, ePerfBoth);
-        printf( "\033[s\033[2;1HIdling for %2d%%\033[u",
-                totalIdlePercent / 100);
+        printf( "\033[s\033[2;1HIdling for %2d.%2d%%\033[u",
+                totalIdlePercent / 100,
+                totalIdlePercent % 100);
     }
 #endif
 #endif
