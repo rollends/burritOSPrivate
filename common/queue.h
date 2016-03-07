@@ -48,6 +48,27 @@ typedef struct
 } QueueU16;
 
 /**
+ * FIFO circular buffer of U32* values
+ */
+typedef struct
+{
+    /// The data pointer for the buffer
+    U32**   data;
+
+    /// The head index
+    U32     head;
+
+    /// The tail index
+    U32     tail;
+
+    /// The element count, 0 => empty
+    U32     count;
+
+    /// The length of the queue
+    U32     length;
+} QueuePU32;
+
+/**
  * Initializes a U8 queue
  *
  * @param   queue   The queue to initialize
@@ -137,4 +158,37 @@ S32 queueU16Pop(QueueU16* queue, U16* value);
  * @return  0 on success, else an error code (if nothing to load)
  */
 S32 queueU16Peek(QueueU16* queue, U16* value);
+
+/**
+ * Initializes a U32* queue
+ *
+ * @param   queue   The queue to initialize
+ * @param   data    The backing data pointer of `length` bytes
+ * @param   length  The length of the queue, must be a power of 2
+ *
+ * @return  0 on success, else an error code
+ */
+S32 queuePU32Init(QueuePU32* queue, U32** data, const U32 length);
+
+/**
+ * Enqueues a value in a U32* queue
+ *
+ * @param   queue   The queue to initialize
+ * @param   value   The value to enqueue
+ *
+ * @return  0 on success, else an error code
+ */
+S32 queuePU32Push(QueuePU32* queue, U32 * const pointer);
+
+/**
+ * Dequeues a value from a U32* queue
+ *
+ * @param   queue   The queue to initialize
+ * @param   value   The destination to load the value
+ *
+ * @return  0 on success, else an error code
+ */
+S32 queuePU32Pop(QueuePU32* queue, U32** value);
+
+
 #endif

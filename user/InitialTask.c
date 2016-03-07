@@ -2,24 +2,23 @@
 #include "kernel/kernel.h"
 
 #include "user/services/services.h"
+#include "user/trains/trains.h"
+
 #include "user/DigitalClock.h"
 #include "user/PerformanceTask.h"
 #include "user/SensorDisplay.h"
 #include "user/Locomotive.h"
-#include "user/SwitchOffice.h"
-#include "user/TrainYard.h"
 
 #define SwitchCount 22
 
 void InitialTask()
 {
     setupUserServices();
+    setupTrainServices();
 
-    sysCreate(2, &TrainYardServer);
     sysCreate(2, &PerformanceTask);
     sysCreate(4, &DigitalClock);
     sysCreate(4, &SensorDisplay);
-    sysCreate(6, &SwitchExecutive);
 
     TaskID  clock   = nsWhoIs(Clock),
             train   = nsWhoIs(Train),
@@ -68,7 +67,7 @@ void InitialTask()
         }
         else
         {
-            dispatchTrainCommand(buffer);
+            dispatchSystemCommand(buffer);
         }
     }
     trainStop(train);

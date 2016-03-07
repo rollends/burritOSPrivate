@@ -1,11 +1,79 @@
 #include "common/string.h"
 #include "user/messageTypes.h"
 #include "user/services/services.h"
-#include "user/SwitchOffice.h"
+#include "user/trains/SwitchOffice.h"
+#include "user/trains/TrainCommander.h"
 
-static U8 trainSpeedHack[80];
+S32 dispatchSystemCommand(String string)
+{
+    U32 len = strlen(string);
 
+  if(len <= 1) { return -1; }
 
+    strtolower(string);
+    ConstString cstring = (ConstString)string;
+
+    if( cstring[0] == 't' || cstring[0] == 'r' )
+    {
+        if( pushTrainCommand(string) < 0 )
+            return -1;
+    }
+    else if( cstring[0] == 's' && cstring[1] == 'w' )
+    {
+        cstring += 2;
+        strskipws(&cstring);
+        U8 switchId = stratoui(&cstring);
+        strskipws(&cstring);
+        SwitchState sw = eStraight;
+        switch(*cstring)
+        {
+        case 'c':
+            sw = eCurved;
+        case 's':
+            break;
+
+        default:
+            return -1;
+        }
+        trainSwitch(nsWhoIs(TrainSwitches), switchId, sw);
+    }
+    else if( cstring[0] == 's' && cstring[1] == 'd' )
+    {
+        cstring += 2;
+        strskipws(&cstring);
+        U8 switchId = stratoui(&cstring);
+        strskipws(&cstring);
+        SwitchState sw = eStraight;
+        switch(*cstring++)
+        {
+        case 'c':
+            sw = eCurved;
+        case 's':
+            break;
+
+        default:
+            return -1;
+        }
+        strskipws(&cstring);
+        U32 timeSeconds = stratoui(&cstring);
+ 
+        SwitchRequest request;
+        request.startTime = clockTime(nsWhoIs(Clock)) + timeSeconds * 100;
+        request.endTime = request.startTime + 300;
+        request.direction = sw;
+        request.branchId = switchId;
+        request.indBranchNode = 79 + (2 * switchId - 1); 
+        MessageEnvelope env;
+        env.type = MESSAGE_SWITCH_ALLOCATE;
+        env.message.MessageArbitrary.body = (U32*)&request;
+        sysSend(nsWhoIs(TrainSwitchOffice).value, &env, &env);
+    }
+    else
+    {
+        return -1;
+    }
+    return 0;
+}
 
 void trainStop(TaskID server)
 {
@@ -31,10 +99,11 @@ void trainSolenoidOff(TaskID server)
 void trainReverseDirection(TaskID server, U8 train)
 {
     assert( train <= 80 && train >= 1 );
+    assert(0);
 
     TaskID clock = nsWhoIs(Clock);
 
-    U8 oldSpeed = trainSpeedHack[train];
+    U8 oldSpeed = 0;// trainSpeedHack[train];
 
     trainSetSpeed(server, train, 0);
     clockDelayBy(clock, 100 + oldSpeed * 15);
@@ -52,7 +121,7 @@ void trainSetSpeed(TaskID server, U8 train, U8 speed)
     assert( speed < 15 );
     assert( train <= 80 && train >= 1 );
 
-    trainSpeedHack[train] = speed;
+    //trainSpeedHack[train] = speed;
 
     MessageEnvelope env;
     env.type = MESSAGE_TRAIN_SET_SPEED;

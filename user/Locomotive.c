@@ -1,8 +1,11 @@
 #include "kernel/kernel.h"
+
 #include "user/services/services.h"
-#include "user/trackData.h"
 #include "user/messageTypes.h"
-#include "user/TrainYard.h"
+
+#include "user/trains/trains.h"
+#include "user/trains/TrainYard.h"
+#include "user/trains/TrainCommander.h"
 
 static void LocomotiveSensor(void);
 static void LocomotiveRadio(void);
@@ -21,9 +24,12 @@ void Locomotive(void)
     assert(from.value == parent.value);
     sysReply(from.value, &env);
     U8 train = env.message.MessageU8.body;
-    
+   
+    assert(sysPriority() < 31);
+    sysSend(sysCreate(sysPriority()+1, &LocomotiveRadio), &env, &env);
+
     // Register ourselves.
-    trainRegister(train);
+    //trainRegister(train);
     
     // Start Train 'GPS'
     TaskID tGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &LocomotiveSensor));
@@ -113,7 +119,6 @@ static U16 firstSensorTriggered()
 
 static void LocomotiveRadio(void)
 {
-    TaskID commander = nsWhoIs(TrainCommander);
     TaskID yard = nsWhoIs(TrainYard);
     TaskID loco; 
     
@@ -123,10 +128,11 @@ static void LocomotiveRadio(void)
     U8 train = env.message.MessageU8.body;
  
     env.type = MESSAGE_NAMESERVER_REGISTER;
+    env.message.MessageU8.body = train;
     sysSend(yard.value, &env, &env);
     for(;;)
     {
-        sysSend(commander.value, &env, &env);
+        pollTrainCommand(train, &env);
         sysSend(loco.value, &env, &env);
     }
 }
