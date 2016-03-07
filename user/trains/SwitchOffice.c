@@ -1,8 +1,8 @@
 #include "kernel/kernel.h"
-#include "user/trackData.h"
-#include "user/services/services.h"
-#include "user/SwitchOffice.h"
 #include "user/messageTypes.h"
+#include "user/services/services.h"
+#include "user/trains/SwitchOffice.h"
+#include "user/trains/trackData.h"
 
 typedef struct IntervalNode
 {
