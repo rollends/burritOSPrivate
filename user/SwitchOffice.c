@@ -1,6 +1,10 @@
 #include "kernel/kernel.h"
+#include "user/trackData.h"
+#include "user/services/services.h"
+#include "user/SwitchOffice.h"
+#include "user/messageTypes.h"
 
-typedef struct IntervalNode;
+typedef struct IntervalNode
 {
     SwitchRequest           request;
     struct IntervalNode *   next;
@@ -8,9 +12,22 @@ typedef struct IntervalNode;
 
 static void SwitchWorker(void)
 {
-    TaskID executive = VAL_TO_ID( sysPid() ); 
-}
+    TaskID task;
+    MessageEnvelope env;
+    
+    sysReceive(&task.value, &env);
+    SwitchRequest request = *(SwitchRequest*)(env.message.MessageArbitrary.body);
+    sysReply(task.value, &env);
 
+    TaskID clock = nsWhoIs(Clock);
+    TaskID sw = nsWhoIs(TrainSwitches);
+    clockDelayUntil(clock, request.startTime);
+    trainSwitch(sw, request.branchId, request.direction);
+    clockDelayUntil(clock, request.endTime);
+
+    sysSend(sysPid(), &env, &env);
+}
+/*
 static void SwitchReceptionist(void)
 {
     TaskID phone = VAL_TO_ID( sysPid() );
@@ -49,6 +66,7 @@ static void SwitchExecutivePhone(void)
         sysSend(executive.value, &env, &env);
     }
 }
+*/
 
 void SwitchExecutive(void)
 {
@@ -56,26 +74,25 @@ void SwitchExecutive(void)
      
     assert(priority >= 1);
 
-    TaskID phone = VAL_TO_ID( sysCreate(priority - 1, &SwitchExecutivePhone) );
-    TaskID worker = VAL_TO_ID( sysCreate(priority - 1, &SwitchWorker) );
+    //TaskID phone = VAL_TO_ID( sysCreate(priority - 1, &SwitchExecutivePhone) );
 
-    MessageEnvelope courierEnvelope;
     U8 i = 0;
 
     TrackNode graph[TRACK_MAX];
     IntervalNode switchIntervalNodes[32];
-    IntervalNode switchFreeList = switchIntervalNodes;
+    IntervalNode *switchFreeList = switchIntervalNodes;
     IntervalNode *switchCalendar[22];
 
     init_tracka(graph);
 
     for(i = 0; i < 31; ++i)
-        switchRequestNodes[i].next = switchRequestNodes + i + 1;
-    switchRequestNodes[i].next = 0;
+        switchIntervalNodes[i].next = switchIntervalNodes + i + 1;
+    switchIntervalNodes[i].next = 0;
     
     for(i = 0; i < 22; ++i)
         switchCalendar[i] = 0;
 
+    nsRegister(TrainSwitchOffice);
     for(;;)
     {
         TaskID person;
@@ -86,21 +103,50 @@ void SwitchExecutive(void)
         {
         case MESSAGE_WORKER:
         {
-            assert(worker.value == person.value);
-           
+            // Pop Node ( SHOULD ALWAYS BE HEAD! )
+            SwitchRequest* request = (SwitchRequest*)env.message.MessageArbitrary.body;
+            U16 cid = request->indBranchNode - 80; // Get Calendar Index
+            IntervalNode* cNode = switchCalendar[cid];
+            
+            switchCalendar[cid] = cNode->next;
+
+            // Did we pop the right node in this calendar? otherwise we ****ed.
+            assert(cNode->request.startTime == request->startTime);
+
+            cNode->next = switchFreeList;
+            switchFreeList = cNode;
+            sysReply(person.value, &env);
             break;
         }
 
         default:
         {
-            assert(phone.value == person.value);
+            //assert(phone.value == person.value);
             
-            SwitchRequest* request = env.message.MessageArbitrary.body;
+            SwitchRequest* request = (SwitchRequest*)env.message.MessageArbitrary.body;
             U16 cid = request->indBranchNode - 80; // Get Calendar Index
             IntervalNode* cNode = switchCalendar[cid];
-            while(cNode)
+            
+            if(!cNode)
             {
-                SwitchRequest cRequest = cNode->request;
+                assert(switchFreeList);
+                IntervalNode* newInterval = switchFreeList;
+                switchFreeList = switchFreeList->next;
+
+                newInterval->request = *request;
+                newInterval->next = 0;
+                switchCalendar[cid] = newInterval;
+                    
+                sysReply(person.value, &env);
+                env.message.MessageArbitrary.body = (U32*)(&newInterval->request);
+                sysSend(sysCreate(priority - 1, &SwitchWorker), &env, &env);    
+                break;
+            }
+
+            SwitchRequest cRequest = cNode->request;
+            IntervalNode* next = cNode->next;
+            for(;;)
+            {
                 if( ((cRequest.startTime <= request->endTime) && (cRequest.endTime >= request->startTime))
                  || ((cRequest.endTime <= request->startTime) && (cRequest.startTime >= request->endTime)))
                 {
@@ -108,23 +154,25 @@ void SwitchExecutive(void)
                     assert(0);
                 }
 
-                IntervalNode* next = cNode->next;
 
                 if(!next || (next && (next->request.startTime >= request->endTime)))
                 {
-                    assert(switchFreeList);
-                    IntervalNode* newInterval = switchFreeList;
-                    switchFreeList = switchFreeList->next;
-
-                    newInterval->request = *request;
-                    cNode->next = newInterval;
-                    newInterval->next = next;
                     break;
                 }
                 cNode = next;
             }
-            
-            
+
+            assert(switchFreeList);
+            IntervalNode* newInterval = switchFreeList;
+            switchFreeList = switchFreeList->next;
+
+            newInterval->request = *request;
+            cNode->next = newInterval;
+            newInterval->next = next;
+                    
+            sysReply(person.value, &env);
+            env.message.MessageArbitrary.body = (U32*)(&newInterval->request);
+            sysSend(sysCreate(priority - 1, &SwitchWorker), &env, &env);
             break;
         }
         }

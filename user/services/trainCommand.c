@@ -1,6 +1,7 @@
 #include "common/string.h"
 #include "user/messageTypes.h"
 #include "user/services/services.h"
+#include "user/SwitchOffice.h"
 
 static U8 trainSpeedHack[80];
 
@@ -14,7 +15,9 @@ S32 dispatchTrainCommand(String string)
     ConstString cstring = (ConstString)string;
 
     TaskID  sTrain      = nsWhoIs(Train),
-            sSwitch     = nsWhoIs(TrainSwitches);
+            sSwitch     = nsWhoIs(TrainSwitches),
+            sSwitchOffice = nsWhoIs(TrainSwitchOffice),
+            clock       = nsWhoIs(Clock);
 
     if( cstring[0] == 't' && cstring[1] == 'r' )
     {
@@ -51,6 +54,36 @@ S32 dispatchTrainCommand(String string)
             return -1;
         }
         trainSwitch(sSwitch, switchId, sw);
+    }
+    else if( cstring[0] == 's' && cstring[1] == 'd' )
+    {
+        cstring += 2;
+        strskipws(&cstring);
+        U8 switchId = stratoui(&cstring);
+        strskipws(&cstring);
+        SwitchState sw = eStraight;
+        switch(*cstring)
+        {
+        case 'c':
+            sw = eCurved;
+        case 's':
+            break;
+
+        default:
+            return -1;
+        }
+        strskipws(&cstring);
+        U32 timeSeconds = stratoui(&cstring);
+        
+        SwitchRequest request;
+        request.startTime = clockTime(clock) + timeSeconds * 100;
+        request.endTime = request.startTime + 300;
+        request.direction = sw;
+        request.branchId = switchId;
+        request.indBranchNode = 79 + switchId; 
+        MessageEnvelope env;
+        env.message.MessageArbitrary.body = (U32*)&request;
+        sysSend(sSwitchOffice.value, &env, &env);
     }
     else
     {
