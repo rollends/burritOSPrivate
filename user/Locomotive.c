@@ -106,7 +106,7 @@ void Locomotive(void)
                     }
                 } while( nextNode->type != eNodeSensor || nextNode->num != currentSensor );
                
-                U32 predictTime = trainPhysicsGetTime(&physics, distance);
+                U32 predictTime = trainPhysicsGetTime(&physics, distance) / 1000;
                 U32 actualTime = (currentTime - previousTime) / 1000;
                 U32 delta = actualTime - predictTime;
                 if (predictTime > actualTime)
