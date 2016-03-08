@@ -23,6 +23,7 @@ void train62(TrainPhysics* physics)
                          632801);
 
     trainPhysicsAccelMap(physics, 0,
+                         0,
                          65482,
                          73793,
                          80448,
@@ -34,6 +35,7 @@ void train62(TrainPhysics* physics)
                          117025);
 
     trainPhysicsAccelMap(physics, 5,
+                         -113256,
                          0,
                          92468,
                          177639,
@@ -45,6 +47,7 @@ void train62(TrainPhysics* physics)
                          252275);
 
     trainPhysicsAccelMap(physics, 8,
+                         -201428,
                          -260017,
                          -225504,
                          -169676,

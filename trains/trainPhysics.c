@@ -34,11 +34,12 @@ void trainPhysicsSpeedMap(TrainPhysics* physics,
 
 void trainPhysicsAccelMap(TrainPhysics* physics,
                           const S32 speed,
-                          const S32 v5, const S32 v6, const S32 v7,
-                          const S32 v8, const S32 v9, const S32 v10,
-                          const S32 v11, const S32 v12, const S32 v13)
+                          const S32 v0, const S32 v5, const S32 v6,
+                          const S32 v7, const S32 v8, const S32 v9,
+                          const S32 v10, const S32 v11, const S32 v12,
+                          const S32 v13)
 {
-    physics->accelMap[speed][ 0] = 0;
+    physics->accelMap[speed][ 0] = v0;
     physics->accelMap[speed][ 1] = 0;
     physics->accelMap[speed][ 2] = 0;
     physics->accelMap[speed][ 3] = 0;
@@ -65,8 +66,8 @@ void trainPhysicsStep(TrainPhysics* physics, const U32 delta)
 
         physics->velocity += (a * ktick);
 
-        if (a > 0 && physics->velocity >= physics->targetVelocity ||
-            a < 0 && physics->velocity <= physics->targetVelocity)
+        if (((a > 0) && (physics->velocity >= physics->targetVelocity)) ||
+            ((a < 0) && (physics->velocity <= physics->targetVelocity)))
         {
             physics->acceleration = 0;
             physics->velocity = physics->targetVelocity;

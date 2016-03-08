@@ -53,9 +53,10 @@ void trainPhysicsSpeedMap(TrainPhysics* physics,
  */
 void trainPhysicsAccelMap(TrainPhysics* physics,
                           const S32 speed,
-                          const S32 v5, const S32 v6, const S32 v7,
-                          const S32 v8, const S32 v9, const S32 v10,
-                          const S32 v11, const S32 v12, const S32 v13);
+                          const S32 v0, const S32 v5, const S32 v6,
+                          const S32 v7, const S32 v8, const S32 v9,
+                          const S32 v10, const S32 v11, const S32 v12,
+                          const S32 v13);
 
 /**
  * Steps the physics simulation by a time delta
