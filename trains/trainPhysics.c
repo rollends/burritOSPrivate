@@ -174,5 +174,5 @@ U32 trainPhysicsGetTime(TrainPhysics* physics, const S32 dx)
         }
     }
 
-    return ticks;
+    return ticks * 1000;
 }
