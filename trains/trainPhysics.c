@@ -59,7 +59,7 @@ void trainPhysicsAccelMap(TrainPhysics* physics,
 
 void trainPhysicsStep(TrainPhysics* physics, const U32 delta)
 {
-    U32 ktick = (delta / 1000);
+    U32 ktick = (delta/1000);
 
     if (physics->acceleration != 0)
     {
@@ -79,9 +79,9 @@ void trainPhysicsStep(TrainPhysics* physics, const U32 delta)
         }
     }
 
-    S32 steadyDist = (physics->velocity/100);
+    S32 steadyDist = (physics->velocity/1000);
     steadyDist *= ktick;
-    physics->distance += (steadyDist/10000);
+    physics->distance += (steadyDist/1000);
 }
 
 void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed)
@@ -90,10 +90,10 @@ void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed)
     {
         physics->targetVelocity = physics->speedMap[speed];
         physics->targetSpeed = speed;
-        //physics->acceleration = physics->accelMap[physics->speed][speed];
+        physics->acceleration = physics->accelMap[physics->speed][speed];
         
-        physics->speed = physics->targetSpeed;
-        physics->velocity = physics->targetVelocity;
+  //      physics->speed = physics->targetSpeed;
+//        physics->velocity = physics->targetVelocity;
 
     }
 }

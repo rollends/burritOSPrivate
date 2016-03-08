@@ -15,10 +15,25 @@ static void LocomotiveRadio(void);
 static void LocomotiveGPS(void);
 static void PositionUpdateCourier(void);
 
+static void PhysicsTick(void)
+{
+    TimerState timing;
+    MessageEnvelope env;
+    for(;;)
+    {
+        timerStart(TIMER_4, &timing);
+        clockDelayBy(nsWhoIs(Clock), 1);
+        timerSample(TIMER_4, &timing);
+        env.message.MessageU32.body = timing.delta;
+        sysSend(sysPid(), &env, &env); 
+    }
+}
+
 void Locomotive(void)
 {
     const char * strPredictTrain = "\033[s\033[44;1H\033[2KPredict: Train %2d | Location %c%2d | Time %d. Velocity %d.\033[u";
     const char * strFoundTrain =   "\033[s\033[45;1H\033[2KActual : Train %2d | Location %c%2d | Time %d. Delta %d.\033[u";
+    const char * strFoundTrainDist =   "\033[s\033[46;1H\033[2KTravelled : Train %2d | Distance %d\033[u";
     //const char * strFoundTrain =   "Actual : Train %2d | Location %c%2d | Time %d. Delta %d.\r\n";
     //const char * strPredictTrain = "Predict: Train %2d | Location %c%2d | Time %d.\r\n";
 
@@ -50,21 +65,28 @@ void Locomotive(void)
 //    TaskID sClock = nsWhoIs(Clock);
 
     // Find Train by moving forward and waiting for a sensor.
-    //trainSetSpeed(sTrainDriver, train, 5);
+    trainSetSpeed(sTrainDriver, train, 0);
     U32 currentTime = 0;
-    S16 throttle = 5;
+    S16 throttle = 0;
 
     TrainPhysics physics;
     train62(&physics);
+    trainPhysicsSetSpeed(&physics, 0);
 
-    trainPhysicsSetSpeed(&physics, 8);
+    TaskID tPhysicsTick = VAL_TO_ID(sysCreate(sysPriority() - 1, &PhysicsTick));
+
     U32 previousTime = 0;
     U32 previousSensor = 0;
     for(;;)
     {
         sysReceive(&from.value, &env);
 
-        if( from.value == tPosGPS.value )
+        if( from.value == tPhysicsTick.value )
+        {
+            trainPhysicsStep(&physics, env.message.MessageU32.body);
+            sysReply(from.value, &env);
+        }
+        else if( from.value == tPosGPS.value )
         {
             sysReply(tPosGPS.value, &env);
 
@@ -112,6 +134,7 @@ void Locomotive(void)
                 if (predictTime > actualTime)
                     delta = predictTime - actualTime;
 
+                printf(strFoundTrainDist, train, trainPhysicsGetDistance(&physics));
                 trainPhysicsReport(&physics, distance, (currentTime - previousTime));
                 printf(strPredictTrain, train, nextSensorGroup, nextSensorId, predictTime, trainPhysicsGetVelocity(&physics));
                 printf(strFoundTrain, train, sensorGroup, sensorId, actualTime, delta);
@@ -128,6 +151,7 @@ void Locomotive(void)
             {
             case MESSAGE_TRAIN_SET_SPEED:
                 throttle = env.message.MessageU8.body;
+                trainPhysicsSetSpeed(&physics, throttle);
                 trainSetSpeed(sTrainDriver, train, throttle);
                 sysReply(from.value, &env);
                 break;
