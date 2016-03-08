@@ -7,17 +7,21 @@
 #include "user/trains/TrainYard.h"
 #include "user/trains/TrainCommander.h"
 
-static void LocomotiveSensor(void);
 static void LocomotiveRadio(void);
+static void LocomotiveGPS(void);
+static void PositionUpdateCourier(void);
 
 void Locomotive(void)
 {
-    const char * strFoundTrain = "\033[s\033[43;1HFound Train %2d at Location %c%2d with time %d.\033[u";
-    const char * strPredictTrain = "\033[s\033[44;1HPredict Train %2d at Location %c%2d next with time %d.\033[u";
+    const char * strFoundTrain =   "\033[s\033[44;1HActual : Train %2d | Location %c%2d | Time %d.\033[u";
+    const char * strPredictTrain = "\033[s\033[45;1HPredict: Train %2d | Location %c%2d | Time %d.\033[u";
 
     TaskID parent = VAL_TO_ID( sysPid() );
     TaskID from;
     MessageEnvelope env;
+
+    TrackNode graph[TRACK_MAX]; 
+    init_tracka(graph);
 
     // Find out the ID of the train I'm driving around.
     sysReceive(&from.value, &env);
@@ -32,9 +36,7 @@ void Locomotive(void)
     trainRegister(train);
     
     // Start Train 'GPS'
-    TaskID tGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &LocomotiveSensor));
-    sysSend(tGPS.value, &env, &env);
-    TrackNode* graph = (TrackNode*)env.message.MessageArbitrary.body;
+    TaskID tPosGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &PositionUpdateCourier));
 
     TaskID sTrainDriver = nsWhoIs(Train);
     TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
@@ -49,9 +51,9 @@ void Locomotive(void)
     {
         sysReceive(&from.value, &env);
 
-        if( from.value == tGPS.value )
+        if( from.value == tPosGPS.value )
         {
-            sysReply(tGPS.value, &env);
+            sysReply(tPosGPS.value, &env);
 
             U8      currentSensor = env.message.MessageU8.body;
             char    sensorGroup = 'A' + currentSensor / 16,
@@ -62,6 +64,7 @@ void Locomotive(void)
 
             // Result
             printf(strFoundTrain, train, sensorGroup, sensorId, currentTime);
+            printf(strPredictTrain, train, nextSensorGroup, nextSensorId, 0);
 
             // Predict
             TrackNode* nextNode = graph + 16 * (sensorGroup - 'A') + (sensorId - 1);
@@ -83,8 +86,6 @@ void Locomotive(void)
 
             nextSensorGroup = nextNode->name[0];
             nextSensorId = (nextNode - graph) % 16 + 1;
-
-            printf(strPredictTrain, train, nextSensorGroup, nextSensorId, 0);
         }
         else
         {
@@ -93,6 +94,18 @@ void Locomotive(void)
             case MESSAGE_TRAIN_SET_SPEED:
                 throttle = env.message.MessageU8.body;
                 trainSetSpeed(sTrainDriver, train, throttle);
+                sysReply(from.value, &env);
+                break;
+            case MESSAGE_TRAIN_REVERSE:
+                trainSetSpeed(sTrainDriver, train, 0);
+                clockDelayBy(nsWhoIs(Clock), 100 * (throttle));
+                
+                env.message.MessageU16.body = (train << 8) | 0x0F;
+                sysSend(sTrainDriver.value, &env, &env);
+
+                clockDelayBy(nsWhoIs(Clock), 10);
+                trainSetSpeed(sTrainDriver, train, throttle);
+                sysReply(from.value, &env);
                 break;
             }
         }
@@ -150,110 +163,117 @@ static void LocomotiveRadio(void)
 
 static void LocomotiveSensor(void)
 {
-    TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
     TaskID sSensors = nsWhoIs(TrainSensors);
-    TaskID parent;
+    TaskID tParent = VAL_TO_ID(sysPid());
+    U32 sensors[5];
     MessageEnvelope env;
+    for(;;)
+    {
+        trainReadAllSensors(sSensors, sensors);
+        env.message.MessageArbitrary.body = sensors;
+        sysSend(tParent.value, &env, &env);
+    }
+}
+
+static void PositionUpdateCourier(void)
+{
+    TaskID gps = VAL_TO_ID(sysCreate(sysPriority(), &LocomotiveGPS));
+    TaskID parent = VAL_TO_ID(sysPid());
+    for(;;)
+    {
+        MessageEnvelope env;
+        sysSend(gps.value, &env, &env);
+        sysSend(parent.value, &env, &env);
+    }
+}
+
+static void LocomotiveGPS(void)
+{
+    TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
 
     TrackNode graph[TRACK_MAX]; 
     init_tracka(graph);
-
-    sysReceive(&parent.value, &env);
-    env.message.MessageArbitrary.body = (U32*)graph;
-    sysReply(parent.value, &env);
 
     TrackNode* position = graph + firstSensorTriggered();
     TrackNode* ip = position;
 
     U32 sensors[5];
     U32 i = 0;
-    U32 const MaxSearchDepth = 3;
-
-    env.message.MessageU8.body = position - graph;
-    sysSend(parent.value, &env, &env);
+    U32 const MaxSearchDepth = 4;
+ 
+    assert(sysPriority() < 31);
+    TaskID tSensors = VAL_TO_ID(sysCreate(sysPriority()+1, &LocomotiveSensor));
+    TaskID tPosCourier = VAL_TO_ID(sysPid());
+    U8 courierWaiting = 0;
     for(;;)
     {
-        trainReadAllSensors(sSensors, sensors);  
-        
-        // FORWARD PREDICTION - See if its the sensor ahead that triggered.
-        ip = position;
-        i = 0;
-        while(i < MaxSearchDepth)
+        TaskID from;
+        MessageEnvelope env;
+        sysReceive(&from.value, &env);
+
+        if( from.value == tSensors.value )
         {
-            if(ip->type == eNodeSensor)
+            memcpy(sensors, env.message.MessageArbitrary.body, 5);
+            sysReply(tSensors.value, &env);
+
+            // FORWARD PREDICTION - See if its the sensor ahead that triggered.
+            ip = position;
+            i = 0;
+            while(i < MaxSearchDepth)
             {
-                if(sensors[ip->num / 16] & (1 << (15 - ip->num % 16)))
+                if(ip->type == eNodeSensor)
                 {
-                    // FOUND IT!
-                    break;
+                    if(sensors[ip->num / 16] & (1 << (15 - ip->num % 16)))
+                    {
+                        // FOUND IT!
+                        break;
+                    }
+                    else
+                    {
+                        // nope.
+                        ++i;
+                    }
+                }
+                if(ip->type == eNodeBranch)
+                {
+                    MessageEnvelope env;
+                    env.message.MessageU8.body = (ip - &graph[80]) / 2;
+                    env.type = MESSAGE_SWITCH_READ;
+                    sysSend(sSwitchOffice.value, &env, &env);
+
+                    SwitchState sw = (SwitchState)env.message.MessageU8.body;
+                    ip = ip->edge[sw == eCurved ? DIR_CURVED : DIR_STRAIGHT].dest;
                 }
                 else
+                    ip = ip->edge[DIR_AHEAD].dest;
+            }
+
+            if(i < MaxSearchDepth)
+            {
+                position = ip;
+                if(courierWaiting)
                 {
-                    // nope.
-                    ++i;
+                    courierWaiting = 0;
+                    env.message.MessageU8.body = position - graph;
+                    sysReply(tPosCourier.value, &env);
                 }
             }
-            if(ip->type == eNodeBranch)
-            {
-                MessageEnvelope env;
-                env.message.MessageU8.body = (ip - &graph[80]) / 2;
-                env.type = MESSAGE_SWITCH_READ;
-                sysSend(sSwitchOffice.value, &env, &env);
-
-                SwitchState sw = (SwitchState)env.message.MessageU8.body;
-                ip = ip->edge[sw == eCurved ? DIR_CURVED : DIR_STRAIGHT].dest;
-            }
-            else
-                ip = ip->edge[DIR_AHEAD].dest;
         }
-
-        if(i < MaxSearchDepth)
+        else if( from.value == tPosCourier.value )
         {
-            position = ip;
-            env.message.MessageU8.body = position - graph;
-            sysSend(parent.value, &env, &env);
-            continue;
+            courierWaiting = 1;
         }
-    
-        // REVERSE PROJECTION - See if its a sensor behind us?
-        /*
-        ip = position->reverse;
-        i = 0;
-        while(i < MaxSearchDepth)
+        else
         {
-            if(ip->type == eNodeSensor)
+            switch(env.type)
             {
-                if(sensors[ip->num / 16] & (1 << (15 - ip->num % 16)))
-                {
-                    // FOUND IT!
-                    break;
-                }
-                else
-                {
-                    // nope.
-                    ++i;
-                }
-            }
-            if(ip->type == eNodeBranch)
+            case MESSAGE_TRAIN_REVERSE:
             {
-                MessageEnvelope env;
-                env.message.MessageU8.body = (ip - &graph[80]) / 2;
-                env.type = MESSAGE_SWITCH_READ;
-                sysSend(sSwitchOffice.value, &env, &env);
-
-                SwitchState sw = (SwitchState)env.message.MessageU8.body;
-                ip = ip->edge[sw == eCurved ? DIR_CURVED : DIR_STRAIGHT].dest;
+                position = position->reverse;
+                sysReply(from.value, &env);
+                break;
             }
-            else
-                ip = ip->edge[DIR_AHEAD].dest;
+            }
         }
-
-        if(i < MaxSearchDepth)
-        {
-            position = ip;
-            env.message.MessageU8.body = position - graph;
-            sysSend(parent.value, &env, &env);
-            continue;
-        }*/
     }
 }
