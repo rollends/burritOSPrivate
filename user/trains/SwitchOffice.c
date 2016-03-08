@@ -56,6 +56,11 @@ void SwitchExecutive(void)
         switchCalendar[i] = 0;
         switches[i] = eCurved;
     }
+    switches[6] = eStraight;
+    switches[7] = eStraight;
+    switches[13] = eStraight;
+    switches[19] = eStraight;
+    switches[21] = eStraight;
 
     nsRegister(TrainSwitchOffice);
     for(;;)

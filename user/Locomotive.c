@@ -1,4 +1,5 @@
 #include "kernel/kernel.h"
+#include "hardware/hardware.h"
 
 #include "user/services/services.h"
 #include "user/messageTypes.h"
@@ -7,14 +8,20 @@
 #include "user/trains/TrainYard.h"
 #include "user/trains/TrainCommander.h"
 
+#include "trains/train62.h"
+#include "trains/trainPhysics.h"
+
 static void LocomotiveRadio(void);
 static void LocomotiveGPS(void);
 static void PositionUpdateCourier(void);
 
 void Locomotive(void)
 {
-    const char * strFoundTrain =   "\033[s\033[44;1HActual : Train %2d | Location %c%2d | Time %d.\033[u";
-    const char * strPredictTrain = "\033[s\033[45;1HPredict: Train %2d | Location %c%2d | Time %d.\033[u";
+    const char * strPredictTrain = "\033[s\033[44;1H\033[2KPredict: Train %2d | Location %c%2d | Time %d. Velocity %d.\033[u";
+    const char * strFoundTrain =   "\033[s\033[45;1H\033[2KActual : Train %2d | Location %c%2d | Time %d. Delta %d.\033[u";
+    //const char * strFoundTrain =   "Actual : Train %2d | Location %c%2d | Time %d. Delta %d.\r\n";
+    //const char * strPredictTrain = "Predict: Train %2d | Location %c%2d | Time %d.\r\n";
+
 
     TaskID parent = VAL_TO_ID( sysPid() );
     TaskID from;
@@ -40,13 +47,19 @@ void Locomotive(void)
 
     TaskID sTrainDriver = nsWhoIs(Train);
     TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
-    TaskID sClock = nsWhoIs(Clock);
+//    TaskID sClock = nsWhoIs(Clock);
 
     // Find Train by moving forward and waiting for a sensor.
-    trainSetSpeed(sTrainDriver, train, 8);
+    //trainSetSpeed(sTrainDriver, train, 5);
     U32 currentTime = 0;
-    S16 throttle = 8;
+    S16 throttle = 5;
 
+    TrainPhysics physics;
+    train62(&physics);
+
+    trainPhysicsSetSpeed(&physics, 8);
+    U32 previousTime = 0;
+    U32 previousSensor = 0;
     for(;;)
     {
         sysReceive(&from.value, &env);
@@ -60,32 +73,54 @@ void Locomotive(void)
                     nextSensorGroup = sensorGroup;
             U8      sensorId = currentSensor % 16 + 1,
                     nextSensorId = sensorId;
-            currentTime = clockTime(sClock);
+            
+            //currentTime = clockTime(sClock);
+            timerGetValue(TIMER_4, &currentTime);
 
-            // Result
-            printf(strFoundTrain, train, sensorGroup, sensorId, currentTime);
-            printf(strPredictTrain, train, nextSensorGroup, nextSensorId, 0);
-
-            // Predict
-            TrackNode* nextNode = graph + 16 * (sensorGroup - 'A') + (sensorId - 1);
-            do
+            
+            if(previousTime != 0)
             {
-                if(nextNode->type == eNodeBranch)
+                // Predict
+                TrackNode* nextNode = graph + previousSensor;
+                U32 distance = 0;
+                do
                 {
-                    MessageEnvelope env;
-                    env.message.MessageU8.body = (nextNode - &graph[80]) / 2 + 1;
-                    env.type = MESSAGE_SWITCH_READ;
-                    sysSend(sSwitchOffice.value, &env, &env);
+                    if(nextNode->type == eNodeBranch)
+                    {
+                         
+                         MessageEnvelope env;
+                         env.message.MessageU8.body = (nextNode - &graph[80]) / 2;
+                         env.type = MESSAGE_SWITCH_READ;
+                         
+                         sysSend(sSwitchOffice.value, &env, &env);
+                        
+                         SwitchState sw = (SwitchState)env.message.MessageU8.body;
+                         U8 swv = (sw == eCurved ? DIR_CURVED : DIR_STRAIGHT);
+                         distance += nextNode->edge[swv].dist;
+                         nextNode = nextNode->edge[swv].dest;
+                    }
+                    else
+                    {
+                        distance += nextNode->edge[DIR_AHEAD].dist;
+                        nextNode = nextNode->edge[DIR_AHEAD].dest;
+                    }
+                } while( nextNode->type != eNodeSensor || nextNode->num != currentSensor );
+               
+                U32 predictTime = trainPhysicsGetTime(&physics, distance);
+                U32 actualTime = (currentTime - previousTime) / 1000;
+                U32 delta = actualTime - predictTime;
+                if (predictTime > actualTime)
+                    delta = predictTime - actualTime;
 
-                    SwitchState sw = (SwitchState)env.message.MessageU8.body;
-                    nextNode = nextNode->edge[sw == eCurved ? DIR_CURVED : DIR_STRAIGHT].dest;
-                }
-                else
-                    nextNode = nextNode->edge[DIR_AHEAD].dest;
-            } while( nextNode->type != eNodeSensor );
-
-            nextSensorGroup = nextNode->name[0];
-            nextSensorId = (nextNode - graph) % 16 + 1;
+                trainPhysicsReport(&physics, distance, (currentTime - previousTime));
+                printf(strPredictTrain, train, nextSensorGroup, nextSensorId, predictTime, trainPhysicsGetVelocity(&physics));
+                printf(strFoundTrain, train, sensorGroup, sensorId, actualTime, delta);
+                
+                nextSensorGroup = nextNode->name[0];
+                nextSensorId = (nextNode - graph) % 16 + 1;
+            }
+            previousTime = currentTime;
+            previousSensor =currentSensor;
         }
         else
         {
@@ -194,12 +229,13 @@ static void LocomotiveGPS(void)
     TrackNode graph[TRACK_MAX]; 
     init_trackb(graph);
 
+
     TrackNode* position = graph + firstSensorTriggered();
     TrackNode* ip = position;
 
     U32 sensors[5];
     U32 i = 0;
-    U32 const MaxSearchDepth = 5;
+    U32 const MaxSearchDepth = 15;
  
     assert(sysPriority() < 31);
     TaskID tSensors = VAL_TO_ID(sysCreate(sysPriority()+1, &LocomotiveSensor));
@@ -219,6 +255,7 @@ static void LocomotiveGPS(void)
             // FORWARD PREDICTION - See if its the sensor ahead that triggered.
             ip = position;
             i = 0;
+            
             while(i < MaxSearchDepth)
             {
                 if(ip->type == eNodeSensor)
@@ -242,7 +279,7 @@ static void LocomotiveGPS(void)
                     sysSend(sSwitchOffice.value, &env, &env);
 
                     SwitchState sw = (SwitchState)env.message.MessageU8.body;
-                    ip = ip->edge[sw == eCurved ? DIR_CURVED : DIR_STRAIGHT].dest;
+                    ip = ip->edge[(sw == eCurved) ? DIR_CURVED : DIR_STRAIGHT].dest;
                 }
                 else
                     ip = ip->edge[DIR_AHEAD].dest;

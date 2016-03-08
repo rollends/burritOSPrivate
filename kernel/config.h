@@ -15,7 +15,7 @@
 
 
 /// The memory block size in words (16,384 bytes = 16kb)
-#define MEMORY_BLOCK_SIZE    4096
+#define MEMORY_BLOCK_SIZE    16384
 
 /// The memoryblock count
 #define MEMORY_BLOCK_COUNT  TASK_COUNT

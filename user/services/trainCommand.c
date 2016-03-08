@@ -35,7 +35,16 @@ S32 dispatchSystemCommand(String string)
         default:
             return -1;
         }
-        trainSwitch(nsWhoIs(TrainSwitches), switchId, sw);
+        SwitchRequest request;
+        request.startTime = clockTime(nsWhoIs(Clock)) + 100;
+        request.endTime = request.startTime + 300;
+        request.direction = sw;
+        request.branchId = switchId;
+        request.indBranchNode = 79 + (2 * switchId - 1); 
+        MessageEnvelope env;
+        env.type = MESSAGE_SWITCH_ALLOCATE;
+        env.message.MessageArbitrary.body = (U32*)&request;
+        sysSend(nsWhoIs(TrainSwitchOffice).value, &env, &env);
     }
     else if( cstring[0] == 's' && cstring[1] == 'd' )
     {

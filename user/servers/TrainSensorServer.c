@@ -62,7 +62,7 @@ void TrainSensorServer(void)
         {
             sysReply(rcvId.value, &rcvEnv);
             
-            U8 changed = 0;
+            U32 changed = 0;
             for(i = 0; i < 5; i++)
             {
                 U32 val1 = sensorBuffer[i];

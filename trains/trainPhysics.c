@@ -90,7 +90,11 @@ void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed)
     {
         physics->targetVelocity = physics->speedMap[speed];
         physics->targetSpeed = speed;
-        physics->acceleration = physics->accelMap[physics->speed][speed];
+        //physics->acceleration = physics->accelMap[physics->speed][speed];
+        
+        physics->speed = physics->targetSpeed;
+        physics->velocity = physics->targetVelocity;
+
     }
 }
 

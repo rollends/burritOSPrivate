@@ -62,7 +62,10 @@ void SensorDisplay(void)
 
       if( row >= SwitchCount ) continue;
     
-        trainSwitch(sSwitch, i, eCurved);
+        if( i != 154 && i != 156 && i != 7 && i != 8 && i != 14 )
+            trainSwitch(sSwitch, i, eCurved);
+        else
+            trainSwitch(sSwitch, i, eStraight);
     }
 
     for(;;)
