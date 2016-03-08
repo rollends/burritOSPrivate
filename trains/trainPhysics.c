@@ -59,7 +59,7 @@ void trainPhysicsStep(TrainPhysics* physics, const U32 delta)
 {
     if (physics->acceleration != 0)
     {
-        U32 ktick = ((delta / 1000));
+        U32 ktick = (delta / 1000);
 
         S32 a = physics->acceleration / 100;
 
@@ -89,6 +89,21 @@ void trainPhysicsReport(TrainPhysics* physics,
                         const S32 dist,
                         const U32 ticks)
 {
+    U32 ktick = (ticks / 1000);
+
+    if (physics->acceleration == 0)
+    {
+        // V = v*0.9 + d/t*0.1
+        S32 velocity = physics->velocity;
+        velocity = (velocity * 9)/10;
+        velocity += (dist*1000*100)/ktick;
+
+        physics->velocity = velocity;
+    }
+    else
+    {
+
+    }
 }
 
 S32 trainPhysicsGetVelocity(TrainPhysics* physics)
