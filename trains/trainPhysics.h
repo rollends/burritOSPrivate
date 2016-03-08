@@ -20,6 +20,9 @@ typedef struct
     /// The target velocity of the train
     S32 targetVelocity;
 
+    /// The distance since the last report
+    S32 distance;
+
     /// The current speed of the train
     U8  speed;
 
@@ -103,5 +106,18 @@ S32 trainPhysicsGetVelocity(TrainPhysics* physics);
  * @return  The time in ticks
  */
 U32 trainPhysicsGetTime(TrainPhysics* physics, const S32 dx);
+
+/**
+ * Gets the distance traveled since the last sensor report
+ *
+ *
+ * @param  physics   The TrainPhysics data struct
+ * 
+ * @return  The distance traveled
+ */
+static inline S32 trainPhysicsGetDistance(TrainPhysics* physics)
+{
+    return physics->distance;
+}
 
 #endif
