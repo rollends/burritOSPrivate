@@ -30,10 +30,16 @@ static char _x2c(int c)
     return 'a' + c - 10;
 }
 
-static int _printDecimal(String* output, U32 value, U32 width, const char delim, const char comma)
+static int _printDecimal(String* output, S32 value, U32 width, const char delim, const char comma)
 {
     char buffer[16];
     U8 i = 0;
+    if (value < 0)
+    {
+        value *= -1;
+         *((*output)++) = '-';
+    }
+
     do
     {
         U8 d = value % 10;
@@ -57,6 +63,7 @@ static int _printDecimal(String* output, U32 value, U32 width, const char delim,
             *((*output)++) = ',';
         }
     }
+
     return 0;
 }
 
@@ -144,11 +151,11 @@ S32 tprintf(TaskID server, ConstString format, ...)
                 switch( ch )
                 {
                 case 'd':
-                    _printDecimal(&OutputBufferI,va_arg(va, U32), widthFlag, '0', 0);
+                    _printDecimal(&OutputBufferI,va_arg(va, S32), widthFlag, '0', 0);
                     break;
 
                 case 'n':
-                    _printDecimal(&OutputBufferI,va_arg(va, U32), widthFlag, ' ', 1);
+                    _printDecimal(&OutputBufferI,va_arg(va, S32), widthFlag, ' ', 1);
                     break;
 
                 case 's':
