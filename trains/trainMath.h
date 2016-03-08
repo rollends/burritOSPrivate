@@ -1,6 +1,8 @@
 #ifndef TRAIN_MATH_H
 #define TRAIN_MATH_H
 
+#include "common/common.h"
+
 /**
  * Newton's method computation of sqrt
  */

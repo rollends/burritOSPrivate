@@ -2,7 +2,6 @@
 #define TRAIN_PHYSICS_H
 
 #include "common/common.h"
-#include "trains/trainAcceleration.h"
 
 typedef struct
 {
@@ -10,7 +9,7 @@ typedef struct
     S32 speedMap[14];
 
     /// Mapping of train speed to accelerations
-    TrainAcceleration accelMap[14];
+    S32 accelMap[14][14];
 
     /// The current velocity of the train
     S32 velocity;
@@ -39,26 +38,24 @@ void trainPhysicsInit(TrainPhysics* physics);
  * Initializes a train speed map
  *
  * @param   physics     The TrainPhysics struct to set the speed map
- * @param   v3..v14     Speed map entries
+ * @param   v5..v14     Speed map entries
  */
 void trainPhysicsSpeedMap(TrainPhysics* physics, 
-                          const S32 v3, const S32 v4, const S32 v5,
-                          const S32 v6, const S32 v7, const S32 v8,
-                          const S32 v9, const S32 v10, const S32 v11,
-                          const S32 v12, const S32 v13, const S32 v14);
-
+                          const S32 v5, const S32 v6, const S32 v7,
+                          const S32 v8, const S32 v9, const S32 v10,
+                          const S32 v11, const S32 v12, const S32 v13);
 /**
- * Initializes a train acceleration map entry
+ * Initializes a train speed map
  *
- * @param   physics   The TrainPhysics struct to set the accel map
- * @param   speed     The map entry speed
- * @param   m         The map m value
- * @param   b         The map b value
+ * @param   physics     The TrainPhysics struct to set the speed map
+ * @param   speed       The speed at which to map the accelerations
+ * @param   a5..a14     Acceleration map entries
  */
 void trainPhysicsAccelMap(TrainPhysics* physics,
-                          const U8 speed,
-                          const S32 m,
-                          const S32 b);
+                          const S32 speed,
+                          const S32 v5, const S32 v6, const S32 v7,
+                          const S32 v8, const S32 v9, const S32 v10,
+                          const S32 v11, const S32 v12, const S32 v13);
 
 /**
  * Steps the physics simulation by a time delta

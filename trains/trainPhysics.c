@@ -11,17 +11,16 @@ void trainPhysicsInit(TrainPhysics* physics)
 }
 
 void trainPhysicsSpeedMap(TrainPhysics* physics, 
-                          const S32 v3, const S32 v4, const S32 v5,
-                          const S32 v6, const S32 v7, const S32 v8,
-                          const S32 v9, const S32 v10, const S32 v11,
-                          const S32 v12, const S32 v13, const S32 v14)
+                          const S32 v5, const S32 v6, const S32 v7,
+                          const S32 v8, const S32 v9, const S32 v10,
+                          const S32 v11, const S32 v12, const S32 v13)
 {
     physics->speedMap[ 0] = 0;
     physics->speedMap[ 1] = 0;
     physics->speedMap[ 2] = 0;
+    physics->speedMap[ 3] = 0;
+    physics->speedMap[ 4] = 0;
 
-    physics->speedMap[ 3] = v3;
-    physics->speedMap[ 4] = v4;
     physics->speedMap[ 5] = v5;
     physics->speedMap[ 6] = v6;
     physics->speedMap[ 7] = v7;
@@ -31,44 +30,59 @@ void trainPhysicsSpeedMap(TrainPhysics* physics,
     physics->speedMap[11] = v11;
     physics->speedMap[12] = v12;
     physics->speedMap[13] = v13;
-    physics->speedMap[14] = v14;
 }
 
 void trainPhysicsAccelMap(TrainPhysics* physics,
-                          const U8 speed,
-                          const S32 m,
-                          const S32 b)
+                          const S32 speed,
+                          const S32 v5, const S32 v6, const S32 v7,
+                          const S32 v8, const S32 v9, const S32 v10,
+                          const S32 v11, const S32 v12, const S32 v13)
 {
-    trainAccelerationInit(&(physics->accelMap[speed]), m, b);
+    physics->accelMap[speed][ 0] = 0;
+    physics->accelMap[speed][ 1] = 0;
+    physics->accelMap[speed][ 2] = 0;
+    physics->accelMap[speed][ 3] = 0;
+    physics->accelMap[speed][ 4] = 0;
+
+    physics->accelMap[speed][ 5] = v5;
+    physics->accelMap[speed][ 6] = v6;
+    physics->accelMap[speed][ 7] = v7;
+    physics->accelMap[speed][ 8] = v8;
+    physics->accelMap[speed][ 9] = v9;
+    physics->accelMap[speed][10] = v10;
+    physics->accelMap[speed][11] = v11;
+    physics->accelMap[speed][12] = v12;
+    physics->accelMap[speed][13] = v13;
 }
 
 void trainPhysicsStep(TrainPhysics* physics, const U32 delta)
 {
     if (physics->acceleration != 0)
     {
-        U32 ktick = ((delta / 100) + 5)/10;
+        U32 ktick = ((delta / 1000));
 
-        S32 a = physics->acceleration / 10;
-        a += 5;
-        a /= 10;
+        S32 a = physics->acceleration / 100;
 
         physics->velocity += (a * ktick);
 
-        if (physics->velocity >= physics->targetVelocity)
+        if (a > 0 && physics->velocity >= physics->targetVelocity ||
+            a < 0 && physics->velocity <= physics->targetVelocity)
         {
             physics->acceleration = 0;
+            physics->velocity = physics->targetVelocity;
+            physics->speed = physics->targetSpeed;
         }
     }
 }
 
 void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed)
 {
-    physics->targetVelocity = physics->speedMap[speed];
-    physics->targetSpeed = speed;
-
-    physics->acceleration =
-        trainAccelerationGet(&(physics->accelMap[physics->speed]),
-                             speed);
+    if (speed != physics->speed)
+    {
+        physics->targetVelocity = physics->speedMap[speed];
+        physics->targetSpeed = speed;
+        physics->acceleration = physics->accelMap[physics->speed][speed];
+    }
 }
 
 void trainPhysicsReport(TrainPhysics* physics,
@@ -88,37 +102,32 @@ U32 trainPhysicsGetTime(TrainPhysics* physics, const S32 dx)
 
     if (physics->acceleration == 0)
     {
-        ticks = (((dx * 1000 * 10000) / physics->velocity)+5)/10;
+        ticks = (dx*1000*1000)/physics->velocity;
     }
     else
     {
         // vf = vi + a*t
         // t = (vf-vi)/a
-        U32 accelTime = physics->targetVelocity - physics->velocity;
-        accelTime += 5;
-        accelTime /= 1000;
+        S32 accelTime = physics->targetVelocity - physics->velocity;
+        accelTime *= 1000;
         accelTime /= physics->acceleration;
 
         // 0.5at^2 + v*t = x
-        U32 vDist = physics->velocity * accelTime;
-        vDist /= 100000;
-        vDist += 5;
-        vDist /= 10;
+        S32 vDist = physics->velocity * accelTime;
+        vDist /= 1000000;
 
-        U32 aDist = accelTime * accelTime;
+        S32 aDist = accelTime * accelTime;
         aDist /= 2000;
         aDist *= physics->acceleration;
-        aDist /= 100000;
-        aDist += 5;
-        aDist /= 10;
+        aDist /= 1000000;
 
-        U32 totalDist = aDist + vDist;
+        S32 totalDist = aDist + vDist;
 
         // x <= dx
         if (totalDist <= dx)
         {
             ticks = accelTime;
-            ticks += (dx-totalDist * 1000 * 1000) / physics->targetVelocity;
+            ticks += ((dx-totalDist)*1000*1000)/physics->targetVelocity;
         }
         // x > dx
         else
