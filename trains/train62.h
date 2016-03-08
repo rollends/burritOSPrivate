@@ -57,6 +57,18 @@ void train62(TrainPhysics* physics)
                          204682,
                          260656,
                          295647);
+
+    trainPhysicsAccelMap(physics, 13,
+                         -309478,
+                         -320728,
+                         -313774,
+                         -312426,
+                         -289475,
+                         -262204,
+                         -258886,
+                         -145809,
+                         -57208,
+                         0);
 }
 
 #endif
