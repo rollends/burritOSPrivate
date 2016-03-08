@@ -17,14 +17,11 @@ static void PositionUpdateCourier(void);
 
 static void PhysicsTick(void)
 {
-    TimerState timing;
     MessageEnvelope env;
+
     for(;;)
     {
-        timerStart(TIMER_4, &timing);
-        clockDelayBy(nsWhoIs(Clock), 1);
-        timerSample(TIMER_4, &timing);
-        env.message.MessageU32.body = timing.delta;
+        clockDelayBy(nsWhoIs(Clock), 3);
         sysSend(sysPid(), &env, &env); 
     }
 }
@@ -33,7 +30,7 @@ void Locomotive(void)
 {
     const char * strPredictTrain = "\033[s\033[44;1H\033[2KPredict: Train %2d | Location %c%2d | Time %d. Velocity %d.\033[u";
     const char * strFoundTrain =   "\033[s\033[45;1H\033[2KActual : Train %2d | Location %c%2d | Time %d. Delta %d.\033[u";
-    const char * strFoundTrainDist =   "\033[s\033[46;1H\033[2KTravelled : Train %2d | Distance %d\033[u";
+    const char * strFoundTrainDist =   "\033[s\033[46;1H\033[2KTravelled : Train %2d | Distance %d | Expected %d\033[u";
     //const char * strFoundTrain =   "Actual : Train %2d | Location %c%2d | Time %d. Delta %d.\r\n";
     //const char * strPredictTrain = "Predict: Train %2d | Location %c%2d | Time %d.\r\n";
 
@@ -66,7 +63,6 @@ void Locomotive(void)
 
     // Find Train by moving forward and waiting for a sensor.
     trainSetSpeed(sTrainDriver, train, 0);
-    U32 currentTime = 0;
     S16 throttle = 0;
 
     TrainPhysics physics;
@@ -75,7 +71,12 @@ void Locomotive(void)
 
     TaskID tPhysicsTick = VAL_TO_ID(sysCreate(sysPriority() - 1, &PhysicsTick));
 
-    U32 previousTime = 0;
+    TimerState tickTimer;
+    TimerState errorTimer;
+
+    timerStart(TIMER_4, &tickTimer);
+    timerStart(TIMER_4, &errorTimer);
+
     U32 previousSensor = 0;
     for(;;)
     {
@@ -83,7 +84,8 @@ void Locomotive(void)
 
         if( from.value == tPhysicsTick.value )
         {
-            trainPhysicsStep(&physics, env.message.MessageU32.body);
+            timerSample(TIMER_4, &tickTimer);
+            trainPhysicsStep(&physics, tickTimer.delta);
             sysReply(from.value, &env);
         }
         else if( from.value == tPosGPS.value )
@@ -96,11 +98,7 @@ void Locomotive(void)
             U8      sensorId = currentSensor % 16 + 1,
                     nextSensorId = sensorId;
             
-            //currentTime = clockTime(sClock);
-            timerGetValue(TIMER_4, &currentTime);
-
-            
-            if(previousTime != 0)
+            if(previousSensor != 0)
             {
                 // Predict
                 TrackNode* nextNode = graph + previousSensor;
@@ -128,21 +126,26 @@ void Locomotive(void)
                     }
                 } while( nextNode->type != eNodeSensor || nextNode->num != currentSensor );
                
+                timerSample(TIMER_4, &errorTimer);
                 U32 predictTime = trainPhysicsGetTime(&physics, distance) / 1000;
-                U32 actualTime = (currentTime - previousTime) / 1000;
+                U32 actualTime = errorTimer.delta / 1000;
+
                 U32 delta = actualTime - predictTime;
                 if (predictTime > actualTime)
                     delta = predictTime - actualTime;
 
-                printf(strFoundTrainDist, train, trainPhysicsGetDistance(&physics));
-                trainPhysicsReport(&physics, distance, (currentTime - previousTime));
+                timerSample(TIMER_4, &tickTimer);
+                trainPhysicsStep(&physics, tickTimer.delta);
+
+                S32 dist = trainPhysicsGetDistance(&physics);
+                printf(strFoundTrainDist, train, dist, distance);
+                trainPhysicsReport(&physics, distance, errorTimer.delta);
                 printf(strPredictTrain, train, nextSensorGroup, nextSensorId, predictTime, trainPhysicsGetVelocity(&physics));
                 printf(strFoundTrain, train, sensorGroup, sensorId, actualTime, delta);
                 
                 nextSensorGroup = nextNode->name[0];
                 nextSensorId = (nextNode - graph) % 16 + 1;
             }
-            previousTime = currentTime;
             previousSensor =currentSensor;
         }
         else
