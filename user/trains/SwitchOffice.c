@@ -24,9 +24,11 @@ static void SwitchWorker(void)
     TaskID sw = nsWhoIs(TrainSwitches);
     clockDelayUntil(clock, request.startTime);
     trainSwitch(sw, request.branchId, request.direction);
+    
+    sysSend(sysPid(), &env, &env);
+    
     clockDelayUntil(clock, request.endTime);
 
-    sysSend(sysPid(), &env, &env);
 }
 
 void SwitchExecutive(void)

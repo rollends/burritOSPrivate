@@ -162,7 +162,7 @@ void Locomotive(void)
                 break;
             case MESSAGE_TRAIN_REVERSE:
                 trainSetSpeed(sTrainDriver, train, 0);
-                clockDelayBy(nsWhoIs(Clock), 70 * (throttle));
+                clockDelayBy(nsWhoIs(Clock), 10 * (throttle));
                 
                 if(reverseCourierWaiting)
                 {
@@ -177,7 +177,7 @@ void Locomotive(void)
                 env.message.MessageU16.body = (train << 8) | 0x0F;
                 sysSend(sTrainDriver.value, &env, &env);
 
-                clockDelayBy(nsWhoIs(Clock), 10);
+                clockDelayBy(nsWhoIs(Clock), 5);
                 trainSetSpeed(sTrainDriver, train, throttle);
                 sysReply(from.value, &env);
                 break;
