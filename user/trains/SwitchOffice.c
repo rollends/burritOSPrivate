@@ -31,23 +31,33 @@ static void SwitchWorker(void)
 
 }
 
+static U32 indexForBranch(TrackNode* graph, U32 branchId)
+{
+    U32 i = 0;
+    for(i = 0; i < TRACK_MAX; ++i)
+    {
+        if( graph[i].type == eNodeBranch && graph[i].num == branchId )
+            return (i - 80)/2;
+    }
+    return 0xFFFFFFFF;
+}
+
 void SwitchExecutive(void)
 {
     U16 priority = sysPriority();
      
     assert(priority >= 1);
 
-    //TaskID phone = VAL_TO_ID( sysCreate(priority - 1, &SwitchExecutivePhone) );
-
     U8 i = 0;
 
     TrackNode graph[TRACK_MAX];
+    init_tracka(graph);
+
     IntervalNode switchIntervalNodes[32];
     IntervalNode *switchFreeList = switchIntervalNodes;
     IntervalNode *switchCalendar[22];
     SwitchState switches[22];
 
-    init_trackb(graph);
 
     for(i = 0; i < 31; ++i)
         switchIntervalNodes[i].next = switchIntervalNodes + i + 1;
@@ -65,6 +75,13 @@ void SwitchExecutive(void)
     switches[21] = eStraight;
 
     nsRegister(TrainSwitchOffice);
+
+    for(i = 80; i < 123 ; i += 2)
+    {
+        TrackNode* iSwitch = graph + i;
+        trainSwitch(nsWhoIs(TrainSwitches), iSwitch->num, switches[(i-80)/2]);
+    }
+
     for(;;)
     {
         TaskID person;
@@ -77,7 +94,8 @@ void SwitchExecutive(void)
         {
             // Pop Node ( SHOULD ALWAYS BE HEAD! )
             SwitchRequest* request = (SwitchRequest*)env.message.MessageArbitrary.body;
-            U16 cid = (request->indBranchNode - 80) / 2; // Get Calendar Index
+            U32 cid = indexForBranch(graph, request->branchId); // Get Calendar Index
+            assert(cid <= 21);
             IntervalNode* cNode = switchCalendar[cid];
             
             switchCalendar[cid] = cNode->next;
@@ -95,17 +113,18 @@ void SwitchExecutive(void)
 
         case MESSAGE_SWITCH_READ:
         {
-            env.message.MessageU8.body = (U8)switches[env.message.MessageU8.body];
+            assert(env.message.MessageU32.body <= 21);
+            env.message.MessageU32.body = (U32)switches[env.message.MessageU32.body];
             sysReply(person.value, &env);
             break;
         }
 
         case MESSAGE_SWITCH_ALLOCATE:
         {
-            //assert(phone.value == person.value);
             
             SwitchRequest* request = (SwitchRequest*)env.message.MessageArbitrary.body;
-            U16 cid = (request->indBranchNode - 80) / 2; // Get Calendar Index
+            U32 cid = indexForBranch(graph,request->branchId); // Get Calendar Index
+            assert(cid <= 21);
             IntervalNode* cNode = switchCalendar[cid];
             
             if(!cNode)

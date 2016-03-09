@@ -31,8 +31,6 @@ void SensorDisplay(void)
     U8      buffer[10];
     U8      bufferHead = 0;
 
-    TaskID  sSwitch = nsWhoIs(TrainSwitches);
-
     printf("\033[s\033[3;1H*----------*----------*\033[u");
     printf("\033[s\033[4;1H|  SENSOR  | SWITCHES |\033[u");
     printf("\033[s\033[5;1H|~~~~~~~~~~|~~~~~~~~~~|\033[u");
@@ -45,28 +43,6 @@ void SensorDisplay(void)
 
     for(i = 0; i < 10; i++) buffer[i] = 0xFF;
     
-
-    U8 switchId2Row[256];
-    for(i = 0; i < 256; ++i) { switchId2Row[i] = 255; }
-    
-    for(i = 1; i <= 18; i++)
-        switchId2Row[i] = i - 1;
-    switchId2Row[0x99] = 18;
-    switchId2Row[0x9A] = 19;
-    switchId2Row[0x9B] = 20;
-    switchId2Row[0x9C] = 21; 
-
-    for(i = 0; i < 256; i++)
-    {
-        U8 row = switchId2Row[i];
-
-      if( row >= SwitchCount ) continue;
-    
-        if( i != 154 && i != 156 && i != 7 && i != 8 && i != 14 )
-            trainSwitch(sSwitch, i, eCurved);
-        else
-            trainSwitch(sSwitch, i, eStraight);
-    }
 
     for(;;)
     {
