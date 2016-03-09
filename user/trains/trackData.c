@@ -1,12 +1,7 @@
 /* THIS FILE IS GENERATED CODE -- DO NOT EDIT */
 
+#include "common/memset.h"
 #include "user/trains/trackData.h"
-
-static void *memset(void *s, int c, unsigned int n) {
-  unsigned char *p = s;
-  while(n --> 0) { *p++ = (unsigned char)c; }
-  return s;
-}
 
 void init_tracka(TrackNode *track) {
   memset(track, 0, TRACK_MAX*sizeof(TrackNode));
