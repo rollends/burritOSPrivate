@@ -182,3 +182,12 @@ U32 trainPhysicsGetTime(TrainPhysics* physics, const S32 dx)
 
     return ticks * 1000;
 }
+
+S32 trainPhysicsStopDist(TrainPhysics* physics)
+{
+    S32 v = physics->velocity/100;
+    S32 dist = (v * v)/(2*23500);
+    dist += (v * 600)/10000;
+
+    return dist;
+}

@@ -107,6 +107,8 @@ S32 trainPhysicsGetVelocity(TrainPhysics* physics);
  */
 U32 trainPhysicsGetTime(TrainPhysics* physics, const S32 dx);
 
+S32 trainPhysicsStopDist(TrainPhysics* physics);
+
 /**
  * Gets the distance traveled since the last sensor report
  *
