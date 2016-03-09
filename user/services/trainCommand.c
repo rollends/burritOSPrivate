@@ -36,7 +36,7 @@ S32 dispatchSystemCommand(String string)
             return -1;
         }
         SwitchRequest request;
-        request.startTime = clockTime(nsWhoIs(Clock)) + 100;
+        request.startTime = clockTime(nsWhoIs(Clock)) + 10;
         request.endTime = request.startTime + 300;
         request.direction = sw;
         request.branchId = switchId;

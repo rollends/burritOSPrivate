@@ -37,9 +37,10 @@ static void PhysicsTick(void)
 
 void Locomotive(void)
 {
-    const char * strPredictOldTrain = "\033[s\033[44;1H\033[2KPredict: Train %2d | Location %c%2d | Time %d.\033[u";
-    const char * strPredictTrain = "\033[s\033[46;1H\033[2KNew Predict: Train %2d | Location %c%2d | Time %d.\033[u";
-    const char * strFoundTrain =   "\033[s\033[45;1H\033[2KActual : Train %2d | Location %c%2d | Time %d. Delta %d.\033[u";
+    const char * strPredictOldTrain = "\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dms\033[u\033[m";
+    const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
+    const char * strPredictTrain = "\033[s\033[46;1H\033[2KNext Prediction:\tTrain %2d | Location %c%2d | Time %dms\033[u";
+    const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dms | DeltaT %dms\033[u";
 
     TaskID parent = VAL_TO_ID( sysPid() );
     TaskID from;
@@ -75,8 +76,11 @@ void Locomotive(void)
 
     TaskID tPhysicsTick = VAL_TO_ID(sysCreate(sysPriority() - 1, &PhysicsTick));
 
+    TimerState tickTimer;
+    TimerState errorTimer;
+    timerStart(TIMER_4, &tickTimer);
+    timerStart(TIMER_4, &errorTimer);
 
-    U32 previousTime = 0;
     TrackNode* previousSensor = 0;
     U8 reverseCourierWaiting = 0;
     U8 isReversing = 0;
@@ -107,19 +111,22 @@ void Locomotive(void)
             char    sensorGroup = 'A' + currentSensor / 16;
             U8      sensorId = currentSensor % 16 + 1;
  
-            //currentTime = clockTime(sClock);
-            timerGetValue(TIMER_4, &currentTime);
+            timerSample(TIMER_4, &errorTimer);
 
-            if(previousTime != 0)
+            if(previousSensor != 0)
             {
                 nextSensorGroup = previousUpdate.prediction[previousUpdate.sensorSkip] / 16 + 'A';
                 nextSensorId = previousUpdate.prediction[previousUpdate.sensorSkip] % 16 + 1;
                 
-                U32 actualTime = (currentTime - previousTime) / 1000;
-                U32 delta = actualTime - predictTime[previousUpdate.sensorSkip];
-                if(predictTime[previousUpdate.sensorSkip] > actualTime) delta = predictTime[previousUpdate.sensorSkip] - actualTime;
-
-                printf(strPredictOldTrain, train, nextSensorGroup, nextSensorId, predictTime[previousUpdate.sensorSkip]);
+                S32 delta = errorTimer.delta/1000 - predictTime[previousUpdate.sensorSkip];
+                if (delta < -50 || delta > 50)
+                {
+                    printf(strPredictOldTrain, train, nextSensorGroup, nextSensorId, predictTime[previousUpdate.sensorSkip]);
+                }
+                else
+                {
+                    printf(strPredictClearTrain);
+                }
                 
                 // Predict
                 U32 distance = update.distance;
@@ -127,16 +134,15 @@ void Locomotive(void)
                 nextSensorGroup = update.prediction[0] / 16 + 'A';
                 nextSensorId = update.prediction[0] % 16 + 1;
                
-                trainPhysicsReport(&physics, distance, (currentTime - previousTime));
+                trainPhysicsReport(&physics, distance, errorTimer.delta);
                 
                 U8 i = 0;
                 for(i = 0; i < 2; ++i)
                     predictTime[i] = trainPhysicsGetTime(&physics, update.predictionDistance[i]) / 1000;
-                
+               
                 printf(strPredictTrain, train, nextSensorGroup, nextSensorId, predictTime[0]);
-                printf(strFoundTrain, train, sensorGroup, sensorId, actualTime, delta);
+                printf(strFoundTrain, train, sensorGroup, sensorId, errorTimer.delta/1000, delta);
             }
-            previousTime = currentTime;
             previousSensor = graph + currentSensor;
         }
         else
