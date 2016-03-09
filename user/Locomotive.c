@@ -82,8 +82,7 @@ void Locomotive(void)
     timerStart(TIMER_4, &errorTimer);
 
     TrackNode* previousSensor = 0;
-    U8 reverseCourierWaiting = 0;
-    U8 isReversing = 0;
+    U8 reverseCourierState = 0;
     TaskID reverseCourier = { 0 };
 
     char    nextSensorGroup = 0;
@@ -112,10 +111,10 @@ void Locomotive(void)
  
             timerSample(TIMER_4, &errorTimer);
 
-            if (sensorGroup == 'D' && sensorId == 13)
+            // No prediction during a reverse!
+            if((reverseCourierState == 1) || (reverseCourierState == 3))
             {
-                trainSetSpeed(sTrainDriver, train, 0);
-                printf("Stopping dist: %d\r\n", trainPhysicsStopDist(&physics));
+                continue;
             }
 
             if(previousSensor != 0)
@@ -163,14 +162,23 @@ void Locomotive(void)
             {
             case MESSAGE_COURIER:
                 reverseCourier = from;
-                if( isReversing )
+                if( reverseCourierState == 0 )
                 {
-                    isReversing = 0;
+                    reverseCourierState = 2; // Waiting for a reverse command
+                }
+                else if(reverseCourierState == 1 )
+                {
+                    // Reverse was happening and courier missed it.
                     env.type = MESSAGE_TRAIN_REVERSE;
                     sysReply(reverseCourier.value, &env);
+                    reverseCourierState = 3;
+                    // Now wait for courier to come back 'round.
                 }
-                else
-                    reverseCourierWaiting = 1;
+                else if(reverseCourierState == 3 )
+                {
+                    // Courier has come back 'round.
+                    reverseCourierState = 0;
+                }
                 break;
             case MESSAGE_TRAIN_SET_SPEED:
                 throttle = env.message.MessageU8.body;
@@ -183,18 +191,23 @@ void Locomotive(void)
                 sysReply(from.value, &env);
                 break;
             case MESSAGE_TRAIN_REVERSE:
-                trainSetSpeed(sTrainDriver, train, 0);
-                clockDelayBy(nsWhoIs(Clock), 10 * (throttle));
-                
-                if(reverseCourierWaiting)
+                assert(reverseCourierState == 3); // Can't do command over again.
+                if(reverseCourierState == 2)
                 {
+                    // Courier is waiting for us to send command.
                     sysReply(reverseCourier.value, &env);
-                    reverseCourierWaiting = 0;
+                    reverseCourierState = 3; 
+                    // Now wait for courier to come back around.
                 }
-                else
-                    isReversing = 1;
-                
-                previousSensor = previousSensor->reverse;
+                else if(reverseCourierState == 0)
+                {
+                    // Courier has missed message.
+                    reverseCourierState = 1;
+                    // Make sure when courier comes around we send it the reverse command.
+                }
+ 
+                trainSetSpeed(sTrainDriver, train, 0);
+                clockDelayBy(nsWhoIs(Clock), 20 * (throttle));
 
                 env.message.MessageU16.body = (train << 8) | 0x0F;
                 sysSend(sTrainDriver.value, &env, &env);
@@ -364,10 +377,14 @@ static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSenso
 
                 SwitchState sw = (SwitchState)env.message.MessageU8.body;
                 U8 swv = ((sw == eCurved) ? DIR_CURVED : DIR_STRAIGHT);
+                dist[3] += ip->edge[swv].dist;
                 ip = ip->edge[swv].dest;
             }
             else
+            {
+                dist[3] += ip->edge[DIR_AHEAD].dist;
                 ip = ip->edge[DIR_AHEAD].dest;
+            }
         }
         faultyBranch[0] = ip->num;
     }
@@ -378,7 +395,6 @@ static void LocomotiveGPS(void)
     TrackNode graph[TRACK_MAX]; 
     init_tracka(graph);
 
-
     TrackNode* position = graph + firstSensorTriggered();
 
     U32 sensors[5], nextSensors[2], faultBranchSensor[1], distances[3];
@@ -388,7 +404,6 @@ static void LocomotiveGPS(void)
     TaskID tSensors = VAL_TO_ID(sysCreate(sysPriority() + 1, &LocomotiveSensor));
     TaskID tPosCourier = VAL_TO_ID(sysPid());
     U8 courierWaiting = 0;
-
 
     GPSUpdate update;
     findNextSensors(graph, position->edge[0].dest, nextSensors, faultBranchSensor, distances);
@@ -433,7 +448,6 @@ static void LocomotiveGPS(void)
             // Its what we predicted!
             if(sensorHit)
             {
-                //TrackNode* prev = position;
                 position = graph + nextSensors[sensorHit-1];
                 if(courierWaiting)
                 {
@@ -448,10 +462,10 @@ static void LocomotiveGPS(void)
                     for(i = 0; i < 3; ++i)
                         distances[i] += position->edge[0].dist;
                     
-                    for(i = 0; i < 2; ++i)
+                    for(i = 0; i < 3; ++i)
                     {
                         update.predictionDistance[i] = distances[i];
-                        update.prediction[i] = nextSensors[i];
+                        update.prediction[i] = (i == 2 ? faultBranchSensor[0] : nextSensors[i]);
                     }
                     sysReply(tPosCourier.value, &env);
                 }
@@ -464,15 +478,33 @@ static void LocomotiveGPS(void)
             }
             else if(failHit)
             {
-                assert(0);
                 position = graph + faultBranchSensor[0];
                 if(courierWaiting)
                 {
                     courierWaiting = 0;
-                    env.message.MessageU8.body = faultBranchSensor[0];
-                    //sysReply(tPosCourier.value, &env);
+
+                    env.message.MessageArbitrary.body = (U32*)(&update);
+                    update.triggeredSensor = faultBranchSensor[0];
+                    update.sensorSkip = 2;
+                    update.distance = distances[2];
+
+                    findNextSensors(graph, position->edge[0].dest, nextSensors, faultBranchSensor, distances);
+                    for(i = 0; i < 3; ++i)
+                        distances[i] += position->edge[0].dist;
+                    
+                    for(i = 0; i < 3; ++i)
+                    {
+                        update.predictionDistance[i] = distances[i];
+                        update.prediction[i] = (i == 2 ? faultBranchSensor[0] : nextSensors[i]);
+                    }
+                    sysReply(tPosCourier.value, &env);
                 }
-                //findNextSensors(graph, position->edge[0].dest, nextSensors, faultBranchSensor);
+                else
+                {
+                    findNextSensors(graph, position->edge[0].dest, nextSensors, faultBranchSensor, distances);
+                    for(i = 0; i < 3; ++i)
+                        distances[i] += position->edge[0].dist;
+                }
             }
         }
         else if( from.value == tPosCourier.value )
