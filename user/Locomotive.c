@@ -8,7 +8,7 @@
 #include "user/trains/TrainYard.h"
 #include "user/trains/TrainCommander.h"
 
-#include "trains/train62.h"
+#include "trains/trainInit.h"
 #include "trains/trainPhysics.h"
 
 typedef struct
@@ -71,7 +71,7 @@ void Locomotive(void)
     S16 throttle = 0;
 
     TrainPhysics physics;
-    train62(&physics);
+    trainInit(&physics, train);
     trainPhysicsSetSpeed(&physics, 0);
 
     TaskID tPhysicsTick = VAL_TO_ID(sysCreate(sysPriority() - 1, &PhysicsTick));

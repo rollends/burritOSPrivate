@@ -1,5 +1,5 @@
-#ifndef TRAIN_62_H
-#define TRAIN_62_H
+#ifndef TRAIN_68_H
+#define TRAIN_68_H
 
 #include "trains/trainPhysics.h"
 /**
@@ -8,19 +8,19 @@
  * @param   physics     The TrainPhysics data to initialize
  *
 */
-static inline void trainInit62(TrainPhysics* physics)
+static inline void trainInit68(TrainPhysics* physics)
 {
     trainPhysicsInit(physics);
     trainPhysicsSpeedMap(physics,
-                         224376,
-                         275931,
-                         335343,
-                         389936,
-                         441837,
-                         491406,
-                         541752,
-                         589662,
-                         632801);
+                         261363,
+                         324144,
+                         381334,
+                         439196,
+                         598679,
+                         546133,
+                         606133,
+                         656859,
+                         713411);
 
     trainPhysicsAccelMap(physics, 0,
                          0,
