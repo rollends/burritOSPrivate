@@ -13,12 +13,7 @@ S32 dispatchSystemCommand(String string)
     strtolower(string);
     ConstString cstring = (ConstString)string;
 
-    if( cstring[0] == 't' || cstring[0] == 'r' )
-    {
-        if( pushTrainCommand(string) < 0 )
-            return -1;
-    }
-    else if( cstring[0] == 's' && cstring[1] == 'w' )
+    if( cstring[0] == 's' && cstring[1] == 'w' )
     {
         cstring += 2;
         strskipws(&cstring);
@@ -79,8 +74,9 @@ S32 dispatchSystemCommand(String string)
     }
     else
     {
-        return -1;
-    }
+        if( pushTrainCommand(string) < 0 )
+            return -1;
+    } 
     return 0;
 }
 

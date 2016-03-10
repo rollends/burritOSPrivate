@@ -23,6 +23,8 @@ struct TrackEdge {
     TrackNode*  src; 
     TrackNode*  dest;
     int         dist;       /* in millimetres */
+    int         dx;
+    int         dt;
 };
 
 struct TrackNode {

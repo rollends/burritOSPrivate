@@ -67,7 +67,7 @@ void trainPhysicsAccelMap(TrainPhysics* physics,
  * @param   physics   The TrainPhysics simulation
  * @param   delta     The time delta, in ticks
  */
-void trainPhysicsStep(TrainPhysics* physics, const U32 delta);
+U32 trainPhysicsStep(TrainPhysics* physics, const U32 delta);
 
 /**
  * Sets the desired train speed, as sent to the train controller

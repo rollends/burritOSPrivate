@@ -1,0 +1,13 @@
+tr 62 10
+sw 17 s
+sw 18 s
+
+sw 8 c
+
+sw 8 s
+
+sa 62 c6
+tr 62 10
+
+sa 62 b12
+sw 7 c
