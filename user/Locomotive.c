@@ -191,7 +191,7 @@ void Locomotive(void)
                 sysReply(from.value, &env);
                 break;
             case MESSAGE_TRAIN_REVERSE:
-                assert(reverseCourierState == 3); // Can't do command over again.
+                assert(reverseCourierState != 3); // Can't do command over again.
                 if(reverseCourierState == 2)
                 {
                     // Courier is waiting for us to send command.
@@ -324,6 +324,7 @@ static void PositionUpdateCourier(void)
 static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSensors, U32* faultyBranch, U32* dist)
 {
     // FORWARD PREDICTION 
+    TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
     TrackNode* ip = current;
     U8 i = 0;
     
@@ -331,6 +332,8 @@ static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSenso
     dist[0] = dist[1] = dist[2] = 0;
     while(i < 2)
     {
+        assert(ip->type != eNodeExit);
+
         if(ip->type == eNodeSensor)
         {
             nextSensors[i] = ip->num; 
@@ -343,7 +346,7 @@ static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSenso
             MessageEnvelope env;
             env.message.MessageU32.body = (ip - (graph + 80)) / 2;
             env.type = MESSAGE_SWITCH_READ;
-            sysSend(nsWhoIs(TrainSwitchOffice).value, &env, &env);
+            sysSend(sSwitchOffice.value, &env, &env);
 
             SwitchState sw = (SwitchState)env.message.MessageU32.body;
             U32 swv = ((sw == eCurved) ? DIR_CURVED : DIR_STRAIGHT);
@@ -368,14 +371,14 @@ static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSenso
     if(ipFail)
     {
         ip = ipFail;
-        while(ip->type != eNodeSensor)
+        while(ip->type != eNodeSensor && ip->type != eNodeExit)
         {
             if(ip->type == eNodeBranch)
             {
                 MessageEnvelope env;
                 env.message.MessageU32.body = (ip - (graph + 80)) / 2;
                 env.type = MESSAGE_SWITCH_READ;
-                sysSend(nsWhoIs(TrainSwitchOffice).value, &env, &env);
+                sysSend(sSwitchOffice.value, &env, &env);
 
                 SwitchState sw = (SwitchState)env.message.MessageU32.body;
                 U32 swv = ((sw == eCurved) ? DIR_CURVED : DIR_STRAIGHT);
