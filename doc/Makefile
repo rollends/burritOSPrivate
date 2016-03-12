@@ -18,7 +18,7 @@ manual.pdf:
 clean:
 	rm -rf $(CODEDIR)
 	rm -rf $(BLDDIR)
-	rm code.pdf
-	rm manual.pdf
+	rm -rf code.pdf
+	rm -rf manual.pdf
 
 .PHONY: $(CODEDIR) clean

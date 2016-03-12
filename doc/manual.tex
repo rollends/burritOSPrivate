@@ -1,11 +1,14 @@
 \documentclass[twoside,a4paper]{refart}
 \usepackage{makeidx}
 \usepackage{ifthen}
+\usepackage{hyperref}
 
 \def\bs{\char'134 }
 \newcommand{\ie}{i.\,e.,}
 \newcommand{\eg}{e.\,g..}
 \DeclareRobustCommand\cs[1]{\texttt{\char`\\#1}}
+\settextfraction{0.9}
+\setlength\parskip {0.15in}
 
 \title{burritOS System Manual}
 \author{Rollen D'Souza (20418141) \\
@@ -13,7 +16,7 @@ rs2dsouz@uwaterloo.ca \\
 Taylor Petrick (20413951) \\
 tpetrick@uwaterloo.ca \\}
 
-\date{\textbf{CS 452 - Kernel 4 \\ \today}}
+\date{\textbf{CS 452 - Trains Demo 1 \\ \today}}
 \emergencystretch1em  %
 
 \pagestyle{myfootings}
@@ -40,9 +43,37 @@ Nam luctus odio at luctus hendrerit. Mauris molestie, purus quis maximus rhoncus
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Compiling and Running}
+A compiled version of our Trains 1 submission can be found in the following directory on the student environment:
+\begin{center}
+\textit{/u/cs452/tftp/ARM/tpetrick/t1.elf}\\
+\textit{md5 hash: ?}
+\end{center}
+The source code for our submission has been shared with the CS 452 TA via the UW GitLab, and can be accessed at the following URL:
+\begin{center}
+\url{https://git.uwaterloo.ca/tpetrick/CS452_Project}\\
+\textit{md5 hash: ?}
+\end{center}
+Additionally, the course code can also be downloaded as an archive from Taylor’s personal web server:
+\begin{center}
+\url{https://www.taylorpetrick.com/cs452/t1.tar.gz}\\
+\textit{md5 hash: ?}
+\end{center}
+Both source code locations contain the files listed in the File Listings section of this report.
+
+To compile the source code, simply run \textit{make} in the top level source directory. This will produce the binary file \textit{/bin/t1.elf}, which should be identical to the elf file listed above. Running \textit{make clean} will remove all build output files, and \textit{make doc} will generate documentation from the source files if Doxygen is installed on the system.
+
+By default, code is built using a unity build technique. The makefile runs \textit{cat} on all of the source files to produce a single source file, which is then built with GCC. This can be disabled by passing \textit{UNITY=0} when running \textit{make}.
+
+The file can be loaded and run on the TS7200 board with the following Redboot commands:
+
+\textit{\textgreater load -b 0x50000 -h 10.15.167.5 /u/cs452/tftp/ARM/tpetrick/k4.elf}\\
+\textit{\textgreater go}\\\\
+
+\textbf{CAUTION:}  The load address has changed since our past submissions. We no longer use the default address of \textit{0x218000}, and require that code is loaded at \textit{0x50000} instead. This should be handled automatically by the linker script and \textit{.elf} file, however it may be necessary to specify the \textit{-b} parameter when loading to Redboot.
 
 \section{Common Libraries}
 \subsection{Type Interface}
+The types used by both kerenl and user space are defined in \textit{common/types.h}
 \subsection{Data Structures}
 \subsection{Utilities}
 
@@ -53,13 +84,69 @@ Nam luctus odio at luctus hendrerit. Mauris molestie, purus quis maximus rhoncus
 \subsection{Interrupts}
 
 \section{Kernel Design}
-\subsection{Memory Layout}
-\subsection{Data Structures}
-\subsection{Control Flow}
-\subsection{Event Handling}
-\subsection{Message Passing}
-\subsection{Performance}
 
+\subsection{Memory Layout}
+Task stacks are placed at address \textit{0x01000000} and higher. Task stacks are created in 16kb blocks. The stacks are managed by a \textit{MemoryAllocator} that uses FIFO queues to give out and reclaim stack blocks. The first word on the stack is its block id; the remaining space is used by the task as desired. Storing the id to the stack serves a dual purpose - it makes reclaiming the stack easier, and also act as an indicator for stack overflows. A block id that seems corrupted when the stack is reclaimed by the allocator is a strong indication that a neighboring stack overflowed. 
+
+The system has more memory blocks that tasks, so the additional blocks can be access by tasks using the \textit{sysAlloc()} and \textit{sysFree()} calls. These methods also return \textit{16kb} blocks, and serve as a basic memory page allocator.
+
+\subsection{Data Structures}
+All data structures in our implementation fall into two categories: flat arrays and circular queues. The circular queues are implemented using a memory block, a length variable and head/tail indices indicating the start and end of the queue. The length and memory pointer are passed in when the queue is initialized. This allows the size of the queue to vary based on the context (e.g. small send queues but large ready queues). Our kernel requires that queues have a length that is equal to a power of two. This is to avoid using modulus function from libgcc. Instead, since the queues are a power of two in length, a bitwise and can be used to ensure the queue indices wrap around to 0. For example:
+
+\begin{verbatim}
+head = (head + 1) & (length - 1)
+\end{verbatim}
+
+The priority queue used for scheduling of ready tasks is a special data structure that contains a set of circular buffer queues. One queue is used for each of the priorities. Kernel 1 and 2 only used three priorities, however in Kernel 3 the number of priorities was increased to 32. A 32 bit integer is used to determine which queues have tasks in them. Bit twiddling is done to compute the highest priority queue with an element in it; the code to do this was taken from \url{https://graphics.stanford.edu/~seander/bithacks.html}. It emulates a count trailing zeroes (CTZ) instruction since ARM v4 lacks CTZ/CLZ.
+
+TaskDescriptors (or otherwise known as TDs) contain the information the kernel needs to schedule tasks and perform system calls. Non essentially information such as the PC and SPSR are stored on the task stack. The kernel stores a TaskTable which has a fixed size array of task descriptors and queue of free descriptors. At the start of the kernel, all descriptors are in the free queue. When a task is created, it pops from the queue and uses the available task descriptor. When a task exits it returns the descriptor to the queue so it can be reused later on. A generation id is stored along with each task id, and gets incremented each time a task is reclaimed by the TaskTable. The TD recycling feature is not used for Kernel 1, but it is included in the code since we plan to build on it in future assignments
+
+TDs themselves are designed to be tightly packed. Task priority is stored as a single byte rather than a full 32 bit value, for example. TaskIDs are 16 bit values, where the first byte is the generation number and second byte is the actual task id and index into the TaskDescriptor array. The task ids are one-based, since task 0 will eventually be used to identify the null process. At the moment, our kernel is defined to support a maximum of 64 tasks. It can support as many as 255 tasks and 255 generations, however it seems unlikely that we will come close to either of these values.
+
+The last important data structure is the kernel data struct. Kernel data is stored as a global that is only used in  kernel functions (bootstrap, schedule and system call). It contains the task table, a pointer to the active task descriptor and the priority queue and queue data.
+
+\subsection{Control Flow}
+The bulk of the kernel logic is controlled in the assembly file \textit{kernel/start.s}. The kernel begins by initializes the interrupt vector table. It then calls the \textit{bootstrap()} function, which initializes all of the kernel data structures and creates the first user task. The user task is entered and runs until an SWI instruction is executed.
+
+When a system call is made the program branches to the \textit{\_systemCall} label in \textit{kernel/start.s}. Since the \textit{SWI} call is wrapped in a C function, GCC automatically places the parameters into \textit{R0-R3} and onto the user stack. To minimize the amount of memory overhead, the system call is processed almost immediately after entering the SWI handler. This is done by calling \textit{systemCallHandler()}, which is performed in System Mode so the user stack is available. The return value from the function is stored in \textit{R0} by GCC. After the call completes the user registers are stacked, including the new \textit{R0} value. When the user task registers are unstacked the next time the task runs, the \textit{R0} value will be restored so the task can inspect the system call return value.
+
+After stacking the registers the kernel calls \textit{schedule()} which updates the task descriptor of the current task, re-enqueues it if necessary and selects a new task from the priority queues. The new task’s stack pointer is returned and the task is entered, thus repeating the process. If the new stack pointer is 0 the kernel will branch to the \textit{kernelEnd} handler to perform cleanup and exit the program.
+
+When an interrupt is fired the control flow is very similar. The interrupt causes the code to jump to the \textit{\_interruptCall} label, which is very similar to \textit{\_systemCall} discussed above. The primary difference is that the interrupt handler calls the  \textit{interruptHandler()} C function instead of processing a system call. The other functionality, such as stacking user registers and scheduling a new task, is the same.
+
+It is worth noting that the task registers are stored in the following layout on the task stack:
+
+\begin{verbatim}
+stack+0x00      SPSR
+                Task LR (R14)
+                R0
+                R4
+                ..
+                R12
+stack+0x0A      Task PC (R15)
+\end{verbatim}
+This somewhat out-of-order stacking order was chosen to make the context switcher more compact.
+
+\subsection{Event Handling}
+The \textit{sysAwaitEvent(event)} primitive allows tasks to wait for interrupts. The supported events are defined in \textit{kernel/event.h}. The kernel data struct has a table that maps event types to the task ids waiting on the events. Only one task can wait on an event at a time, which we think will be sufficient for the remaining coursework.
+
+When an interrupt occurs the system jumps to the label \textit{\_interruptCall}. This works much like the swi handler, however instead of calling the syscall function it calls \textit{interruptHandler()} to process the interrupt. The interrupt handler checks the event table to see if a task is waiting on the event. If a valid task id is found, the task is unblocked and the table entry cleared, otherwise the interrupt is consumed without taking any additional action. Like the swi handler, an interrupt results in a call to the scheduler after interrupt processing is complete.
+
+\subsection{Message Passing}
+Messages can be set between tasks using the \textit{sysSend} and \textit{sysReceive} system calls, both of which are blocking. After receiving a message a task must reply to its sender using the \textit{sysReply} primitive.
+
+By default, no deep memory copies are done in the kernel. All messages are at most 1 word in length, however that word can be a pointer to a large buffer of memory if desired. When the kernel sends a message it copies the message type and the 1 word message body to the receiver’s message envelope. It is up to the receiving task to make a copy of the memory using the \_memcpy function. This design makes the kernel extremely lightweight, and also eliminates the need to do a memory copy if the message data is used in a read-only way. For safety reasons, this design is unsuitable for general purpose operating systems, but in a control RTOS it offers performance benefits.
+
+For the performance benchmarks with 64 bytes a full memcpy is done upon receiving a message and after receiving a reply. The memcpy implementation was written from scratch and uses load/store multiple instructions to improve copying speed.
+
+\subsection{Performance}
+Performance timing is reset with a call to \textit{sysPerfReset()} - this sets all task performance counters to 0 and resets the timer used by the kernel to track performance. The kernel uses the 40-bit debug timer for this process since it’s clocked at around 983 Khz. This offers slightly better timer resolution that the standard 16 and 32 bit timers, which can only run at a max of 508 Khz.
+
+Calling \textit{sysPerfQueryP(tid, mode)} will return the percentage of execution time spent on the task tid. The mode parameter can be \textit{ePerfKernel}, \textit{ePerfTask} or \textit{ePerfBoth}. Using \textit{ePerfKernel} returns the time spent by the task in the kernel, and \textit{ePerfTask} returns the time spent in task code. The \textit{ePerfBoth} option is useful be cause it adds the kernel and task performance together before computing the percentage - this yields slightly higher precision results in most cases since the numerator of the computation is larger.
+
+The \textit{sysPerfQueryT(tid, mode)} system call queries the run time microseconds for each of the cases listed above, rather than as a relative percentage. Additionally the mode value ePerfTotal can be passed in to get the total run time in microseconds since the last call to \textit{sysPerfReset()}.
+
+The performance timings are implemented by storing two unsigned integers at the end of each task descriptor. When a system call or interrupt occurs, the active task has its task mode counter updated by the current timer delta. Then, right before the scheduler returns, the last active task has its kernel mode counter updated by the timer delta. Both updates reset the timer delta. This means that task mode timings are the amount of time spent from the return statement of the scheduler until the entry point of a system call or interrupt, and kernel mode timings are the amount of time spent inside the syscall/interrupt and scheduler. This is not a perfect representation of task/kernel time, but is close enough to be useful. 
 \section{System Calls}
 \subsection{System State}
 \subsection{Task Management}
@@ -68,6 +155,48 @@ Nam luctus odio at luctus hendrerit. Mauris molestie, purus quis maximus rhoncus
 \subsection{Events}
 \subsection{Memory}
 
+\section{Debugging and Assertions}
+ Almost all hardware and kernel functions return a status code and perform safety checks including out-of-bounds access, invalid memory addresses and invalid parameter values. Assertions are used liberally to validate both kernel and user-space code. When an assertion is throw, a debug message is printed:
+
+\begin{verbatim}
+....................
+....................
+......______ .......
+...../      \\......
+..../  x  x  \\.....
+...|   ____   h|....
+...|  /    \  h|....
+....\_________\/....
+....................
+.....SAD..TACO......
+....................
+Assertion in `kernel/scheduler.c` on line 18
+Current Active Task is 0x06
+\end{verbatim}
+
+Assertions, return codes and bounds checking can be enabled/disabled using a collection of preprocessor flags. When return codes are disabled functions return void, otherwise they return a signed integer. These flags are:\\
+\begin{verbatim}
+NULL_CHECK              Include null pointer checks on memory address
+BOUNDS_CHECK            Include bounds checking
+RANGE_CHECK             Include memory address range checks
+DEVICE_CHECK            Include device register checks (e.g. UART, timers, etc)
+ASSERT_BUILD            Enabled assertions
+RETURN_CODES            Enable return codes
+KERNEL_PERF             Enable kernel performance primitives
+KERNEL_PERF_VERBOSE     Enable verbose performance updates from the perf Task
+\end{verbatim}
+
+These flags enable a set of error and assertion macros that are normally disabled. For example, for null checking:
+
+\begin{verbatim}
+#ifdef NULL_CHECK
+    #define IS_NOT_NULL(x) do {if ((x) == 0) return ERROR_NULL;} while(0);
+#else
+    #define IS_NOT_NULL(x)
+#endif
+\end{verbatim}
+
+It is up to the kernel programmer to use the macros in their code, so we have not yet achieved full coverage. This is an area that will be improved in future assignments. 
 \section{Userspace}
 \subsection{Services}
 \subsection{Tasks}
