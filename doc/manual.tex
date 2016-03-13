@@ -79,60 +79,6 @@ The types used by both kerenl and user space are defined in \textit{common/types
 \subsection{Data Structures}
 \subsection{Utilities}
 
-\section{General Purpose User Tasks}
-The general purpose user-space tasks provide important services on top of the kernel. All of these tasks provide a named interface that can be discovered using the \textit{Name Server}. The \textit{Name Server} is assumed to be have a task ID of 2.
-
-\subsection{Name Service}
-
-\subsubsection{Interface}
-\textbf{nsRegister(taskName)} - Registers the caller task with the name provided.\\\\
-\textbf{nsWhoIs(taskName)} - Looks up the \verb~TaskID~ of the task registered with the provided name. Will block until \textit{all} task names have been registered.
-
-\subsubsection{Implementation}
-The \textit{Name Server} task triages and responds requests to find the task ID of a \'named\' task. Two service methods are provided as the interface to the name service. This service provides the ability for tasks to find other operating system services. The current implementation requires that all possible registrations be made before any lookup (WhoIs) requests are served. As a consequence of our kernel development tenets, we chose enumerated values to represent task names instead of strings. This reduces complexity in the user space code of the nameserver. An enumerated list has a well-defined maximum meaning the nameserver can maintain a constant-sized array to store registered IDs.
-
-\subsection{Clock Service}
-
-\subsubsection{Interface}
-\textbf{clockDelayBy(clockServerID, ticks)} - Delays a task by \verb~ticks~ times 10 milliseconds. The delay is guaranteed to an interval of plus or minus 10 milliseconds.\\\\
-\textbf{clockLongDelayBy(clockServerID, longTicks)} - Delays a task by \verb~longTicks~ times 150 milliseconds. The delay is guaranteed to an interval of plus or minus 150 milliseconds.\\\\
-\textbf{clockTime(clockServerID)} - Returns the current time reported by the \textit{Clock Server}, in multiples of 10 milliseconds (\verb~ticks~).\\\\
-\textbf{clockDelayUntil(clockServerID, time)} - Delays a task until the \textit{Clock Server} reports that [10 millisecond] tick \verb~time~ has passed. This method is implemented using calls to \verb~clockTime()~ and \verb~clockDelayBy~ and is therefore more susceptible to error.
-
-\subsubsection{Implementation}
-The clock server is first instantiated by the initial task at priority 1 (one level short of the highest possible priority). It has the responsibility of: creating the clock notifier (at priority 0), handling delay requests, unblocking tasks whose delay time has passed. The notifier is at a priority higher than the server to ensure that the ‘tick’ interrupt is handled without blocking any other driver interaction; this model is useful in future parts of the project where various interrupts will compete for operation.
-
-The clock server must be as responsive as possible in order to service the timer reliably for user tasks. \textit{BurritOS} implements a sorted linked-list data structure to facilitate fast dequeuing of delayed tasks. A task that wishes to delay a certain number of ticks is enqueued in the list in sorted order. Additionally, each node in the list retains a count of how many ticks to delay relative to its parent. This structure has the property of requiring the clock server to only decrement the head of the list during an uneventful timer tick. It is trivial to observe that a ‘dequeue’ tick occurs when the linked list has a set of nodes at the head with 0. The worst-case cost occurs during insertion with $O(n)$. Retrieval is at worst $O(k)$ where $k$ is the number of tasks that dequeued in one tick. During an uneventful tick (no dequeue operation), the cost is constant (decrement and check the head).
-
-The primitives the clock server exposes to user tasks include: \verb~clockDelayBy~, \verb~clockTime~, \verb~clockDelayUntil~. \verb~clockDelayUntil~ is implemented as a function of the other two primitives for the purpose of this assignment. The other primitives wrap messages to the clock server. \verb~clockTime~ is replied to as soon as possible. \verb~clockDelayBy~ is replied to when the delay time has passed, unblocking the task in real-time.
-
-The notifier is a simple ‘await-send’ loop. A more complicated architecture - courier and warehouse - was not used for this assignment since our message passing mechanism is fast and therefore we expect a simple architecture to provide reasonable response time. The notifier does have the additional task of killing the \textit{Clock Server} cleanly during system shutdown.
-
-\subsection{Hardware I/O Servers: Terminal}
-
-\subsubsection{Interface}
-\textbf{printf(formatString, ...)} - A partial implementation of the C standardized \verb~printf~. It is does not wait until the output has been flushed.\\\\
-\textbf{getc()} - Blocks and consumes a character from the \textit{Terminal Server}. Only one task should use this as the input is not duplicated for each task.
-
-\subsubsection{Implementation}
-We chose to implement a slightly different interface for input/output than the kernel specification discusses. We deemed it costly to use \verb~putc~ directly since we generate long strings of text at specific locations using cursor commands. To accomodate this requirement, we implement \verb~putStr~ which sends whole strings to the \textit{Terminal Server}. This is used by userspace \verb~printf~ implementation in order to reduce the number of system calls and messaging overhead.
-
-The terminal server architecture is as simple as possible. The server creates two notifiers: one for input and one for output. The server also maintains buffers for both input and output. Originally we designed a more elaborate structure (warehouse-courier model) to handle high bandwidth but observed that this structure was unnecessary given our messaging round-trip time.
-
-\subsection{Hardware I/O Servers: Train}
-
-\subsubsection{Interface}
-\textbf{trainStop(trainServer)} - Commands the board to send an emergency stop to the track.\\\\
-\textbf{trainGo(trainServer)} - Sends a Go to the track.\\\\
-\textbf{trainSetSpeed(trainServer, train, speed)} - Sets a train to a given speed.
-
-\subsubsection{Implementation}
-The input and output components of the train are implemented as one I/O server. Complexity was introduced as needed for the switches and sensors. The switches need delays of 160ms between every command. In order to implement this, we took advantage of the courier design. An independent switch server handles switch requests. This switch server creates a courier that communicates to the actual train I/O server. The trick is to implement a delay inside the courier, hiding the delay from both servers and, more importantly, from any other request that may come to the train server (set speed, reverse). This model also allows the switch server to easily determine when to send a turn-off-solenoid request; this event fires when the courier arrives at the switch server without any pending switch commands.
-
-Complexity was introduced in sensor reading for performance reasons. Since the train UART is slow, we would like to send requests for a group of sensors. Unfortunately, that means tasks would send requests for more data than they’d need. Instead we choose to have a sensor server which buffers all the sensor data as fast as it can while passing along specific sensor information when clients request it.
-
-Tasks will almost never directly talk to the \textit{Train Server} and instead will go through another more job specific server for the command they are sending. For example, a \textit{Train Switch Server} for throwing a switch.
-
 \section{Hardware Interface}
 \subsection{General Notes and Usage}
 \subsection{Interrupt Driven I/O}
@@ -319,7 +265,75 @@ These flags enable a set of error and assertion macros that are normally disable
 It is up to the kernel programmer to use the macros in their code, so we have not yet achieved full coverage. This is an area that will be improved in future iterations of the kernel.
 \section{Userspace}
 \subsection{Services}
-\subsection{Tasks}
+The general purpose user-space tasks provide important services on top of the kernel. All of these tasks provide a named interface that can be discovered using the \textit{Name Server}. The \textit{Name Server} is assumed to be have a task ID of 2.
+
+\subsubsection{Name Service}
+
+\textbf{nsRegister(taskName)} - Registers the caller task with the name provided.\\\\
+\textbf{nsWhoIs(taskName)} - Looks up the \verb~TaskID~ of the task registered with the provided name. Will block until \textit{all} task names have been registered.\\\\
+
+The \textit{Name Server} task triages and responds requests to find the task ID of a \'named\' task. Two service methods are provided as the interface to the name service. This service provides the ability for tasks to find other operating system services. The current implementation requires that all possible registrations be made before any lookup (WhoIs) requests are served. As a consequence of our kernel development tenets, we chose enumerated values to represent task names instead of strings. This reduces complexity in the user space code of the nameserver. An enumerated list has a well-defined maximum meaning the nameserver can maintain a constant-sized array to store registered IDs.
+
+\subsubsection{Clock Service}
+
+\textbf{clockDelayBy(clockServerID, ticks)} - Delays a task by \verb~ticks~ times 10 milliseconds. The delay is guaranteed to an interval of plus or minus 10 milliseconds.\\\\
+\textbf{clockLongDelayBy(clockServerID, longTicks)} - Delays a task by \verb~longTicks~ times 150 milliseconds. The delay is guaranteed to an interval of plus or minus 150 milliseconds.\\\\
+\textbf{clockTime(clockServerID)} - Returns the current time reported by the \textit{Clock Server}, in multiples of 10 milliseconds (\verb~ticks~).\\\\
+\textbf{clockDelayUntil(clockServerID, time)} - Delays a task until the \textit{Clock Server} reports that [10 millisecond] tick \verb~time~ has passed. This method is implemented using calls to \verb~clockTime()~ and \verb~clockDelayBy~ and is therefore more susceptible to error.\\\\
+
+The clock server is first instantiated by the initial task at priority 1 (one level short of the highest possible priority). It has the responsibility of: creating the clock notifier (at priority 0), handling delay requests, unblocking tasks whose delay time has passed. The notifier is at a priority higher than the server to ensure that the ‘tick’ interrupt is handled without blocking any other driver interaction; this model is useful in future parts of the project where various interrupts will compete for operation.
+
+The clock server must be as responsive as possible in order to service the timer reliably for user tasks. \textit{BurritOS} implements a sorted linked-list data structure to facilitate fast dequeuing of delayed tasks. A task that wishes to delay a certain number of ticks is enqueued in the list in sorted order. Additionally, each node in the list retains a count of how many ticks to delay relative to its parent. This structure has the property of requiring the clock server to only decrement the head of the list during an uneventful timer tick. It is trivial to observe that a ‘dequeue’ tick occurs when the linked list has a set of nodes at the head with 0. The worst-case cost occurs during insertion with $O(n)$. Retrieval is at worst $O(k)$ where $k$ is the number of tasks that dequeued in one tick. During an uneventful tick (no dequeue operation), the cost is constant (decrement and check the head).
+
+The primitives the clock server exposes to user tasks include: \verb~clockDelayBy~, \verb~clockTime~, \verb~clockDelayUntil~. \verb~clockDelayUntil~ is implemented as a function of the other two primitives for the purpose of this assignment. The other primitives wrap messages to the clock server. \verb~clockTime~ is replied to as soon as possible. \verb~clockDelayBy~ is replied to when the delay time has passed, unblocking the task in real-time.
+
+The notifier is a simple ‘await-send’ loop. A more complicated architecture - courier and warehouse - was not used for this assignment since our message passing mechanism is fast and therefore we expect a simple architecture to provide reasonable response time. The notifier does have the additional task of killing the \textit{Clock Server} cleanly during system shutdown.
+
+\subsubsection{Hardware I/O Servers: Terminal}
+
+\textbf{printf(formatString, ...)} - A partial implementation of the C standardized \verb~printf~. It is does not wait until the output has been flushed.\\\\
+\textbf{getc()} - Blocks and consumes a character from the \textit{Terminal Server}. Only one task should use this as the input is not duplicated for each task.\\\\
+
+We chose to implement a slightly different interface for input/output than the kernel specification discusses. We deemed it costly to use \verb~putc~ directly since we generate long strings of text at specific locations using cursor commands. To accomodate this requirement, we implement \verb~putStr~ which sends whole strings to the \textit{Terminal Server}. This is used by userspace \verb~printf~ implementation in order to reduce the number of system calls and messaging overhead.
+
+The terminal server architecture is as simple as possible. The server creates two notifiers: one for input and one for output. The server also maintains buffers for both input and output. Originally we designed a more elaborate structure (warehouse-courier model) to handle high bandwidth but observed that this structure was unnecessary given our messaging round-trip time.
+
+\subsubsection{Hardware I/O Servers: Train}
+
+\textbf{trainStop(trainServer)} - Commands the board to send an emergency stop to the track.\\\\
+\textbf{trainGo(trainServer)} - Sends a Go to the track.\\\\
+\textbf{trainSetSpeed(trainServer, train, speed)} - Sets a train to a given speed.\\\\
+
+The input and output components of the train are implemented as one I/O server. Complexity was introduced as needed for the switches and sensors. The switches need delays of 160ms between every command. In order to implement this, we took advantage of the courier design. An independent switch server handles switch requests. This switch server creates a courier that communicates to the actual train I/O server. The trick is to implement a delay inside the courier, hiding the delay from both servers and, more importantly, from any other request that may come to the train server (set speed, reverse). This model also allows the switch server to easily determine when to send a turn-off-solenoid request; this event fires when the courier arrives at the switch server without any pending switch commands.
+
+Complexity was introduced in sensor reading for performance reasons. Since the train UART is slow, we would like to send requests for a group of sensors. Unfortunately, that means tasks would send requests for more data than they’d need. Instead we choose to have a sensor server which buffers all the sensor data as fast as it can while passing along specific sensor information when clients request it.
+
+Tasks will almost never directly talk to the \textit{Train Server} and instead will go through another more job specific server for the command they are sending. For example, a \textit{Train Switch Server} for throwing a switch.
+
+\subsection{Tasks - Milestone 1}
+Milestone 1 provides the ability to track the position of a single train on the track. This includes ensuring the train can stop at an arbitrary point on the track. We chose to stop the train only at sensors using a methodology that easily generalizes to arbitrary points on the track graph.
+
+\subsubsection{Switch Office}
+The \textit{Switch Office} (server) maintains a calendar which, in a sense, represents temporal ownership of a given switch. The server handles allocations to throw a switch into a given state at a given time and rejects invalid allocations --- i.e. a switch that was thrown into a state by someone else in that period. In order to facilitate requests effectively, the server spawns workers that utilize the \textit{Clock Service} to throw a switch at the allocated block of time.
+
+This feature is not important for this milestone but will be necessary in future submissions.
+
+\subsubsection{Train Commander}
+\label{sec:traincommander}
+
+
+\subsubsection{Locomotive Task}
+Every train is controlled by a single task, known as the \textit{Locomotive}, whose purpose is to create and facilitate communication between useful jobs. For this milestone, this consists of: commanding the train (through command input), positioning information, and prediction.
+
+The \textit{Locomotive} creates the following subsystems:
+\begin{itemize}
+    \item{ \textit{Locomotive Radio}: Courier that transfers commands from central \textit{Train Commander}. These are commands entered in the command prompt.}
+    \item{ \textit{Locomotive GPS}: A server that maintains and updates position information on the track graph using sensor reads. Two couriers facilitate communication between the \textit{Locomotive} and \textit{Locomotive GPS}. }
+    \item{ \textit{Physics Tick}: A notifier that provides a reasonably reliable physics integration timestep. Used by the \textit{Locomotive} to calculate stopping distance through numerical integration of the (current) velocity. }
+\end{itemize}
+For more information on the \textit{Locomotive Radio}, refer to Section~\ref{sec:traincommander}.
+
+The reasoning behind the decision to implement the \textit{Locomotive GPS} as a server with courier-communication is non-trivial. The driving motivation lay in the guarantee that the \textit{Locomotive} never wastes time. Missing a physics tick (or delaying a physics tick) can result in inaccurate calculations. Delaying an urgent user command due to a sensor read can lead to catastrophic results. It only follows that the \textit{Locomotive} task should almost never block. This is, of course, impossible without a very extensive design since it has to send commands to the driver (which blocks temporarily). Nevertheless, we attempt to minimize time spent blocked using couriers to transfer commands and position/prediction updates.
 
 \section{Known Issues}
 \section{File Listings}
