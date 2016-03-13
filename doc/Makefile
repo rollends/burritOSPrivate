@@ -8,7 +8,7 @@ $(CODEDIR):
 	$(MAKE) -C $(CODEDIR)/latex
 	cp $(CODEDIR)/latex/refman.pdf code.pdf
 
-manual.pdf:
+manual.pdf: manual.tex
 	mkdir -p $(BLDDIR)
 	pdflatex -output-directory $(BLDDIR) manual.tex
 	pdflatex -output-directory $(BLDDIR) manual.tex

@@ -2,6 +2,8 @@
 \usepackage{makeidx}
 \usepackage{ifthen}
 \usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows}
 
 \def\bs{\char'134 }
 \newcommand{\ie}{i.\,e.,}
@@ -23,7 +25,7 @@ tpetrick@uwaterloo.ca \\}
 \markboth{burritOS System Manual}%
          {burritOS System Manual}
 
-\makeindex 
+\makeindex
 \setcounter{tocdepth}{2}
 \begin{document}
 \maketitle
@@ -77,19 +79,73 @@ The types used by both kerenl and user space are defined in \textit{common/types
 \subsection{Data Structures}
 \subsection{Utilities}
 
+\section{General Purpose User Tasks}
+The general purpose user-space tasks provide important services on top of the kernel. All of these tasks provide a named interface that can be discovered using the \textit{Name Server}. The \textit{Name Server} is assumed to be have a task ID of 2.
+
+\subsection{Name Service}
+
+\subsubsection{Interface}
+\textbf{nsRegister(taskName)} - Registers the caller task with the name provided.\\\\
+\textbf{nsWhoIs(taskName)} - Looks up the \verb~TaskID~ of the task registered with the provided name. Will block until \textit{all} task names have been registered.
+
+\subsubsection{Implementation}
+The \textit{Name Server} task triages and responds requests to find the task ID of a \'named\' task. Two service methods are provided as the interface to the name service. This service provides the ability for tasks to find other operating system services. The current implementation requires that all possible registrations be made before any lookup (WhoIs) requests are served. As a consequence of our kernel development tenets, we chose enumerated values to represent task names instead of strings. This reduces complexity in the user space code of the nameserver. An enumerated list has a well-defined maximum meaning the nameserver can maintain a constant-sized array to store registered IDs.
+
+\subsection{Clock Service}
+
+\subsubsection{Interface}
+\textbf{clockDelayBy(clockServerID, ticks)} - Delays a task by \verb~ticks~ times 10 milliseconds. The delay is guaranteed to an interval of plus or minus 10 milliseconds.\\\\
+\textbf{clockLongDelayBy(clockServerID, longTicks)} - Delays a task by \verb~longTicks~ times 150 milliseconds. The delay is guaranteed to an interval of plus or minus 150 milliseconds.\\\\
+\textbf{clockTime(clockServerID)} - Returns the current time reported by the \textit{Clock Server}, in multiples of 10 milliseconds (\verb~ticks~).\\\\
+\textbf{clockDelayUntil(clockServerID, time)} - Delays a task until the \textit{Clock Server} reports that [10 millisecond] tick \verb~time~ has passed. This method is implemented using calls to \verb~clockTime()~ and \verb~clockDelayBy~ and is therefore more susceptible to error.
+
+\subsubsection{Implementation}
+The clock server is first instantiated by the initial task at priority 1 (one level short of the highest possible priority). It has the responsibility of: creating the clock notifier (at priority 0), handling delay requests, unblocking tasks whose delay time has passed. The notifier is at a priority higher than the server to ensure that the ‘tick’ interrupt is handled without blocking any other driver interaction; this model is useful in future parts of the project where various interrupts will compete for operation.
+
+The clock server must be as responsive as possible in order to service the timer reliably for user tasks. \textit{BurritOS} implements a sorted linked-list data structure to facilitate fast dequeuing of delayed tasks. A task that wishes to delay a certain number of ticks is enqueued in the list in sorted order. Additionally, each node in the list retains a count of how many ticks to delay relative to its parent. This structure has the property of requiring the clock server to only decrement the head of the list during an uneventful timer tick. It is trivial to observe that a ‘dequeue’ tick occurs when the linked list has a set of nodes at the head with 0. The worst-case cost occurs during insertion with $O(n)$. Retrieval is at worst $O(k)$ where $k$ is the number of tasks that dequeued in one tick. During an uneventful tick (no dequeue operation), the cost is constant (decrement and check the head).
+
+The primitives the clock server exposes to user tasks include: \verb~clockDelayBy~, \verb~clockTime~, \verb~clockDelayUntil~. \verb~clockDelayUntil~ is implemented as a function of the other two primitives for the purpose of this assignment. The other primitives wrap messages to the clock server. \verb~clockTime~ is replied to as soon as possible. \verb~clockDelayBy~ is replied to when the delay time has passed, unblocking the task in real-time.
+
+The notifier is a simple ‘await-send’ loop. A more complicated architecture - courier and warehouse - was not used for this assignment since our message passing mechanism is fast and therefore we expect a simple architecture to provide reasonable response time. The notifier does have the additional task of killing the \textit{Clock Server} cleanly during system shutdown.
+
+\subsection{Hardware I/O Servers: Terminal}
+
+\subsubsection{Interface}
+\textbf{printf(formatString, ...)} - A partial implementation of the C standardized \verb~printf~. It is does not wait until the output has been flushed.\\\\
+\textbf{getc()} - Blocks and consumes a character from the \textit{Terminal Server}. Only one task should use this as the input is not duplicated for each task.
+
+\subsubsection{Implementation}
+We chose to implement a slightly different interface for input/output than the kernel specification discusses. We deemed it costly to use \verb~putc~ directly since we generate long strings of text at specific locations using cursor commands. To accomodate this requirement, we implement \verb~putStr~ which sends whole strings to the \textit{Terminal Server}. This is used by userspace \verb~printf~ implementation in order to reduce the number of system calls and messaging overhead.
+
+The terminal server architecture is as simple as possible. The server creates two notifiers: one for input and one for output. The server also maintains buffers for both input and output. Originally we designed a more elaborate structure (warehouse-courier model) to handle high bandwidth but observed that this structure was unnecessary given our messaging round-trip time.
+
+\subsection{Hardware I/O Servers: Train}
+
+\subsubsection{Interface}
+\textbf{trainStop(trainServer)} - Commands the board to send an emergency stop to the track.\\\\
+\textbf{trainGo(trainServer)} - Sends a Go to the track.\\\\
+\textbf{trainSetSpeed(trainServer, train, speed)} - Sets a train to a given speed.
+
+\subsubsection{Implementation}
+The input and output components of the train are implemented as one I/O server. Complexity was introduced as needed for the switches and sensors. The switches need delays of 160ms between every command. In order to implement this, we took advantage of the courier design. An independent switch server handles switch requests. This switch server creates a courier that communicates to the actual train I/O server. The trick is to implement a delay inside the courier, hiding the delay from both servers and, more importantly, from any other request that may come to the train server (set speed, reverse). This model also allows the switch server to easily determine when to send a turn-off-solenoid request; this event fires when the courier arrives at the switch server without any pending switch commands.
+
+Complexity was introduced in sensor reading for performance reasons. Since the train UART is slow, we would like to send requests for a group of sensors. Unfortunately, that means tasks would send requests for more data than they’d need. Instead we choose to have a sensor server which buffers all the sensor data as fast as it can while passing along specific sensor information when clients request it.
+
+Tasks will almost never directly talk to the \textit{Train Server} and instead will go through another more job specific server for the command they are sending. For example, a \textit{Train Switch Server} for throwing a switch.
+
 \section{Hardware Interface}
 \subsection{General Notes and Usage}
 \subsection{Interrupt Driven I/O}
 The \textit{sysWrite} call takes a UART port and character as parameters and blocks the calling task until a transmit interrupt occurs. Since transmit interrupts continuously fire until a byte is transmitted, we disable the interrupt on the UART after transmitting a byte. \textit{sysWrite} also enables the TX interrupt so the task will be able to send data.
 
-A \textit{sysRead} call is also provided for reading from a serial port. The call takes a UART port as its only parameter and returns a byte once an RX interrupt occurs on the desired UART. Technically sysRead could be implemented using the existing \textit{sysAwait}, however we chose to make a separate system call for readability and API consistency. Initially we also experimented with buffering input in the kernel, which required special read/write logic - the names \textit{sysRead}/\textit{sysWrite} calls are leftover from that implementation. 
+A \textit{sysRead} call is also provided for reading from a serial port. The call takes a UART port as its only parameter and returns a byte once an RX interrupt occurs on the desired UART. Technically sysRead could be implemented using the existing \textit{sysAwait}, however we chose to make a separate system call for readability and API consistency. Initially we also experimented with buffering input in the kernel, which required special read/write logic - the names \textit{sysRead}/\textit{sysWrite} calls are leftover from that implementation.
 
 When using UART 1 the CTS flag is checked before transmitting data. This is done by handling the ORed interrupt for UART 1, which includes RX, TX and modem status interrupts. When a UART 1 interrupt occurs we first determine which source (RX, TX, Modem) it is by reading the UART’s IRQ status register. If a modem status interrupt is triggered, the interrupt handler queries the UART’s CTS register and updates the kernel’s CTS flag. If the interrupt is an RX or TX interrupt, the event table is checked to see if any tasks are waiting to read or write from UART 1. TX interrupts are only processed for UART 1 if the CTS flag is set to 1 UART 2 does not require a CTS flag, so the ORed interrupt trigger isn’t used. The event handler processes the raw TX and RX interrupts for that UART in the same way that the timer events are handled.
 
 \section{Kernel Design}
 
 \subsection{Memory Layout}
-Task stacks are placed at address \textit{0x01000000} and higher. Task stacks are created in 16kb blocks. The stacks are managed by a \textit{MemoryAllocator} that uses FIFO queues to give out and reclaim stack blocks. The first word on the stack is its block id; the remaining space is used by the task as desired. Storing the id to the stack serves a dual purpose - it makes reclaiming the stack easier, and also act as an indicator for stack overflows. A block id that seems corrupted when the stack is reclaimed by the allocator is a strong indication that a neighboring stack overflowed. 
+Task stacks are placed at address \textit{0x01000000} and higher. Task stacks are created in 16kb blocks. The stacks are managed by a \textit{MemoryAllocator} that uses FIFO queues to give out and reclaim stack blocks. The first word on the stack is its block id; the remaining space is used by the task as desired. Storing the id to the stack serves a dual purpose - it makes reclaiming the stack easier, and also act as an indicator for stack overflows. A block id that seems corrupted when the stack is reclaimed by the allocator is a strong indication that a neighboring stack overflowed.
 
 The system has more memory blocks that tasks, so the additional blocks can be access by tasks using the \textit{sysAlloc()} and \textit{sysFree()} calls. These methods also return \textit{16kb} blocks, and serve as a basic memory page allocator.
 
@@ -149,7 +205,7 @@ Calling \textit{sysPerfQueryP(tid, mode)} will return the percentage of executio
 
 The \textit{sysPerfQueryT(tid, mode)} system call queries the run time microseconds for each of the cases listed above, rather than as a relative percentage. Additionally the mode value ePerfTotal can be passed in to get the total run time in microseconds since the last call to \textit{sysPerfReset()}.
 
-The performance timings are implemented by storing two unsigned integers at the end of each task descriptor. When a system call or interrupt occurs, the active task has its task mode counter updated by the current timer delta. Then, right before the scheduler returns, the last active task has its kernel mode counter updated by the timer delta. Both updates reset the timer delta. This means that task mode timings are the amount of time spent from the return statement of the scheduler until the entry point of a system call or interrupt, and kernel mode timings are the amount of time spent inside the syscall/interrupt and scheduler. This is not a perfect representation of task/kernel time, but is close enough to be useful. 
+The performance timings are implemented by storing two unsigned integers at the end of each task descriptor. When a system call or interrupt occurs, the active task has its task mode counter updated by the current timer delta. Then, right before the scheduler returns, the last active task has its kernel mode counter updated by the timer delta. Both updates reset the timer delta. This means that task mode timings are the amount of time spent from the return statement of the scheduler until the entry point of a system call or interrupt, and kernel mode timings are the amount of time spent inside the syscall/interrupt and scheduler. This is not a perfect representation of task/kernel time, but is close enough to be useful.
 
 The following output was produced using the data recored by the performance primitives:
 \begin{verbatim}
@@ -217,7 +273,7 @@ The \textit{Performance} calls are used to monitor system performance. See Secti
 The burritOS system does not use or provide heap allocation, however it does have a generic memory block allocator. The allocator is used to give out stack blocks; extra blocks are available via memory system calls. No protection or ownership verification is done on the blocks.
 
 \textbf{U32* = sysAlloc(void)} - Returns a pointer to a 16kB - 1 word memory block. The first address holds the block id, so the memory returned begins after that location.\\\\
-\textbf{sysFree(block*)} - Frees a memory block pointer for reuse by the system. 
+\textbf{sysFree(block*)} - Frees a memory block pointer for reuse by the system.
 
 \section{Debugging and Assertions}
  Almost all hardware and kernel functions return a status code and perform safety checks including out-of-bounds access, invalid memory addresses and invalid parameter values. Assertions are used liberally to validate both kernel and user-space code. When an assertion is throw, a debug message is printed:
@@ -260,7 +316,7 @@ These flags enable a set of error and assertion macros that are normally disable
 #endif
 \end{verbatim}
 
-It is up to the kernel programmer to use the macros in their code, so we have not yet achieved full coverage. This is an area that will be improved in future iterations of the kernel. 
+It is up to the kernel programmer to use the macros in their code, so we have not yet achieved full coverage. This is an area that will be improved in future iterations of the kernel.
 \section{Userspace}
 \subsection{Services}
 \subsection{Tasks}
