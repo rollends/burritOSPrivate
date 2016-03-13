@@ -78,10 +78,13 @@ The types used by both kerenl and user space are defined in \textit{common/types
 \subsection{Utilities}
 
 \section{Hardware Interface}
-\subsection{Memory}
-\subsection{Timers}
-\subsection{UARTs}
-\subsection{Interrupts}
+\subsection{General Notes and Usage}
+\subsection{Interrupt Driven I/O}
+The \textit{sysWrite} call takes a UART port and character as parameters and blocks the calling task until a transmit interrupt occurs. Since transmit interrupts continuously fire until a byte is transmitted, we disable the interrupt on the UART after transmitting a byte. \textit{sysWrite} also enables the TX interrupt so the task will be able to send data.
+
+A \textit{sysRead} call is also provided for reading from a serial port. The call takes a UART port as its only parameter and returns a byte once an RX interrupt occurs on the desired UART. Technically sysRead could be implemented using the existing \textit{sysAwait}, however we chose to make a separate system call for readability and API consistency. Initially we also experimented with buffering input in the kernel, which required special read/write logic - the names \textit{sysRead}/\textit{sysWrite} calls are leftover from that implementation. 
+
+When using UART 1 the CTS flag is checked before transmitting data. This is done by handling the ORed interrupt for UART 1, which includes RX, TX and modem status interrupts. When a UART 1 interrupt occurs we first determine which source (RX, TX, Modem) it is by reading the UART’s IRQ status register. If a modem status interrupt is triggered, the interrupt handler queries the UART’s CTS register and updates the kernel’s CTS flag. If the interrupt is an RX or TX interrupt, the event table is checked to see if any tasks are waiting to read or write from UART 1. TX interrupts are only processed for UART 1 if the CTS flag is set to 1 UART 2 does not require a CTS flag, so the ORed interrupt trigger isn’t used. The event handler processes the raw TX and RX interrupts for that UART in the same way that the timer events are handled.
 
 \section{Kernel Design}
 
@@ -91,7 +94,7 @@ Task stacks are placed at address \textit{0x01000000} and higher. Task stacks ar
 The system has more memory blocks that tasks, so the additional blocks can be access by tasks using the \textit{sysAlloc()} and \textit{sysFree()} calls. These methods also return \textit{16kb} blocks, and serve as a basic memory page allocator.
 
 \subsection{Data Structures}
-All data structures in our implementation fall into two categories: flat arrays and circular queues. The circular queues are implemented using a memory block, a length variable and head/tail indices indicating the start and end of the queue. The length and memory pointer are passed in when the queue is initialized. This allows the size of the queue to vary based on the context (e.g. small send queues but large ready queues). Our kernel requires that queues have a length that is equal to a power of two. This is to avoid using modulus function from libgcc. Instead, since the queues are a power of two in length, a bitwise and can be used to ensure the queue indices wrap around to 0. For example:
+All data structures in our implementation fall into two categories: flat arrays and circular queues. The circular queues are implemented using a memory block, a length variable and head/tail indices indicating the start and end of the queue. The length and memory pointer are passed in when the queue is initialized. This allows the size of the queue to vary based on the context (e.g. small send queues but large ready queues). Our kernel requires that queues have a length that is equal to a power of two. This is to avoid using modulus function from libgcc. Instead, since the queues are a power of two in length, a bitwise \textit{and} can be used to ensure the queue indices wrap around to 0. For example:
 
 \begin{verbatim}
 head = (head + 1) & (length - 1)
@@ -117,13 +120,13 @@ When an interrupt is fired the control flow is very similar. The interrupt cause
 It is worth noting that the task registers are stored in the following layout on the task stack:
 
 \begin{verbatim}
-stack+0x00      SPSR
+stack+0x0       SPSR
                 Task LR (R14)
                 R0
                 R4
                 ..
                 R12
-stack+0x0A      Task PC (R15)
+stack+0xA       Task PC (R15)
 \end{verbatim}
 This somewhat out-of-order stacking order was chosen to make the context switcher more compact.
 
@@ -147,13 +150,74 @@ Calling \textit{sysPerfQueryP(tid, mode)} will return the percentage of executio
 The \textit{sysPerfQueryT(tid, mode)} system call queries the run time microseconds for each of the cases listed above, rather than as a relative percentage. Additionally the mode value ePerfTotal can be passed in to get the total run time in microseconds since the last call to \textit{sysPerfReset()}.
 
 The performance timings are implemented by storing two unsigned integers at the end of each task descriptor. When a system call or interrupt occurs, the active task has its task mode counter updated by the current timer delta. Then, right before the scheduler returns, the last active task has its kernel mode counter updated by the timer delta. Both updates reset the timer delta. This means that task mode timings are the amount of time spent from the return statement of the scheduler until the entry point of a system call or interrupt, and kernel mode timings are the amount of time spent inside the syscall/interrupt and scheduler. This is not a perfect representation of task/kernel time, but is close enough to be useful. 
+
+The following output was produced using the data recored by the performance primitives:
+\begin{verbatim}
+    TaskId  Tsk %   Krnl %  Ttl %   Tsk us      Krnl us     Ttl us
+    0x00    46.17   50.68   96.86   1,156,700   1,269,741   2,426,442
+    0x01    00.26   00.00   00.26       6,623          64       6,687
+    0x02    00.00   00.00   00.00          28          43          72
+    0x03    00.03   00.05   00.10       1,053       1,509       2,563
+    0x04    00.03   00.05   00.10       1,075       1,539       2,614
+    0x05    01.21   00.00   01.22      30,915          91      31,012
+    0x06    01.22   00.00   01.22      31,209         114      31,324
+    0x07    00.55   00.00   00.55      14,049          57      14,107
+    0x08    00.36   00.00   00.36       9,366          42       9,408
+    0x09    00.17   00.00   00.17       4,691          26       4,718
+
+    Total run time: 2,552,806us ~ 2.552s
+\end{verbatim}
+
 \section{System Calls}
 \subsection{System State}
+
+The \textit{System State} calls are used to monitor the state of the kernel. Currently there are two calls in this category.
+
+\textbf{sysRunning(void)} - Returns 1 if the system running flag is set, else returns 0.\\\\
+\textbf{sysShutdown(void)} - Sends a shutdown signal to the kernel, and sets the running state to 0. Does not force the system to terminate; processes must check the running flag with \textit{sysRunning} to determine if they should continue executing.
+
 \subsection{Task Management}
+
+\textit{Task Management} system calls are used to create, destroy and query tasks. There are a total of 7 task related system calls.
+
+\textbf{sysExit(void)} - Exits a task and returns the descriptor and stack back to the kernel. This system call is deprecated; tasks will perform this operation on their own once the task function returns.\\\\
+\textbf{sysPass(void)} - Yields control of the processor to the kernel. Effective performs a no-op, however since the scheduler is invoked a different task may be entered.\\\\
+\textbf{U16 = sysCreate(priority, entry\_point)} - Creates a new task with a given priority and code entry point. The new task's id is returned.\\\\
+\textbf{char* = sysName(tid)} - Returns a pointer to the string name of a given task.\\\\
+\textbf{U16 = sysTid(void)} - Returns the id of the current task.\\\\
+\textbf{U16 = sysPid(void)} - Returns the id of the current task's parent.\\\\
+\textbf{U8 = sysPriority(void)} - Returns the priority of the current task.
+
 \subsection{Messaging}
+
+\textit{Messaging} system calls are used to perform inter-task communication. Currently only blocking ITC is supported.
+
+\textbf{sysSend(tid, *msg, *reply)} - Sends a message to task, and provides a memory location in which the reply should be stored. Blocks the caller until a \textit{sysReply} is sent by the receiver.\\\\
+\textbf{sysReceive(*tid, *msg)} - Receives a message and stores the sender id and message body. Blocks the caller until a message arrives.\\\\
+\textbf{sysReply(tid, *msg)} - Sends a reply message back in response to a \textit{sysReceive}.
+
 \subsection{Performance}
-\subsection{Events}
+
+The \textit{Performance} calls are used to monitor system performance. See Section 4.6 for details on performance monitoring.
+
+\textbf{sysPerfReset(void)} - Resets performance tracking on all tasks.\\\\
+\textbf{sysPerfQueryP(tid, mode)} - Queries performance of task for a given mode, as a percentage of total runtime.\\\\
+\textbf{sysPerfQueryT(tid, mode)} - Queries performance of task for a given mode, as an absolute time in microseconds.
+
+\subsection{Event Handling and I/O}
+
+\textit{Event} system calls are used to block on hardware interrupts and interact with hardware peripherals. See the Hardware section for details on interrupt driven input and output. All Event calls cause tasks to be blocked on hardware interrupts.
+
+\textbf{sysAwait(event)} - Blocks the calling task on a specific event.\\\\
+\textbf{char = sysRead(port)} - Blocking read from a UART port.\\\\
+\textbf{sysWrite(port, byte)} - Blocking write to a UART port.
+
 \subsection{Memory}
+
+The burritOS system does not use or provide heap allocation, however it does have a generic memory block allocator. The allocator is used to give out stack blocks; extra blocks are available via memory system calls. No protection or ownership verification is done on the blocks.
+
+\textbf{U32* = sysAlloc(void)} - Returns a pointer to a 16kB - 1 word memory block. The first address holds the block id, so the memory returned begins after that location.\\\\
+\textbf{sysFree(block*)} - Frees a memory block pointer for reuse by the system. 
 
 \section{Debugging and Assertions}
  Almost all hardware and kernel functions return a status code and perform safety checks including out-of-bounds access, invalid memory addresses and invalid parameter values. Assertions are used liberally to validate both kernel and user-space code. When an assertion is throw, a debug message is printed:
@@ -196,7 +260,7 @@ These flags enable a set of error and assertion macros that are normally disable
 #endif
 \end{verbatim}
 
-It is up to the kernel programmer to use the macros in their code, so we have not yet achieved full coverage. This is an area that will be improved in future assignments. 
+It is up to the kernel programmer to use the macros in their code, so we have not yet achieved full coverage. This is an area that will be improved in future iterations of the kernel. 
 \section{Userspace}
 \subsection{Services}
 \subsection{Tasks}
