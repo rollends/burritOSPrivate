@@ -18,7 +18,7 @@ rs2dsouz@uwaterloo.ca \\
 Taylor Petrick (20413951) \\
 tpetrick@uwaterloo.ca \\}
 
-\date{\textbf{CS 452 - Trains Demo 1 \\ \today}}
+\date{\textbf{CS 452 - Real Time With Bill Cowan \\ Trains 1 Demo \\ \today}}
 \emergencystretch1em  %
 
 \pagestyle{myfootings}
@@ -30,13 +30,15 @@ tpetrick@uwaterloo.ca \\}
 \begin{document}
 \maketitle
 
-Changes summary....
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin pulvinar euismod ipsum, quis egestas sem cursus eget. Morbi dignissim porttitor vehicula. Vestibulum iaculis, odio eget sagittis luctus, lectus magna iaculis sem, non rhoncus lorem urna id dui. Etiam augue lacus, ullamcorper vel orci ut, tempus semper leo. Praesent malesuada mauris dolor, et laoreet est ullamcorper at. Suspendisse tincidunt semper euismod. Sed ac vulputate lorem. Pellentesque lectus justo, suscipit at velit et, finibus aliquam libero.
+\textbf{Noteworthy Changes}\\\\
+This submission include a new document format, train tracking logic and the neccessary user space services to complete the Trains 1 milestone.
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elit. Ut sed placerat neque. Ut ornare diam a bibendum egestas. Phasellus quis venenatis odio, ac consequat eros. Sed condimentum mauris et dolor tempor commodo. Vivamus eu ex metus. Ut suscipit dui orci, sit amet ornare magna auctor facilisis. Morbi id feugiat metus.
+The new documentation is written in \LaTeX\ rather than a typical desktop word processor. The .tex file is included as part of the Git repository as \textit{./doc/manual.tex}, and is built into a PDF with the rest of the documentation build target. Future submissions will be patches to this document - that is, rather than resubmitting the whole document new sections relating to Milestone 2 and the Project will be submitted when required.
 
-Nam luctus odio at luctus hendrerit. Mauris molestie, purus quis maximus rhoncus, massa purus auctor felis, ac venenatis ex nunc ut arcu. Nam luctus, tellus non tempus ornare, turpis mi finibus sapien, ut bibendum ante risus sed metus. Sed porta nec turpis sit amet accumsan. Maecenas accumsan consectetur nisl, id pellentesque urna. Mauris vel fringilla velit, semper interdum magna. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Praesent ac tempor sem, a cursus purus. In id dui quis lectus ultricies pellentesque. Nunc eget tincidunt dolor. Curabitur placerat pulvinar ex, at maximus diam ultricies vitae. Quisque sit amet tempor mi.
+The \textit{./trains/} subdirectoy was added to the source code for the Trains 1 milestone. It includes a collection of files for maintaining a physical model of the train, including initial configuration data for Train 68 and Train 62.
+
+A number of additional user tasks were also added. The system now launches a collection of tasks for each train that are used to schedule, track position and interact with that particular train. The tasks are described in more detail in \textbf{Section 6.2} of this report.
 
 \newpage
 \tableofcontents
@@ -68,19 +70,17 @@ By default, code is built using a unity build technique. The makefile runs \text
 
 The file can be loaded and run on the TS7200 board with the following Redboot commands:
 
-\textit{\textgreater load -b 0x50000 -h 10.15.167.5 /u/cs452/tftp/ARM/tpetrick/k4.elf}\\
+\textit{\textgreater load -b 0x50000 -h 10.15.167.5 /u/cs452/tftp/ARM/tpetrick/t1.elf}\\
 \textit{\textgreater go}\\\\
 
 \textbf{CAUTION:}  The load address has changed since our past submissions. We no longer use the default address of \textit{0x218000}, and require that code is loaded at \textit{0x50000} instead. This should be handled automatically by the linker script and \textit{.elf} file, however it may be necessary to specify the \textit{-b} parameter when loading to Redboot.
 
-\section{Common Libraries}
-\subsection{Type Interface}
-The types used by both kerenl and user space are defined in \textit{common/types.h}
-\subsection{Data Structures}
-\subsection{Utilities}
-
 \section{Hardware Interface}
 \subsection{General Notes and Usage}
+The hardware layer is intended to abstract away the details of dealing with hardware perhipherals. It current wraps the timers, UARTS and interrupt controller logic in a simple interace. An implementation of the interface for the TS7200 board can be found in the \textit{hardware/ts7200} subdirectory.
+
+The hardware layer is also responsible for providing instructions for intializing the interrupt vector table, and handling software and hardware interrupts.
+
 \subsection{Interrupt Driven I/O}
 The \textit{sysWrite} call takes a UART port and character as parameters and blocks the calling task until a transmit interrupt occurs. Since transmit interrupts continuously fire until a byte is transmitted, we disable the interrupt on the UART after transmitting a byte. \textit{sysWrite} also enables the TX interrupt so the task will be able to send data.
 
@@ -99,7 +99,7 @@ The system has more memory blocks that tasks, so the additional blocks can be ac
 All data structures in our implementation fall into two categories: flat arrays and circular queues. The circular queues are implemented using a memory block, a length variable and head/tail indices indicating the start and end of the queue. The length and memory pointer are passed in when the queue is initialized. This allows the size of the queue to vary based on the context (e.g. small send queues but large ready queues). Our kernel requires that queues have a length that is equal to a power of two. This is to avoid using modulus function from libgcc. Instead, since the queues are a power of two in length, a bitwise \textit{and} can be used to ensure the queue indices wrap around to 0. For example:
 
 \begin{verbatim}
-head = (head + 1) & (length - 1)
+    head = (head + 1) & (length - 1)
 \end{verbatim}
 
 The priority queue used for scheduling of ready tasks is a special data structure that contains a set of circular buffer queues. One queue is used for each of the priorities. Kernel 1 and 2 only used three priorities, however in Kernel 3 the number of priorities was increased to 32. A 32 bit integer is used to determine which queues have tasks in them. Bit twiddling is done to compute the highest priority queue with an element in it; the code to do this was taken from \url{https://graphics.stanford.edu/~seander/bithacks.html}. It emulates a count trailing zeroes (CTZ) instruction since ARM v4 lacks CTZ/CLZ.
@@ -122,13 +122,13 @@ When an interrupt is fired the control flow is very similar. The interrupt cause
 It is worth noting that the task registers are stored in the following layout on the task stack:
 
 \begin{verbatim}
-stack+0x0       SPSR
-                Task LR (R14)
-                R0
-                R4
-                ..
-                R12
-stack+0xA       Task PC (R15)
+    stack+0x0       SPSR
+                    Task LR (R14)
+                    R0
+                    R4
+                    ..
+                    R12
+    stack+0xA       Task PC (R15)
 \end{verbatim}
 This somewhat out-of-order stacking order was chosen to make the context switcher more compact.
 
@@ -200,7 +200,7 @@ The \textit{System State} calls are used to monitor the state of the kernel. Cur
 
 \subsection{Performance}
 
-The \textit{Performance} calls are used to monitor system performance. See Section 4.6 for details on performance monitoring.
+The \textit{Performance} calls are used to monitor system performance. See \textbf{Section 4.6} for details on performance monitoring.
 
 \textbf{sysPerfReset(void)} - Resets performance tracking on all tasks.\\\\
 \textbf{sysPerfQueryP(tid, mode)} - Queries performance of task for a given mode, as a percentage of total runtime.\\\\
@@ -208,7 +208,7 @@ The \textit{Performance} calls are used to monitor system performance. See Secti
 
 \subsection{Event Handling and I/O}
 
-\textit{Event} system calls are used to block on hardware interrupts and interact with hardware peripherals. See the Hardware section for details on interrupt driven input and output. All Event calls cause tasks to be blocked on hardware interrupts.
+\textit{Event} system calls are used to block on hardware interrupts and interact with hardware peripherals. See the \textbf{Section 2.2} for details on interrupt driven input and output. All Event calls cause tasks to be blocked on hardware interrupts.
 
 \textbf{sysAwait(event)} - Blocks the calling task on a specific event.\\\\
 \textbf{char = sysRead(port)} - Blocking read from a UART port.\\\\
@@ -225,41 +225,42 @@ The burritOS system does not use or provide heap allocation, however it does hav
  Almost all hardware and kernel functions return a status code and perform safety checks including out-of-bounds access, invalid memory addresses and invalid parameter values. Assertions are used liberally to validate both kernel and user-space code. When an assertion is throw, a debug message is printed:
 
 \begin{verbatim}
-....................
-....................
-......______ .......
-...../      \\......
-..../  x  x  \\.....
-...|   ____   h|....
-...|  /    \  h|....
-....\_________\/....
-....................
-.....SAD..TACO......
-....................
-Assertion in `kernel/scheduler.c` on line 18
-Current Active Task is 0x06
+    ....................
+    ....................
+    ......______ .......
+    ...../      \ \.....
+    ..../  x  x  \n\....
+    ...|   ____   hn|...
+    ...|  /    \  hn|...
+    ....\_________\/....
+    ....................
+    .....SAD..TACO......
+    ....................
+
+    Assertion in `kernel/scheduler.c` on line 18
+    Current Active Task is 0x06
 \end{verbatim}
 
 Assertions, return codes and bounds checking can be enabled/disabled using a collection of preprocessor flags. When return codes are disabled functions return void, otherwise they return a signed integer. These flags are:\\
 \begin{verbatim}
-NULL_CHECK              Include null pointer checks on memory address
-BOUNDS_CHECK            Include bounds checking
-RANGE_CHECK             Include memory address range checks
-DEVICE_CHECK            Include device register checks (e.g. UART, timers, etc)
-ASSERT_BUILD            Enabled assertions
-RETURN_CODES            Enable return codes
-KERNEL_PERF             Enable kernel performance primitives
-KERNEL_PERF_VERBOSE     Enable verbose performance updates from the perf Task
+    NULL_CHECK              Include null pointer checks on memory address
+    BOUNDS_CHECK            Include bounds checking
+    RANGE_CHECK             Include memory address range checks
+    DEVICE_CHECK            Include device register checks (e.g. UART, timers, etc)
+    ASSERT_BUILD            Enabled assertions
+    RETURN_CODES            Enable return codes
+    KERNEL_PERF             Enable kernel performance primitives
+    KERNEL_PERF_VERBOSE     Enable verbose performance updates from the perf Task
 \end{verbatim}
 
 These flags enable a set of error and assertion macros that are normally disabled. For example, for null checking:
 
 \begin{verbatim}
-#ifdef NULL_CHECK
-    #define IS_NOT_NULL(x) do {if ((x) == 0) return ERROR_NULL;} while(0);
-#else
-    #define IS_NOT_NULL(x)
-#endif
+    #ifdef NULL_CHECK
+        #define IS_NOT_NULL(x) do {if ((x) == 0) return ERROR_NULL;} while(0);
+    #else
+        #define IS_NOT_NULL(x)
+    #endif
 \end{verbatim}
 
 It is up to the kernel programmer to use the macros in their code, so we have not yet achieved full coverage. This is an area that will be improved in future iterations of the kernel.
@@ -272,7 +273,7 @@ The general purpose user-space tasks provide important services on top of the ke
 \textbf{nsRegister(taskName)} - Registers the caller task with the name provided.\\\\
 \textbf{nsWhoIs(taskName)} - Looks up the \verb~TaskID~ of the task registered with the provided name. Will block until \textit{all} task names have been registered.\\\\
 
-The \textit{Name Server} task triages and responds requests to find the task ID of a \'named\' task. Two service methods are provided as the interface to the name service. This service provides the ability for tasks to find other operating system services. The current implementation requires that all possible registrations be made before any lookup (WhoIs) requests are served. As a consequence of our kernel development tenets, we chose enumerated values to represent task names instead of strings. This reduces complexity in the user space code of the nameserver. An enumerated list has a well-defined maximum meaning the nameserver can maintain a constant-sized array to store registered IDs.
+The \textit{Name Server} task triages and responds to requests to find the task ID of a "named" task. Two service methods are provided as the interface to the name service. This service provides the ability for tasks to find other operating system services. The current implementation requires that all possible registrations be made before any lookup (WhoIs) requests are served. As a consequence of our kernel development tenets, we chose enumerated values to represent task names instead of strings. This reduces complexity in the user space code of the nameserver. An enumerated list has a well-defined maximum meaning the nameserver can maintain a constant-sized array to store registered IDs.
 
 \subsubsection{Clock Service}
 
@@ -334,9 +335,170 @@ The \textit{Locomotive} creates the following subsystems:
 
 The reasoning behind the decision to implement the \textit{Locomotive GPS} as a server with courier-communication is non-trivial. The driving motivation lay in the guarantee that the \textit{Locomotive} never wastes time. Missing a physics tick (or delaying a physics tick) can result in inaccurate calculations. Delaying an urgent user command due to a sensor read can lead to catastrophic results. It only follows that the \textit{Locomotive} task should almost never block. This is, of course, impossible without a very extensive design since it has to send commands to the driver (which blocks temporarily). Nevertheless, we attempt to minimize time spent blocked using couriers to transfer commands and position/prediction updates.
 
-\section{Known Issues}
-\section{File Listings}
+\section{Train Modeling}
 
-\printindex
+\subsection{Static Model}
+A variety of data collection experiments were performed when developing the physical model for the trains. This included starting distance, stopping distance, inter-speed acceleration and steady state velocity. Only the steady-state velocity and stopping distance were used for the first demo, since the train didn't need to change speeds. Error in tracking from the lack of starting acceleration model was ignored during the demo.
+
+For the steady state velocity, a one-to-one mapping of train speed to velocity was produced. For example, the following map was used for Train 62:
+\begin{verbatim}
+    Speed  5   ->   224376 um/mt
+    Speed  6   ->   275931 um/mt
+    Speed  7   ->   335343 um/mt
+    Speed  8   ->   389936 um/mt
+    Speed  9   ->   441837 um/mt
+    Speed 10   ->   491406 um/mt
+    Speed 11   ->   541752 um/mt
+    Speed 12   ->   589662 um/mt
+    Speed 13   ->   632801 um/mt
+\end{verbatim}
+
+The units on the velocity are micrometers per megatick. Since we used the 983 Khz timer it was easiest to perform the calculations in ticks rather than in seconds. The computations were done using fixed point integers, hence the use of micrometers instead of millimeters.
+
+Note that speeds 1 - 4, and 14 were ignored. We found that speeds below 5 were too slow to reliably tranverse the track without getting stuck at dead zones. Speed 14 produced strange behavior for some of the trains. For example, for Train 62 it had the same velocity as speed 13, but a different acceleration profile.
+
+Modeling acceleration was done by mapping all valid speeds, including 0, to all other possible speeds. This required a 10x10 mapping array. The acceleration functionality was not used during the Trains 1 demo, however an example acceleration table for Train 62 is listed below:
+
+\begin{verbatim}
+    Speed 5 ->  0       -113256 um/mt^2
+    Speed 5 ->  5             0 um/mt^2
+    Speed 5 ->  6         92468 um/mt^2
+    Speed 5 ->  7        177639 um/mt^2
+    Speed 5 ->  8        192717 um/mt^2
+    Speed 5 ->  9        205884 um/mt^2
+    Speed 5 -> 10        213830 um/mt^2
+    Speed 5 -> 11        237231 um/mt^2
+    Speed 5 -> 12        255761 um/mt^2
+    Speed 5 -> 13        252275 um/mt^2
+\end{verbatim}
+
+The units on the accelerations are micrometers per megatick squared.
+
+The actual stopping distance calcuation in the Trains 1 Demo code is hacked together, since we had to switch trains at the last minute. As such, the \textit{trainPhysicsStopDist} method directly computes the stopping distance rather than going through the proper table lookups. This computation also takes into account overshoot by adding a factor of $v*60ms$.
+
+\subsection{Dynamic Model}
+
+Run time corrections are made to the model to improve accuracy. During the first ten sensor triggers the velocity model is updated to account for any discrepencies between the train and the static model. On subsequent sensor triggers, any timing error was stored on the sensor node so that future predictions could account for it. The assumption was that in most cases, if the train was late to a sensor once it would have a decent chance of being late again. 
+
+The combination of the static model and run time corrections to the dynamic model was sufficiently accurate for the demo. We were generally able to stop the train within a few centimeters of the target location and accurate predict the arrival time at sensors with less than 30ms of error.
+
+\section{File Listings}
+The following listing contains the name and hash of all of the source files in the current project:
+\begin{verbatim}
+    7a570500eaaa3aaece0e2c3ab932806c  common/queue.h
+    5111780c98f90c807e28c9051a957bd1  common/priorityQueue.h
+    236769e5da7bac28b735653c61180294  common/random.h
+    6e4a6dc8741dbc70e7f58f6cb97de87f  common/common.h
+    f5f8b0aba1d08886d21a252ed70af1fb  common/random.c
+    dbc1e1f655ec2eb5634d253a4e225901  common/error.h
+    fa27cfc4310ef2f2a4aa21a263f0ac15  common/utils.h
+    4ad96714a59e326dd08f49fa87ac8edf  common/memcpy.s
+    1aca0ab83913d5a7432db2ce8b3e46b4  common/timerState.h
+    0a75e9ea015602357e05992d269d1cae  common/memcpy.h
+    9a51fd55cbaa0561763a09336f2a2eea  common/queue.c
+    a7d11483d9452d5d8f9f784bb26e8209  common/types.h
+    65491591f39cd860d49c262b3541a11e  common/memset.c
+    7fdf99d4a9ea148c4e8d4d8b2777404d  common/vaList.h
+    51f48f7fffd96b988d0d424119850596  common/string.c
+    0eb10e8842dc414bcd499341a23cc5db  common/string.h
+    06d14c9b85a344d1794fd1de3aca1cc1  common/memset.h
+    adcf35544f06b19164f55b953995d1ff  common/priorityQueue.c
+
+    d5f38025b527f774835847d5f79ad85b  hardware/uart.h
+    6c5930b3f894fe526814ea0ce188ed4e  hardware/timer.h
+    b36394bd275b36728ac6122e45a7f142  hardware/ts7200/start.s
+    6055b18f1d4b2f2d6a200ff8cbcbeebf  hardware/ts7200/ts7200.h
+    87306d757b7eda3d725cad19dc6bf919  hardware/ts7200/interrupt.c
+    4e90444ef3fbdfb1078e8682dee3084e  hardware/ts7200/uart.c
+    20421e2c6a4e0d22bce2d9c812680b34  hardware/ts7200/timer.c
+    ac2247029448237de4c4590f27698a85  hardware/ts7200/vector.s
+    c71fbd7b3723c4bf4d0d104902b01487  hardware/memory.h
+    4541004aefa37b3c3e19d8c184deb2f6  hardware/hardware.h
+    98f10a0ba0008da70ef80f36cd2a9031  hardware/interrupt.h
+
+    3d29dd33b7f3526ae350378f872644b2  kernel/taskTable.h
+    59e283c66c5a66e627e33f3ef39a6f58  kernel/event.c
+    26f5ecdbe74ff55fddc97b6127cee60e  kernel/event.h
+    f8a30fe67fb0ab3ae7905cf429aaf5a0  kernel/kernelUtils.h
+    b9ccd6cc031e6d339d7bc7bd18f7f895  kernel/assert.c
+    00ada8b6e2ff6aa0c1c79396609c8927  kernel/systemCall.c
+    7617ed11988f83aa8440410517efd7f7  kernel/print.c
+    46216ee62cc2a38d1194ca9c435fe0af  kernel/systemCall.h
+    027b87b518651720441978c985804ce4  kernel/kernel.h
+    4b77d920ca414341407ba26669285f02  kernel/memoryAllocator.h
+    c1b8f89e01d797c5b606726807ac6e4b  kernel/kernelUtils.s
+    cddeb3d30d579f5cddb6e05a24ff96dd  kernel/taskTable.c
+    74845107469cf4a11eb30e63ccedb531  kernel/bootstrap.c
+    be97388a9577fb156157cd5e3f7df771  kernel/scheduler.c
+    caac750f901b606a3b2f951f3483d091  kernel/assert.h
+    e1f4e45f2752c7d539018a020a6ba8e6  kernel/taskDescriptor.h
+    f6c4b6303c324dcfecf1e6333b7ba02c  kernel/kernelData.h
+    c7abe47341dd218cace01e289281a9fe  kernel/memoryAllocator.c
+    60aed85beecdff6275fe0e71a48c6df2  kernel/config.h
+    269831580f0cb96b0128c175c677d590  kernel/message.h
+    6a21b1817843435936a212ce8f594f85  kernel/print.h
+    8169ff0345038b3337e244491a014d07  kernel/kernelData.c
+
+    1352f3743944badbb8c2399e6fb2ccd4  trackdata/new/track_data_new.h
+    cc1cbe679f12e26e95e6580ca063ebe5  trackdata/new/track_data_new.c
+    bff8429e47061fcbd57199fd54cfd0b2  trackdata/trackData.c
+    b5bb94c81caa1e24b4387d3f293859d0  trackdata/trackData.h
+    ded037f2ebd6fca0c9ab6f10852f4d35  trackdata/trackNode.h
+    f4afacf8d77358966835c9538d7ff2bb  trackdata/legacy/model.c
+
+    04750c307ce96072bc6893933fdb7b80  trains/trainInit.h
+    7b356af8288465da34caaf7eae16a035  trains/trainPhysics.c
+    5b3c0f265f184d7e95a1b8bedff3c1b4  trains/train62.h
+    5483d30b360258dd3d1da6a34a3ca7ac  trains/trainPhysics.h
+    1161c63d1c0f24c6f1b4c173d39d750d  trains/trainMath.h
+    8d75585b5fab2f967ff68ee6ee41a388  trains/train68.h
+
+    ba7ee9f4d08d785fd60c7e5afadfb1f2  user/PerformanceTask.c
+    1dc31a1c273532052c366b1b8fa8c586  user/trains/TrainCommander.c
+    f9674818e242137b06d4b62c0cdbfd1a  user/trains/TrainYard.c
+    bb372bd6b7586f68f30ea287b753e5a8  user/trains/TrainCommander.h
+    19186aaece2ba13ed4f1d6785933bc30  user/trains/trains.c
+    bc41d8ef222498b059f4c89d78e728de  user/trains/trackData.c
+    3d4b10ab39c266385db62beca0108866  user/trains/trackData.h
+    a51fee6be16c32e8298b2e8d6739cd3f  user/trains/trackNode.h
+    c4eda1eb8b6fd29989447793dc730dff  user/trains/SwitchOffice.c
+    8445ae5c02c17771caaf23e655b600d7  user/trains/SwitchOffice.h
+    b384e3973c8782620b966c35b77308b9  user/trains/trains.h
+    cd12a73f7ce5746e18d7a5e375ab506b  user/trains/TrainYard.h
+    d74b948e07b52e5de119f7e3367df9b0  user/SensorDisplay.c
+    63bb9b7bc6d198c30c328b2f2e0850f8  user/InitialTask.h
+    a833fcdae45fb79e86cbfe8aa52b4553  user/Locomotive.h
+    87b141bec054ee126714e0ddc6d5c3ef  user/DigitalClock.c
+    a172fa9d55a825ef2dfa891b91279ec5  user/servers/TrainDriver.c
+    6fd529e84ccf8f4264e0c9d22870e626  user/servers/TerminalDriver.h
+    304b576694eb39739e46f5293f6d6cec  user/servers/TrainSwitchServer.c
+    5ce850a0ca90fbba0277955dfc8d74db  user/servers/NameServer.c
+    fda7de6c69066a709f71851d409038c8  user/servers/ClockNotifier.h
+    b1228054cb0be753d947d59480718fa5  user/servers/TrainDriver.h
+    7c8d6a256a3bd5ee748c79806a3e2225  user/servers/NameServer.h
+    24e0865f484341092ad222ebfb47f8ea  user/servers/TerminalDriver.c
+    557bd2106756c181127d7a928b496979  user/servers/TrainSensorServer.c
+    368242d16e123c6910bce9bbd9be9cd0  user/servers/ClockServer.h
+    17927bdd3663deee85ddb9224d147384  user/servers/ClockServer.c
+    1c77c18014d4834bf7d8cc1e110f3639  user/servers/ClockNotifier.c
+    d57a0c5e6aa62c3c2c2f0c5ba2360555  user/Locomotive.c
+    a01d7f95458f44436a20e7ffc626b890  user/IdleTask.c
+    cbb0a6db7a3fa6c7758e2907aa62e831  user/services/services.c
+    4e54be7abd939a75df1d64f2d840ef5e  user/services/terminal.c
+    408320cee05a6ef9709468845779a400  user/services/clockService.h
+    4e976b1c77a43d5dea7640299506e9e5  user/services/trainCommand.c
+    8d1f82b30788352ba85026c0ee136cd6  user/services/nameService.h
+    5238b767be62191fd89db795ebc9da79  user/services/trainCommand.h
+    9abbea9cf81b40755d6176a08bb9cc73  user/services/services.h
+    bdf4cdc781bc41b9684787c8fa4b7ad3  user/services/terminal.h
+    b1d37cb42c79cdaa0b5728477f5dad9b  user/services/nameService.c
+    66133f586027d068e5254bfefefe62ed  user/services/clockService.c
+    f6225db7856a4204228c34dec5a7ea06  user/DigitalClock.h
+    f720cb5f7c54893a176e1ffb53a53845  user/SensorDisplay.h
+    60df8cdb2606a35d5d4927de9b181c36  user/PerformanceTask.h
+    e7ff85ba8f14ce99e0229fff7dd87d52  user/IdleTask.h
+    c5351116a601c3683097c17d843d54ee  user/InitialTask.c
+    bccd0e2dae1e9fa0e3547810d26222b7  user/messageTypes.h
+\end{verbatim}
 
 \end{document}

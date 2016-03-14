@@ -21,4 +21,4 @@ clean:
 	rm -rf code.pdf
 	rm -rf manual.pdf
 
-.PHONY: $(CODEDIR) clean
+.PHONY: $(CODEDIR) manual.pdf clean
