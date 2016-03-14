@@ -320,7 +320,7 @@ This feature is not important for this milestone but will be necessary in future
 
 \subsubsection{Train Commander}
 \label{sec:traincommander}
-
+The train commander fields commands from the command line input to train tasks. Every train dispatches a \textit{Locomotive Radio} courier to register a particular train ID with the \textit{Train Commander}. This model permits a train to block input to itself but not to other trains.
 
 \subsubsection{Locomotive Task}
 Every train is controlled by a single task, known as the \textit{Locomotive}, whose purpose is to create and facilitate communication between useful jobs. For this milestone, this consists of: commanding the train (through command input), positioning information, and prediction.
@@ -331,7 +331,6 @@ The \textit{Locomotive} creates the following subsystems:
     \item{ \textit{Locomotive GPS}: A server that maintains and updates position information on the track graph using sensor reads. Two couriers facilitate communication between the \textit{Locomotive} and \textit{Locomotive GPS}. }
     \item{ \textit{Physics Tick}: A notifier that provides a reasonably reliable physics integration timestep. Used by the \textit{Locomotive} to calculate stopping distance through numerical integration of the (current) velocity. }
 \end{itemize}
-For more information on the \textit{Locomotive Radio}, refer to Section~\ref{sec:traincommander}.
 
 The reasoning behind the decision to implement the \textit{Locomotive GPS} as a server with courier-communication is non-trivial. The driving motivation lay in the guarantee that the \textit{Locomotive} never wastes time. Missing a physics tick (or delaying a physics tick) can result in inaccurate calculations. Delaying an urgent user command due to a sensor read can lead to catastrophic results. It only follows that the \textit{Locomotive} task should almost never block. This is, of course, impossible without a very extensive design since it has to send commands to the driver (which blocks temporarily). Nevertheless, we attempt to minimize time spent blocked using couriers to transfer commands and position/prediction updates.
 
