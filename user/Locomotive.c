@@ -140,12 +140,6 @@ void Locomotive(void)
  
             timerSample(TIMER_4, &errorTimer);
 
-            // No prediction during a reverse!
-            if((reverseCourierState == 1) || (reverseCourierState == 3))
-            {
-                continue;
-            }
-
             if(previousSensor != 0)
             {
                 timerSample(TIMER_4, &tickTimer);
@@ -199,6 +193,7 @@ void Locomotive(void)
               
                 
                 TrackNode* ip = previousSensor;
+                U32 dist = 0;
                 TrackEdge* edgeFrom = 0;
                 do
                 {
@@ -212,59 +207,64 @@ void Locomotive(void)
                         SwitchState sw = (SwitchState)env.message.MessageU32.body;
                         U32 swv = ((sw == eCurved) ? DIR_CURVED : DIR_STRAIGHT);
                         edgeFrom = &ip->edge[swv];
+                        dist += ip->edge[swv].dist;
                         ip = ip->edge[swv].dest;
                     }
                     else
                     {
                         edgeFrom = &ip->edge[DIR_AHEAD];
+                        dist += ip->edge[DIR_AHEAD].dist;
                         ip = ip->edge[DIR_AHEAD].dest;
                     }
-                } while( (ip->type != eNodeSensor) || (ip->num != currentSensor) );
+                } while( dist < 5000 && ( (ip->type != eNodeSensor) || (ip->num != currentSensor) ) );
                 assert(edgeFrom != 0);
-
-                S32 trueDelta = delta + previousUpdate.time[update.sensorSkip];
-
-                if (((delta < 120 && delta > 10) || (delta > -120 && delta < -10)) && sensorCount >= 10)
-                {
-                    if (edgeFrom->dt == 0)
-                    {
-                        edgeFrom->dt = trueDelta/2;
-                    }
-                    else
-                    {
-                        edgeFrom->dt = (edgeFrom->dt * 1900 + trueDelta * 100)/2000;
-                    }
-                }
-
-                if (deltaX < 50 && deltaX > -50)
-                {
-                    if (edgeFrom->dx == 0)
-                    {
-                        edgeFrom->dx = deltaX;
-                    }
-                    else
-                    {
-                        edgeFrom->dx = (edgeFrom->dx * 900 + deltaX * 100)/1000;
-                    }
-                }
-
-                nextSensorGroup = update.prediction[0] / 16 + 'A';
-                nextSensorId = update.prediction[0] % 16 + 1;
-
-                if (delta < 200 && delta > -200 && sensorCount < 10)
-                {
-                    trainPhysicsReport(&physics, distance, errorTimer.delta);
-                }
-                physics.distance = 0;
                 
-                U8 i = 0;
-                for(i = 0; i < 3; ++i)
+                if( dist < 5000 )
                 {
-                    predictTime[i] = trainPhysicsGetTime(&physics, update.predictionDistance[i]) / 1000 - update.time[i];
-                }
+                    S32 trueDelta = delta + previousUpdate.time[update.sensorSkip];
 
-                printf(strPredictTrain, train, nextSensorGroup, nextSensorId, predictTime[0]);
-                printf(strFoundTrain, train, sensorGroup, sensorId, errorTimer.delta/1000, delta, previousUpdate.time[update.sensorSkip], distance, traveledDistance, deltaX);
+                    if (((delta < 120 && delta > 10) || (delta > -120 && delta < -10)) && sensorCount >= 10)
+                    {
+                        if (edgeFrom->dt == 0)
+                        {
+                            edgeFrom->dt = trueDelta/2;
+                        }
+                        else
+                        {
+                            edgeFrom->dt = (edgeFrom->dt * 1900 + trueDelta * 100)/2000;
+                        }
+                    }
+
+                    if (deltaX < 50 && deltaX > -50)
+                    {
+                        if (edgeFrom->dx == 0)
+                        {
+                            edgeFrom->dx = deltaX;
+                        }
+                        else
+                        {
+                            edgeFrom->dx = (edgeFrom->dx * 900 + deltaX * 100)/1000;
+                        }
+                    }
+
+                    nextSensorGroup = update.prediction[0] / 16 + 'A';
+                    nextSensorId = update.prediction[0] % 16 + 1;
+
+                    if (delta < 200 && delta > -200 && sensorCount < 10)
+                    {
+                        trainPhysicsReport(&physics, distance, errorTimer.delta);
+                    }
+                    physics.distance = 0;
+                    
+                    U8 i = 0;
+                    for(i = 0; i < 3; ++i)
+                    {
+                        predictTime[i] = trainPhysicsGetTime(&physics, update.predictionDistance[i]) / 1000 - update.time[i];
+                    }
+
+                    printf(strPredictTrain, train, nextSensorGroup, nextSensorId, predictTime[0]);
+                    printf(strFoundTrain, train, sensorGroup, sensorId, errorTimer.delta/1000, delta, previousUpdate.time[update.sensorSkip], distance, traveledDistance, deltaX);
+                }
             }
             previousSensor = graph + currentSensor;
             sensorCount++;
@@ -284,20 +284,13 @@ void Locomotive(void)
                 reverseCourier = from;
                 if( reverseCourierState == 0 )
                 {
-                    reverseCourierState = 2; // Waiting for a reverse command
+                    reverseCourierState = 1; // Waiting for a reverse command
                 }
-                else if(reverseCourierState == 1 )
+                else if(reverseCourierState == 2)
                 {
-                    // Reverse was happening and courier missed it.
                     env.type = MESSAGE_TRAIN_REVERSE;
                     sysReply(reverseCourier.value, &env);
-                    reverseCourierState = 3;
-                    // Now wait for courier to come back 'round.
-                }
-                else if(reverseCourierState == 3 )
-                {
-                    // Courier has come back 'round.
-                    reverseCourierState = 2;
+                    reverseCourierState = 0;
                 }
                 break;
             case MESSAGE_TRAIN_SET_SPEED:
@@ -312,20 +305,20 @@ void Locomotive(void)
                 sysReply(from.value, &env);
                 break;
             case MESSAGE_TRAIN_REVERSE:
-                assert(reverseCourierState != 3); // Can't do command over again.
-                if(reverseCourierState == 2)
+                if(reverseCourierState == 1)
                 {
                     // Courier is waiting for us to send command.
                     sysReply(reverseCourier.value, &env);
-                    reverseCourierState = 3; 
+                    reverseCourierState = 0; 
                     // Now wait for courier to come back around.
                 }
                 else if(reverseCourierState == 0)
                 {
                     // Courier has missed message.
-                    reverseCourierState = 1;
+                    reverseCourierState = 2;
                     // Make sure when courier comes around we send it the reverse command.
                 }
+                previousSensor = previousSensor->reverse;
  
                 trainSetSpeed(sTrainDriver, train, 0);
                 clockDelayBy(nsWhoIs(Clock), 20 * (throttle) + 100);
