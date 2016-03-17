@@ -189,7 +189,7 @@ S32 trainPhysicsStopDist(TrainPhysics* physics)
 {
     S32 v = physics->velocity/100;
 //    S32 dist = (v * v)/(2*23500);
-    S32 dist = (v * v)/(2*36600);
+    S32 dist = (v * v)/(2*33200);
     dist += (v*600)/10000;
 
     return dist;

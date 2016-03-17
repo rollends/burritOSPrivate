@@ -1,4 +1,4 @@
-tr 62 10
+tr 64 10
 sw 17 s
 sw 18 s
 
@@ -6,8 +6,8 @@ sw 8 c
 
 sw 8 s
 
-sa 62 c6
-tr 62 10
+sa 64 c6
+tr 64 10
 
-sa 62 b12
+sa 64 b12
 sw 7 c

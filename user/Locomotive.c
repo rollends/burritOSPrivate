@@ -43,7 +43,7 @@ void Locomotive(void)
     const char * strPredictOldTrain = "\033[s\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dms\033[u\033[m\033[u";
     const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
     const char * strPredictTrain = "\033[s\033[48;1H\033[2KNext Prediction:\tTrain %2d | Location %c%2d | Time %dms\033[u";
-    const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dms | \033[1mDeltaT %dms\033[mErrorT: %dms\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                      \033[u";
+    const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dms | \033[1mDeltaT %dms\033[m | Correction: %dms\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm | DeltaV: %d                      \033[u";
 
     TaskID parent = VAL_TO_ID( sysPid() );
     TaskID from;
@@ -265,6 +265,19 @@ void Locomotive(void)
                     printf(strPredictTrain, train, nextSensorGroup, nextSensorId, predictTime[0]);
                     printf(strFoundTrain, train, sensorGroup, sensorId, errorTimer.delta/1000, delta, previousUpdate.time[update.sensorSkip], distance, traveledDistance, deltaX);
                 }
+<<<<<<< Updated upstream
+=======
+                physics.distance = 0;
+                
+                U8 i = 0;
+                for(i = 0; i < 3; ++i)
+                {
+                    predictTime[i] = trainPhysicsGetTime(&physics, update.predictionDistance[i]) / 1000 - update.time[i];
+                }
+
+                printf(strPredictTrain, train, nextSensorGroup, nextSensorId, predictTime[0]);
+                printf(strFoundTrain, train, sensorGroup, sensorId, errorTimer.delta/1000, delta, previousUpdate.time[update.sensorSkip], distance, traveledDistance, deltaX, physics.velocity);
+>>>>>>> Stashed changes
             }
             previousSensor = graph + currentSensor;
             sensorCount++;
