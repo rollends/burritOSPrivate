@@ -1,9 +1,12 @@
-/* THIS FILE IS GENERATED CODE -- DO NOT EDIT */
+#ifndef TRACK_DATA_H
+#define TRACK_DATA_H
 
-#include "user/trains/trackNode.h"
+#include "trains/trackNode.h"
 
 // The track initialization functions expect an array of this size.
 #define TRACK_MAX 144
 
 void init_tracka(TrackNode *track);
 void init_trackb(TrackNode *track);
+
+#endif

@@ -1,7 +1,7 @@
 #include "common/common.h"
 #include "user/messageTypes.h"
 #include "user/services/nameService.h"
-#include "user/trains/TrainCommander.h"
+#include "user/trainservers/TrainCommander.h"
 
 S32 pushTrainCommand(String string)
 {

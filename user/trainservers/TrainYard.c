@@ -1,7 +1,7 @@
 #include "kernel/kernel.h"
 #include "user/messageTypes.h"
 #include "user/services/services.h"
-#include "user/trains/TrainYard.h"
+#include "user/trainservers/TrainYard.h"
 
 void TrainYardServer(void)
 {

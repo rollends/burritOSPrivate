@@ -1,7 +1,8 @@
-#ifndef SWITCH_OFFICE_H
-#define SWITCH_OFFICE_H
+#ifndef TRAIN_SERVICES_H
+#define TRAIN_SERVICES_H
 
 #include "common/common.h"
+#include "kernel/kernel.h"
 #include "user/services/trainCommand.h"
 
 typedef struct
@@ -13,6 +14,9 @@ typedef struct
     SwitchState     direction;
 } SwitchRequest;
 
-void SwitchExecutive(void);
+S32 pushTrainCommand(String string);
+S32 pollTrainCommand(U8 trainId, MessageEnvelope* env);
+void trainRegister(U8 trainId);
+S32 trainWhoIs(U8 trainId, TaskID* tid);
 
 #endif

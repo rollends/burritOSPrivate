@@ -1,16 +1,11 @@
 #include "common/common.h"
 #include "kernel/kernel.h"
 #include "hardware/hardware.h"
+#include "trains/trains.h"
 
-#include "user/services/services.h"
 #include "user/messageTypes.h"
-
-#include "user/trains/trains.h"
-#include "user/trains/TrainYard.h"
-#include "user/trains/TrainCommander.h"
-
-#include "trains/trainInit.h"
-#include "trains/trainPhysics.h"
+#include "user/services/services.h"
+#include "user/trainservers/trainservices.h"
 
 typedef struct
 {

@@ -1,8 +1,7 @@
 #include "common/string.h"
 #include "user/messageTypes.h"
 #include "user/services/services.h"
-#include "user/trains/SwitchOffice.h"
-#include "user/trains/TrainCommander.h"
+#include "user/trainservers/trainservices.h"
 
 S32 dispatchSystemCommand(String string)
 {
