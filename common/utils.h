@@ -17,4 +17,9 @@ static inline U32 __ctz(U32 v)
 
 #define STRINGIFY(s) #s
 
+static inline U32 min(U32 a, U32 b)
+{
+    return (a <= b ? a : b);
+}
+
 #endif

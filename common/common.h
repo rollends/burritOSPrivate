@@ -3,6 +3,7 @@
 
 #include "common/error.h"
 #include "common/memcpy.h"
+#include "common/memset.h"
 #include "common/priorityQueue.h"
 #include "common/queue.h"
 #include "common/random.h"
