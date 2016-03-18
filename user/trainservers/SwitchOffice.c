@@ -29,7 +29,6 @@ static void SwitchWorker(void)
     sysSend(sysPid(), &env, &env);
     
     clockDelayUntil(clock, request.endTime);
-
 }
 
 static U32 indexForBranch(TrackNode* graph, U32 branchId)

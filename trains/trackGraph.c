@@ -57,10 +57,19 @@ int isReachable(Graph* graph, U32 start, U32 end)
 }
 */
 
-int pathFind(TrackNode* graph, U32 start, U32 end, GraphPath* path)
+static void buildPath(U8 start, U8 end, U8* mapCameFrom, GraphPath* path)
 {
-    HeapNodeU16 openList[TRACK_MAX / 3];
-    U16 mapCameFrom[TRACK_MAX]; 
+    if(start != end)
+    {
+        buildPath(start, mapCameFrom[end], mapCameFrom, path);
+    }
+    queueU8Push(&(path->qPath), end);
+}
+
+int pathFind(TrackNode* graph, U8 start, U8 end, GraphPath* path)
+{
+    HeapNodeU16 openList[0x7F];
+    U8 mapCameFrom[TRACK_MAX];
     U16 costToNode[TRACK_MAX];
 
     memset(costToNode, 0xFF, sizeof(U16)*TRACK_MAX);
@@ -74,17 +83,18 @@ int pathFind(TrackNode* graph, U32 start, U32 end, GraphPath* path)
 
     while(heapU16Pop(&qOpen, &current) >= OK)
     {
-        U16 cInd = current.value;
+        U8 cInd = current.value;
         U16 cCost = current.cost;
         
         TrackEdge* neighbours = graph[cInd].edge;
         U8 degree = (graph[cInd].type == eNodeBranch ? 2 : 1);
+        U8 ni = 0;
         while(degree--)
         {
             HeapNodeU16 newNode = 
                 HEAP_NODE(
-                    neighbours[degree].dest - graph, 
-                    cCost + neighbours[degree].dist
+                    neighbours[ni].dest - graph, 
+                    cCost + neighbours[ni].dist
                 );
 
             if(costToNode[newNode.value] > newNode.cost)
@@ -93,22 +103,13 @@ int pathFind(TrackNode* graph, U32 start, U32 end, GraphPath* path)
                 costToNode[newNode.value] = newNode.cost;
                 heapU16Push(&qOpen, newNode);
             }
+            ++ni;
         }
     }
 
-    queueU8Init(&path->qPath, path->pathBuffer, GRAPH_PATH_LENGTH);
-    
-    U16 ind = end;
-    U16 count = 0;
-    do
-    {
-        count++;
-        queueU8Push(&path->qPath, ind);
+    if( mapCameFrom[end] == 0xFF ) return -1;
 
-      if( ind == start ) break;
-
-        ind = mapCameFrom[ind];
-    } while( 1 );
-
+    queueU8Init(&(path->qPath), path->pathBuffer, GRAPH_PATH_LENGTH);
+    buildPath(start, end, mapCameFrom, path);
     return 0;
 }

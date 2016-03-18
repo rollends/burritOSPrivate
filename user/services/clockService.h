@@ -3,8 +3,8 @@
 
 #include "kernel/kernel.h"
 
-void clockLongDelayBy( TaskID clockId, U32 mult150ms );
-void clockDelayBy( TaskID clock, U32 mult10ms );
+void clockLongDelayBy( TaskID clockId, S32 mult150ms );
+void clockDelayBy( TaskID clock, S32 mult10ms );
 U32 clockTime( TaskID clock );
 void clockDelayUntil( TaskID clock, U32 );
 

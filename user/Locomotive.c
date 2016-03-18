@@ -77,6 +77,70 @@ static TrackNode* getLocomotiveTrackGraph(U8 trainId)
 }
 
 
+static void clearPath(TrackNode* graph, GraphPath* destinationPath, TrainPhysics *physics)
+{
+    // Switch dem switches.
+    U8 current, next;
+    queueU8Pop(&destinationPath->qPath, &next);
+   
+    TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
+    U32 dist = 0;
+    U32 sensCount = 0;
+    U32 currentTime = clockTime(nsWhoIs(Clock));
+    while(sensCount < 3 && destinationPath->qPath.count)
+    {
+        current = next;
+        queueU8Pop(&destinationPath->qPath, &next);
+        if(graph[current].type == eNodeBranch)
+        {
+            MessageEnvelope env;
+            env.message.MessageU32.body = (current - 80) / 2;
+            env.type = MESSAGE_SWITCH_READ;
+            sysSend(sSwitchOffice.value, &env, &env);
+
+            SwitchState sw = (SwitchState)env.message.MessageU32.body;
+
+            SwitchRequest request;
+            request.startTime = currentTime 
+                + trainPhysicsGetTime(physics, dist) / 10000
+                - 150;
+            request.branchId = graph[current].num;
+            request.indBranchNode = current;//79 + (2 * switchId - 1); 
+            
+            env.type = MESSAGE_SWITCH_ALLOCATE;
+            env.message.MessageArbitrary.body = (U32*)&request;
+
+            // Which branch is it?
+            if( (graph[current].edge[DIR_AHEAD].dest - graph) == next)
+            {
+                request.direction = eStraight;
+                dist += graph[current].edge[DIR_AHEAD].dist;
+            }
+            else
+            {
+                request.direction = eCurved;
+                dist += graph[current].edge[DIR_CURVED].dist;
+            }
+            request.endTime = request.startTime
+                + trainPhysicsGetTime(physics, dist) / 10000
+                - 150;
+            
+            if(request.direction != sw)
+                sysSend(sSwitchOffice.value, &env, &env);
+        }
+        else if(graph[current].type == eNodeSensor)
+        {
+            sensCount++;
+            dist += graph[current].edge[DIR_AHEAD].dist;
+        }
+        else
+        {
+            dist += graph[current].edge[DIR_AHEAD].dist;
+        }
+    }
+}
+
+
 void Locomotive(void)
 {
     const char * strPredictOldTrain = "\033[s\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dkt\033[u\033[m\033[u";
@@ -115,8 +179,9 @@ void Locomotive(void)
  
     // Startup Radio comm (for commands)
     assert(sysPriority() < 31);
-    sysSend(sysCreate(sysPriority()+1, &LocomotiveRadio), &env, &env);
-        
+    TaskID tRadio = VAL_TO_ID(sysCreate(sysPriority()+1, &LocomotiveRadio));
+    sysSend(tRadio.value, &env, &env);
+
     // Start Train 'GPS' and physics tick
     TaskID tPosGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &PositionUpdateCourier));
     TaskID tPhysicsTick = VAL_TO_ID(sysCreate(sysPriority() - 1, &PhysicsTick));
@@ -143,6 +208,10 @@ void Locomotive(void)
     U8      setSpeed = 0xFF;
     GPSUpdate previousUpdate;
     GPSUpdate update;
+
+    U8      destinationSensor = 46;
+    U32      random = 46;
+    GraphPath destinationPath;
     for(;;)
     {
         sysReceive(&from.value, &env);
@@ -172,9 +241,21 @@ void Locomotive(void)
                 else if (stopping == 1)
                 {
                     stopDistance -= delta;
+                    if(stopDistance <= 5)
+                    {
+                        stopping = 0;
+                        clockDelayBy(nsWhoIs(Clock), 100); 
+                        trainSetSpeed(sTrainDriver, train, throttle);
+                        stopSensor = destinationSensor;
+
+                        do
+                        {
+                            nextRandU32(&random);
+                            destinationSensor = random % 80;
+                        } while( pathFind(graph, stopSensor, destinationSensor, &destinationPath) < 0 );
+                    }
                 }
 
-            //    printf("\033[s\033[43;1HDistance til Stop Sensor %d.\r\n\033[u", stopDistance);
             }
         }
         else if (from.value == tRandomSpeed.value )
@@ -219,6 +300,9 @@ void Locomotive(void)
                 
                 if( stopSensor < 0xFFFF )
                 {
+                    pathFind(graph, currentSensor, stopSensor, &destinationPath);
+                    clearPath(graph, &destinationPath, &physics);
+                    
                     TrackNode* ip = graph + previousUpdate.prediction[update.sensorSkip];
                     U32 nodeCount = 0;
                     stopDistance = 0;
@@ -283,9 +367,9 @@ void Locomotive(void)
                     
                     if (setSpeed < 14)
                     {
-                        trainPhysicsSetSpeed(&physics, setSpeed);
-                        trainSetSpeed(sTrainDriver, train, setSpeed);
-                        setSpeed = 0xFF;
+                        //trainPhysicsSetSpeed(&physics, setSpeed);
+                        //trainSetSpeed(sTrainDriver, train, setSpeed);
+                        //setSpeed = 0xFF;
                     }
 
                     if (accelReport != 1)
@@ -350,8 +434,18 @@ void Locomotive(void)
 
             case MESSAGE_TRAIN_STOP:
             {
-                stopSensor = env.message.MessageU32.body;
+                destinationSensor = env.message.MessageU32.body;
                 sysReply(from.value, &env);
+                
+                stopSensor = destinationSensor;
+                
+                do
+                {
+                    nextRandU32(&random);
+                    destinationSensor = random % 80;
+                } while( pathFind(graph, stopSensor, destinationSensor, &destinationPath) < 0 );
+                printf("\033[s\033[50;1HNext Destination is %c%2d\033[u", 'A' + destinationSensor / 16, destinationSensor % 16 + 1);
+
                 break;
             }
 
@@ -454,8 +548,10 @@ static void LocomotiveRadio(void)
     sysReply(loco.value, &env);
 
     U8 train = env.message.MessageU8.body;
+    printf("\033[s\033[43;1HTrain %d\033[u", train);
     for(;;)
     {
+        env.message.MessageU8.body = train;
         pollTrainCommand(train, &env);
         sysSend(loco.value, &env, &env);
     }

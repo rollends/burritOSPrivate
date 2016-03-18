@@ -5,7 +5,7 @@
 #include "trains/trackData.h"
 
 #define GRAPH_DEGREE            2
-#define GRAPH_PATH_LENGTH       TRACK_MAX 
+#define GRAPH_PATH_LENGTH       128
 
 /*
 typedef struct GraphNode
@@ -31,7 +31,7 @@ typedef struct
     QueueU8             qPath;
 } GraphPath;
 
-int pathFind(TrackNode* graph, U32 start, U32 end, GraphPath* path);
+int pathFind(TrackNode* graph, U8 start, U8 end, GraphPath* path);
 //int isReachable(Graph* graph, U32 start, U32 end);
 //GraphNode* findNode(Graph* graph, U32 id);
 
