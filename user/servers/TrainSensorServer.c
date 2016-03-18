@@ -3,6 +3,14 @@
 #include "user/servers/TrainDriver.h"
 #include "user/services/services.h"
 
+static void TrainSensorStartupDelay(void)
+{
+    MessageEnvelope env;
+    clockLongDelayBy(nsWhoIs(Clock), 10);
+    env.type = MESSAGE_NOTIFY;
+    sysSend(sysPid(), &env, &env);
+}
+
 static void TrainSensorCourier(void)
 {
     MessageEnvelope env;
@@ -52,16 +60,29 @@ void TrainSensorServer(void)
         sensorBuffer[i] = 0;
     }
 
+    U8 startupStage = 1;
+    sysCreate(sysPriority() - 1, &TrainSensorStartupDelay);
+   
     for(;;)
     {
         sysReceive(&rcvId.value, &rcvEnv);
 
         switch(rcvEnv.type)
         {
+        case MESSAGE_NOTIFY:
+            sysReply(rcvId.value, &rcvEnv);
+            startupStage = 0;
+            break;
+
         case MESSAGE_COURIER:
         {
             sysReply(rcvId.value, &rcvEnv);
-            
+         
+            if( startupStage ) 
+            {
+                continue;
+            }
+
             U32 changed = 0;
             for(i = 0; i < 5; i++)
             {
