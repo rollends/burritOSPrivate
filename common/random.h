@@ -12,6 +12,6 @@
  *
  * @return  a pseudo random byte
  */
-U8 nextRandU8(U8* value);
+U32 nextRandU32(U32* value);
 
 #endif

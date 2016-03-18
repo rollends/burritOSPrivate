@@ -26,6 +26,26 @@ static void LocomotiveRadio(void);
 static void LocomotiveGPS(void);
 static void PositionUpdateCourier(void);
 
+static void RandomSpeed(void)
+{
+    MessageEnvelope env;
+    
+    U32 random = 19;
+    for(;;)
+    {
+        nextRandU32(&random);
+        U8 delay = random % 40 + 30;
+
+        nextRandU32(&random);
+        U8 speed = random % 9 + 5;
+
+        clockLongDelayBy(nsWhoIs(Clock), delay);
+
+        env.message.MessageU8.body = speed;
+        sysSend(sysPid(), &env, &env); 
+    }
+}
+
 static void PhysicsTick(void)
 {
     MessageEnvelope env;
@@ -41,11 +61,11 @@ static TrackNode graph[TRACK_MAX];
 
 void Locomotive(void)
 {
-    const char * strPredictOldTrain = "\033[s\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dms\033[u\033[m\033[u";
+    const char * strPredictOldTrain = "\033[s\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dmt\033[u\033[m\033[u";
     const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
-    const char * strPredictTrain = "\033[s\033[48;1H\033[2KNext Prediction:\tTrain %2d | Location %c%2d | Time %dms\033[u";
-    const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dms | \033[1mDeltaT %dms\033[m | Correction: %dms\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
-    const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Velocity %dm/s | Acceleration %dm/s^2\033[u";
+    const char * strPredictTrain = "\033[s\033[48;1H\033[2KNext Prediction:\tTrain %2d | Location %c%2d | Time %dmt\033[u";
+    const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dmt | \033[1mDeltaT %dmt\033[m | Correction: %dms\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
+    const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Target Speed %d | Velocity %dmm/mt | Acceleration %dmm/mt^2\033[u";
 
     TaskID parent = VAL_TO_ID( sysPid() );
     TaskID from;
@@ -80,7 +100,7 @@ void Locomotive(void)
     // Start Train 'GPS' and physics tick
     TaskID tPosGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &PositionUpdateCourier));
     TaskID tPhysicsTick = VAL_TO_ID(sysCreate(sysPriority() - 1, &PhysicsTick));
-
+    TaskID tRandomSpeed = VAL_TO_ID(sysCreate(sysPriority() - 1, &RandomSpeed));
     TimerState tickTimer;
     TimerState errorTimer;
     timerStart(TIMER_4, &tickTimer);
@@ -109,7 +129,7 @@ void Locomotive(void)
             sysReply(from.value, &env);
             timerSample(TIMER_4, &tickTimer);
             S32 delta = trainPhysicsStep(&physics, tickTimer.delta);
-            printf(strPhysicsTrain, train, physics.velocity, physics.acceleration);
+            printf(strPhysicsTrain, train, physics.targetSpeed, physics.velocity, physics.acceleration);
             
             if (stopDistance > 0)
             {
@@ -133,6 +153,11 @@ void Locomotive(void)
 
                 printf("\033[s\033[43;1HDistance til Stop Sensor %d.\r\n\033[u", stopDistance);
             }
+        }
+        else if (from.value == tRandomSpeed.value )
+        {
+            sysReply(from.value, &env);
+            setSpeed = env.message.MessageU8.body;
         }
         else if( from.value == tPosGPS.value )
         {
