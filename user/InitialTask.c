@@ -30,11 +30,7 @@ void InitialTask()
 
     {
         MessageEnvelope env;
-<<<<<<< Updated upstream
-        env.message.MessageU8.body = 68;
-=======
         env.message.MessageU8.body = 64;
->>>>>>> Stashed changes
         sysSend(sysCreate(6, &Locomotive), &env, &env);
     }
 

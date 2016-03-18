@@ -32,7 +32,7 @@ static void PhysicsTick(void)
     
     for(;;)
     {
-        clockDelayBy(nsWhoIs(Clock), 3);
+        clockDelayBy(nsWhoIs(Clock), 10);
         sysSend(sysPid(), &env, &env); 
     }
 }
@@ -44,7 +44,8 @@ void Locomotive(void)
     const char * strPredictOldTrain = "\033[s\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dms\033[u\033[m\033[u";
     const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
     const char * strPredictTrain = "\033[s\033[48;1H\033[2KNext Prediction:\tTrain %2d | Location %c%2d | Time %dms\033[u";
-    const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dms | \033[1mDeltaT %dms\033[m | Correction: %dms\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm | DeltaV: %d                      \033[u";
+    const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dms | \033[1mDeltaT %dms\033[m | Correction: %dms\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
+    const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Velocity %dm/s | Acceleration %dm/s^2\033[u";
 
     TaskID parent = VAL_TO_ID( sysPid() );
     TaskID from;
@@ -96,7 +97,7 @@ void Locomotive(void)
     U32     stopSensor = 0xFFFF;
     S32     stopDistance = 0;
     U32     stopping = 0;
-    U32     sensorCount = 0;
+    U8      setSpeed = 0xFF;
     GPSUpdate previousUpdate;
     GPSUpdate update;
     for(;;)
@@ -108,6 +109,8 @@ void Locomotive(void)
             sysReply(from.value, &env);
             timerSample(TIMER_4, &tickTimer);
             S32 delta = trainPhysicsStep(&physics, tickTimer.delta);
+            printf(strPhysicsTrain, train, physics.velocity, physics.acceleration);
+            
             if (stopDistance > 0)
             {
                 U32 stopDist = trainPhysicsStopDist(&physics);
@@ -150,8 +153,8 @@ void Locomotive(void)
                 nextSensorGroup = previousUpdate.prediction[update.sensorSkip] / 16 + 'A';
                 nextSensorId = previousUpdate.prediction[update.sensorSkip] % 16 + 1;
                 
-                S32 delta = predictTime[update.sensorSkip] - errorTimer.delta/1000;
-                if (delta < -50 || delta > 50)
+                S32 deltaT = predictTime[update.sensorSkip] - errorTimer.delta/1000;
+                if (deltaT < -50 || deltaT > 50)
                 {
                     printf(strPredictOldTrain, train, nextSensorGroup, nextSensorId, predictTime[update.sensorSkip]);
                 }
@@ -193,7 +196,6 @@ void Locomotive(void)
                 S32 traveledDistance = trainPhysicsGetDistance(&physics);
                 S32 deltaX = distance - traveledDistance;
               
-                
                 TrackNode* ip = previousSensor;
                 U32 dist = 0;
                 TrackEdge* edgeFrom = 0;
@@ -223,66 +225,65 @@ void Locomotive(void)
                 
                 if( dist < 5000 )
                 {
-                    S32 trueDelta = delta + previousUpdate.time[update.sensorSkip];
-
-                    if (((delta < 120 && delta > 10) || (delta > -120 && delta < -10)) && sensorCount >= 10)
+                    S32 accelReport = trainPhysicsReport(&physics, distance, errorTimer.delta, deltaT);
+                    
+                    if (setSpeed < 14)
                     {
-                        if (edgeFrom->dt == 0)
-                        {
-                            edgeFrom->dt = trueDelta/2;
-                        }
-                        else
-                        {
-                            edgeFrom->dt = (edgeFrom->dt * 1900 + trueDelta * 100)/2000;
-                        }
+                        trainPhysicsSetSpeed(&physics, setSpeed);
+                        trainSetSpeed(sTrainDriver, train, setSpeed);
+                        setSpeed = 0xFF;
                     }
 
-                    if (deltaX < 50 && deltaX > -50)
+                    if (accelReport != 1)
                     {
-                        if (edgeFrom->dx == 0)
+                        S32 trueDelta = deltaT + previousUpdate.time[update.sensorSkip];
+
+                        if (((deltaT < 120 && deltaT > 10) || (deltaT > -120 && deltaT < -10)))
                         {
-                            edgeFrom->dx = deltaX;
+                            if (edgeFrom->dt == 0)
+                            {
+                                edgeFrom->dt = trueDelta/2;
+                            }
+                            else
+                            {
+                                edgeFrom->dt = (edgeFrom->dt * 1900 + trueDelta * 100)/2000;
+                            }
                         }
-                        else
+
+                        if (deltaX < 50 && deltaX > -50)
                         {
-                            edgeFrom->dx = (edgeFrom->dx * 900 + deltaX * 100)/1000;
+                            if (edgeFrom->dx == 0)
+                            {
+                                edgeFrom->dx = deltaX;
+                            }
+                            else
+                            {
+                                edgeFrom->dx = (edgeFrom->dx * 900 + deltaX * 100)/1000;
+                            }
                         }
                     }
 
                     nextSensorGroup = update.prediction[0] / 16 + 'A';
                     nextSensorId = update.prediction[0] % 16 + 1;
 
-                    if (delta < 200 && delta > -200 && sensorCount < 10)
-                    {
-                        trainPhysicsReport(&physics, distance, errorTimer.delta);
-                    }
-                    physics.distance = 0;
-                    
                     U8 i = 0;
                     for(i = 0; i < 3; ++i)
                     {
                         predictTime[i] = trainPhysicsGetTime(&physics, update.predictionDistance[i]) / 1000 - update.time[i];
                     }
 
-                    printf(strPredictTrain, train, nextSensorGroup, nextSensorId, predictTime[0]);
-                    printf(strFoundTrain, train, sensorGroup, sensorId, errorTimer.delta/1000, delta, previousUpdate.time[update.sensorSkip], distance, traveledDistance, deltaX);
-                }
-<<<<<<< Updated upstream
-=======
-                physics.distance = 0;
-                
-                U8 i = 0;
-                for(i = 0; i < 3; ++i)
-                {
-                    predictTime[i] = trainPhysicsGetTime(&physics, update.predictionDistance[i]) / 1000 - update.time[i];
-                }
+                    printf(strPredictTrain, train, nextSensorGroup,
+                           nextSensorId, predictTime[0]);
 
-                printf(strPredictTrain, train, nextSensorGroup, nextSensorId, predictTime[0]);
-                printf(strFoundTrain, train, sensorGroup, sensorId, errorTimer.delta/1000, delta, previousUpdate.time[update.sensorSkip], distance, traveledDistance, deltaX, physics.velocity);
->>>>>>> Stashed changes
+                    printf(strFoundTrain, train, sensorGroup, sensorId,
+                           errorTimer.delta/1000, deltaT,
+                           previousUpdate.time[update.sensorSkip],
+                           distance, traveledDistance, deltaX,
+                           physics.velocity);
+                }
             }
+
             previousSensor = graph + currentSensor;
-            sensorCount++;
         }
         else
         {
@@ -310,8 +311,17 @@ void Locomotive(void)
                 break;
             case MESSAGE_TRAIN_SET_SPEED:
                 throttle = env.message.MessageU8.body;
-                trainPhysicsSetSpeed(&physics, throttle);
-                trainSetSpeed(sTrainDriver, train, throttle);
+                if (physics.velocity == 0)
+                {
+                    trainPhysicsSetSpeed(&physics, throttle);
+                    trainSetSpeed(sTrainDriver, train, throttle);
+                    setSpeed = 0xFF;
+                }
+                else
+                {
+                    setSpeed = throttle;
+                }
+
                 if (throttle != 0)
                 {
                     stopping = 0;

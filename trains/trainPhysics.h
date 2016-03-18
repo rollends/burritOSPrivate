@@ -7,12 +7,21 @@ typedef struct
 {
     /// Mapping of train speed to steady state velocities
     S32 speedMap[14];
+    
+    /// Calibration count per speed
+    S32 calibrationCount[14];
 
     /// Mapping of train speed to accelerations
     S32 accelMap[14][14];
 
     /// The current velocity of the train
     S32 velocity;
+
+    /// The velocity at the last report
+    S32 initialVelocity;
+
+    /// The speed at the last set
+    S32 initialSpeed;
 
     /// The current acceleration of the train
     S32 acceleration;
@@ -84,9 +93,10 @@ void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed);
  * @param   dist      The reported distance
  * @param   ticks     The reported ticks
  */
-void trainPhysicsReport(TrainPhysics* physics,
+S32 trainPhysicsReport(TrainPhysics* physics,
                         const S32 dist,
-                        const U32 ticks);
+                        const U32 ticks,
+                        const S32 tickError);
 
 /**
  * Gets the current velocity of the train
