@@ -132,6 +132,7 @@ S32 trainPhysicsReport(TrainPhysics* physics,
 
             physics->velocity = velocity;
             physics->calibrationCount[physics->speed] -=1;
+            physics->speedMap[physics->speed] = velocity;
 
             return 1;
         }
@@ -230,9 +231,9 @@ U32 trainPhysicsGetTime(TrainPhysics* physics, const S32 dx)
 S32 trainPhysicsStopDist(TrainPhysics* physics)
 {
     S32 v = physics->velocity/100;
-//    S32 dist = (v * v)/(2*23500);
-    S32 dist = (v * v)/(2*33200);
-    dist += (v*600)/10000;
+    S32 a = physics->accelMap[physics->targetSpeed][0] / -10;
+    S32 dist = (v * v)/(2*a);
+    dist += (v*550)/10000;
 
     return dist;
 }

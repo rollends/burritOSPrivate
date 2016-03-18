@@ -31,6 +31,7 @@ static void RandomSpeed(void)
     MessageEnvelope env;
     
     U32 random = 19;
+    U32 zero = 0;
     for(;;)
     {
         nextRandU32(&random);
@@ -38,6 +39,15 @@ static void RandomSpeed(void)
 
         nextRandU32(&random);
         U8 speed = random % 9 + 5;
+        if (zero == 0)
+        {
+            speed = 0;
+            zero = 1;
+        }
+        else
+        {
+            zero = 0;
+        }
 
         clockLongDelayBy(nsWhoIs(Clock), delay);
 
@@ -52,7 +62,7 @@ static void PhysicsTick(void)
     
     for(;;)
     {
-        clockDelayBy(nsWhoIs(Clock), 10);
+        clockDelayBy(nsWhoIs(Clock), 6);
         sysSend(sysPid(), &env, &env); 
     }
 }
@@ -142,6 +152,7 @@ void Locomotive(void)
                     if ((stopDistance - delta) <= trainPhysicsStopDist(&physics) && stopping == 0)
                     {
                         trainSetSpeed(sTrainDriver, train, 0);
+                        trainPhysicsSetSpeed(&physics, 0);
                         stopping = 1;
                         stopSensor = 0xFFFF;
                     }
@@ -157,7 +168,14 @@ void Locomotive(void)
         else if (from.value == tRandomSpeed.value )
         {
             sysReply(from.value, &env);
+            /*
             setSpeed = env.message.MessageU8.body;
+            if (physics.velocity == 0)
+            {
+                trainPhysicsSetSpeed(&physics, setSpeed);
+                trainSetSpeed(sTrainDriver, train, setSpeed);
+                setSpeed = 0xFF;
+            }*/
         }
         else if( from.value == tPosGPS.value )
         {
@@ -380,6 +398,27 @@ void Locomotive(void)
                 trainSetSpeed(sTrainDriver, train, throttle);
                 sysReply(from.value, &env);
                 break;
+            case MESSAGE_TRAIN_DUMP_ACCEL:
+            {
+                sysReply(from.value, &env);
+                U8 dump = env.message.MessageU8.body;
+                U8 i;
+                for (i = 0; i < 14; i++)
+                {
+                    printf("\033[s\033[%d;30H \033[2K %d \033[u", i + 9, physics.accelMap[dump][i]);
+                }
+                break;
+            }
+            case MESSAGE_TRAIN_DUMP_VEL:
+            {
+                sysReply(from.value, &env);
+                U8 i;
+                for (i = 0; i < 14; i++)
+                {
+                    printf("\033[s\033[%d;45H \033[2K %d \033[u", i + 9, physics.speedMap[i]);
+                }
+                break;
+            }
             }
         }
     }
