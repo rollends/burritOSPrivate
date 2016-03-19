@@ -77,17 +77,16 @@ static TrackNode* getLocomotiveTrackGraph(U8 trainId)
 }
 
 
-static void clearPath(TrackNode* graph, GraphPath* destinationPath, TrainPhysics *physics)
+static S32 clearPath(TrackNode* graph, GraphPath* destinationPath, TrainPhysics *physics, S32 stoppingDistance)
 {
     // Switch dem switches.
     U8 current, next;
     queueU8Pop(&destinationPath->qPath, &next);
    
     TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
-    U32 dist = 0;
-    U32 sensCount = 0;
+    S32 dist = stoppingDistance; // 1m stopping
     U32 currentTime = clockTime(nsWhoIs(Clock));
-    while(sensCount < 3 && destinationPath->qPath.count)
+    while(dist >= 0 && destinationPath->qPath.count)
     {
         current = next;
         queueU8Pop(&destinationPath->qPath, &next);
@@ -105,7 +104,7 @@ static void clearPath(TrackNode* graph, GraphPath* destinationPath, TrainPhysics
                 + trainPhysicsGetTime(physics, dist) / 10000
                 - 150;
             request.branchId = graph[current].num;
-            request.indBranchNode = current;//79 + (2 * switchId - 1); 
+            request.indBranchNode = current;
             
             env.type = MESSAGE_SWITCH_ALLOCATE;
             env.message.MessageArbitrary.body = (U32*)&request;
@@ -114,12 +113,12 @@ static void clearPath(TrackNode* graph, GraphPath* destinationPath, TrainPhysics
             if( (graph[current].edge[DIR_AHEAD].dest - graph) == next)
             {
                 request.direction = eStraight;
-                dist += graph[current].edge[DIR_AHEAD].dist;
+                dist -= graph[current].edge[DIR_AHEAD].dist;
             }
             else
             {
                 request.direction = eCurved;
-                dist += graph[current].edge[DIR_CURVED].dist;
+                dist -= graph[current].edge[DIR_CURVED].dist;
             }
             request.endTime = request.startTime
                 + trainPhysicsGetTime(physics, dist) / 10000
@@ -128,16 +127,12 @@ static void clearPath(TrackNode* graph, GraphPath* destinationPath, TrainPhysics
             if(request.direction != sw)
                 sysSend(sSwitchOffice.value, &env, &env);
         }
-        else if(graph[current].type == eNodeSensor)
-        {
-            sensCount++;
-            dist += graph[current].edge[DIR_AHEAD].dist;
-        }
         else
         {
-            dist += graph[current].edge[DIR_AHEAD].dist;
+            dist -= graph[current].edge[DIR_AHEAD].dist;
         }
     }
+    return (destinationPath->qPath.count ? 5000 : stoppingDistance - dist);
 }
 
 
@@ -301,32 +296,13 @@ void Locomotive(void)
                 if( stopSensor < 0xFFFF )
                 {
                     pathFind(graph, currentSensor, stopSensor, &destinationPath);
-                    clearPath(graph, &destinationPath, &physics);
-                    
-                    TrackNode* ip = graph + previousUpdate.prediction[update.sensorSkip];
-                    U32 nodeCount = 0;
-                    stopDistance = 0;
-                    do
-                    {
-                        nodeCount++;
-                        if(ip->type == eNodeBranch)
-                        {
-                            MessageEnvelope env;
-                            env.message.MessageU32.body = (ip - (graph + 80)) / 2;
-                            env.type = MESSAGE_SWITCH_READ;
-                            sysSend(sSwitchOffice.value, &env, &env);
-
-                            SwitchState sw = (SwitchState)env.message.MessageU32.body;
-                            U32 swv = ((sw == eCurved) ? DIR_CURVED : DIR_STRAIGHT);
-                            stopDistance += ip->edge[swv].dist - ip->edge[swv].dx;
-                            ip = ip->edge[swv].dest;
-                        }
-                        else
-                        {
-                            stopDistance += ip->edge[DIR_AHEAD].dist - ip->edge[DIR_AHEAD].dx;
-                            ip = ip->edge[DIR_AHEAD].dest;
-                        }
-                    } while( nodeCount < 150 && (ip->type != eNodeSensor || ip->num != stopSensor) );
+                    stopDistance = 
+                        clearPath(
+                            graph, 
+                            &destinationPath, 
+                            &physics, 
+                            trainPhysicsStopDist(&physics)
+                        );
                 }
 
                 // Predict

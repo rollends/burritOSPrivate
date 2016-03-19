@@ -151,7 +151,8 @@ void SwitchExecutive(void)
                  || ((cRequest.endTime <= request->startTime) && (cRequest.startTime >= request->endTime)))
                 {
                     // Fail! The switch is taken!
-                    assert(0);
+                    sysReply(person.value, &env);
+                    //assert(0);
                 }
 
 
