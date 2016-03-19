@@ -134,15 +134,15 @@ void trainSetSpeed(TaskID server, U8 train, U8 speed)
     sysSend(server.value, &env, &env);
 }
 
-U8 trainReadSensorGroup(TaskID sensorServer, U8 sensorGroup)
+U8 trainWaitForSensor(TaskID sensorServer, U8 sensorId)
 {
-    assert( sensorGroup > 0 && sensorGroup <= 32 );
+    assert( sensorId < 80 );
 
     MessageEnvelope env;
     env.type = MESSAGE_TRAIN_GET_SENSOR;
-    env.message.MessageU8.body = sensorGroup;
+    env.message.MessageU8.body = sensorId;
     sysSend(sensorServer.value, &env, &env);
-    return env.message.MessageU16.body;
+    return sensorId;
 }
 
 void trainReadAllSensors(TaskID sensorServer, U32* sensorArray)

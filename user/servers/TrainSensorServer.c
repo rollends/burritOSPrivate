@@ -51,14 +51,14 @@ void TrainSensorServer(void)
     U16             qTaskBacking[16];
     QueueU16        qTask;
     QueueU16        qBodyIndex;
-    
+
+    U16             aTaskSensorBlocked[80];
+
     queueU16Init(&qTask, qTaskBacking, 16);
     queueU16Init(&qBodyIndex, qBodyIndexBacking, 16);
 
-    for(i = 0; i < 5; i++)
-    {
-        sensorBuffer[i] = 0;
-    }
+    memset(aTaskSensorBlocked, 0xFF, sizeof(U16)*80);
+    memset(sensorBuffer, 0, sizeof(U32)*5);
 
     U8 startupStage = 1;
     sysCreate(sysPriority() - 1, &TrainSensorStartupDelay);
@@ -107,6 +107,24 @@ void TrainSensorServer(void)
 
                     queueU16Push(&qBodyFree, index);
                 }
+
+                for(i = 0; i < 5; ++i)
+                {
+                    // Read all sensors
+                    U8 c = 0;
+                    U16 group = (U16)sensorBuffer[i];
+                    for(c = 0; c < 16; ++c)
+                    {
+                        U8 sensorId = 16 * i + c;
+                        if((aTaskSensorBlocked[sensorId] != 0xFFFF) 
+                            && ((1 << (15-c)) & group))
+                        {
+                            rcvEnv.type = MESSAGE_TRAIN_GET_SENSOR;
+                            sysReply(aTaskSensorBlocked[sensorId], &rcvEnv);
+                            aTaskSensorBlocked[sensorId] = 0xFFFF;
+                        }
+                    }
+                }
             }
             break;
         }
@@ -123,8 +141,8 @@ void TrainSensorServer(void)
 
         case MESSAGE_TRAIN_GET_SENSOR:
         {
-            rcvEnv.message.MessageU16.body = sensorBuffer[rcvEnv.message.MessageU8.body - 1];
-            sysReply(rcvId.value, &rcvEnv);
+            assert(rcvEnv.message.MessageU8.body < 80);
+            aTaskSensorBlocked[rcvEnv.message.MessageU8.body] = rcvId.value;
             break;
         }
         }
