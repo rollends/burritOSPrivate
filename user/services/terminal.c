@@ -136,8 +136,6 @@ S32 tprintf(TaskID server, ConstString format, ...)
                 state = FORMAT;
                 widthFlag = 0;
             }
-            else if( ch == '\\' )
-                state = ESCAPE;
             else
                 *(OutputBufferI++) = ch;
             break;

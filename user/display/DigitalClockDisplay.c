@@ -1,6 +1,7 @@
+#include "user/display/DigitalClockDisplay.h"
 #include "user/services/services.h"
 
-void DigitalClock(void)
+void DigitalClockDisplay(void)
 {
     TaskID  clock   = nsWhoIs(Clock);
     U16     minutes = 0;
@@ -17,7 +18,7 @@ void DigitalClock(void)
         millis = millis % 1000;
         seconds = seconds % 60;
         
-        printf( "\033[s\033[H%2d:%2d.%1d\033[u", 
+        printf( "\033[s\033[1;8H\033[33m|%2d:%2d.%1d]\033[m\033[u", 
                 minutes,
                 seconds,
                 millis / 100 );

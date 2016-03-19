@@ -31,9 +31,9 @@ void TrainSwitchCourier(void)
                 id = (id - 0x99) + 19;
             }
 
-            printf("\033[s\033[%d;17H%c\033[u",
-                   5 + id,
-                   type == MESSAGE_TRAIN_SWITCH_STRAIGHT ? 'S' : 'C');
+//            printf("\033[s\033[%d;17H%c\033[u",
+  //                 5 + id,
+    //               type == MESSAGE_TRAIN_SWITCH_STRAIGHT ? 'S' : 'C');
         }
     }
 }

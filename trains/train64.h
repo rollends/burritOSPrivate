@@ -24,15 +24,15 @@ static inline void trainInit64(TrainPhysics* physics)
 
     trainPhysicsAccelMap(physics, 0,
                          0,
-                         65482,
+                         62911,
                          73793,
-                         80448,
-                         87609,
-                         94291,
-                         100269,
-                         105954,
-                         111151,
-                         117025);
+                         92415,
+                         86138,
+                         92644,
+                         124226,
+                         286245,
+                         276718,
+                         225787);
 
     trainPhysicsAccelMap(physics, 5,
                          -113256,

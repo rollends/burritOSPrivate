@@ -41,12 +41,12 @@ static void RandomSpeed(void)
         U8 speed = random % 9 + 5;
         if (zero == 0)
         {
-            speed = 0;
-            zero = 1;
+//            speed = 0;
+    //        zero = 1;
         }
         else
         {
-            zero = 0;
+  //          zero = 0;
         }
 
         clockLongDelayBy(nsWhoIs(Clock), delay);
@@ -62,7 +62,7 @@ static void PhysicsTick(void)
     
     for(;;)
     {
-        clockDelayBy(nsWhoIs(Clock), 6);
+        clockDelayBy(nsWhoIs(Clock), 3);
         sysSend(sysPid(), &env, &env); 
     }
 }
@@ -71,11 +71,11 @@ static TrackNode graph[TRACK_MAX];
 
 void Locomotive(void)
 {
-    const char * strPredictOldTrain = "\033[s\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dmt\033[u\033[m\033[u";
-    const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
-    const char * strPredictTrain = "\033[s\033[48;1H\033[2KNext Prediction:\tTrain %2d | Location %c%2d | Time %dmt\033[u";
-    const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dmt | \033[1mDeltaT %dmt\033[m | Correction: %dms\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
-    const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Target Speed %d | Velocity %dmm/mt | Acceleration %dmm/mt^2\033[u";
+    //const char * strPredictOldTrain = "\033[s\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dkt\033[u\033[m\033[u";
+    //const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
+    //const char * strPredictTrain = "\033[s\033[48;1H\033[2KNext Prediction:\tTrain %2d | Location %c%2d | Time %dkt\033[u";
+    //const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dkt | \033[1mDeltaT %dkt\033[m | Correction: %dkt\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
+    //const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Target Speed %d | Velocity %dmm/mt | Acceleration %dmm/mt^2\033[u";
 
     TaskID parent = VAL_TO_ID( sysPid() );
     TaskID from;
@@ -121,8 +121,8 @@ void Locomotive(void)
     TaskID reverseCourier = { 0 };
 
     S16     throttle = 0;
-    char    nextSensorGroup = 0;
-    U8      nextSensorId = 0;
+    //char    nextSensorGroup = 0;
+    //U8      nextSensorId = 0;
     U32     predictTime[3] = { 0 };
     U32     stopSensor = 0xFFFF;
     S32     stopDistance = 0;
@@ -139,7 +139,7 @@ void Locomotive(void)
             sysReply(from.value, &env);
             timerSample(TIMER_4, &tickTimer);
             S32 delta = trainPhysicsStep(&physics, tickTimer.delta);
-            printf(strPhysicsTrain, train, physics.targetSpeed, physics.velocity, physics.acceleration);
+            //printf(strPhysicsTrain, train, physics.targetSpeed, physics.velocity, physics.acceleration);
             
             if (stopDistance > 0)
             {
@@ -147,7 +147,6 @@ void Locomotive(void)
                 if (stopDist < stopDistance)
                 {
                     stopDistance -= delta;
-
                     delta /= 2;
                     if ((stopDistance - delta) <= trainPhysicsStopDist(&physics) && stopping == 0)
                     {
@@ -162,14 +161,13 @@ void Locomotive(void)
                     stopDistance -= delta;
                 }
 
-                printf("\033[s\033[43;1HDistance til Stop Sensor %d.\r\n\033[u", stopDistance);
+                //printf("\033[s\033[43;1HDistance til Stop Sensor %d.\r\n\033[u", stopDistance);
             }
         }
         else if (from.value == tRandomSpeed.value )
         {
             sysReply(from.value, &env);
-            /*
-            setSpeed = env.message.MessageU8.body;
+/*            setSpeed = env.message.MessageU8.body;
             if (physics.velocity == 0)
             {
                 trainPhysicsSetSpeed(&physics, setSpeed);
@@ -183,8 +181,8 @@ void Locomotive(void)
             update = *(GPSUpdate*)(env.message.MessageArbitrary.body);
             sysReply(tPosGPS.value, &env);
             U8      currentSensor = update.triggeredSensor;
-            char    sensorGroup = 'A' + currentSensor / 16;
-            U8      sensorId = currentSensor % 16 + 1;
+            //char    sensorGroup = 'A' + currentSensor / 16;
+            //U8      sensorI = currentSensor % 16 + 1;
  
             timerSample(TIMER_4, &errorTimer);
             
@@ -193,17 +191,17 @@ void Locomotive(void)
                 timerSample(TIMER_4, &tickTimer);
                 trainPhysicsStep(&physics, tickTimer.delta);
 
-                nextSensorGroup = previousUpdate.prediction[update.sensorSkip] / 16 + 'A';
-                nextSensorId = previousUpdate.prediction[update.sensorSkip] % 16 + 1;
+                //nextSensorGroup = previousUpdate.prediction[update.sensorSkip] / 16 + 'A';
+                //nextSensorId = previousUpdate.prediction[update.sensorSkip] % 16 + 1;
                 
                 S32 deltaT = predictTime[update.sensorSkip] - errorTimer.delta/1000;
                 if (deltaT < -50 || deltaT > 50)
                 {
-                    printf(strPredictOldTrain, train, nextSensorGroup, nextSensorId, predictTime[update.sensorSkip]);
+                    //printf(strPredictOldTrain, train, nextSensorGroup, nextSensorId, predictTime[update.sensorSkip]);
                 }
                 else
                 {
-                    printf(strPredictClearTrain);
+                    //printf(strPredictClearTrain);
                 }
                 
                 if( stopSensor < 0xFFFF )
@@ -306,8 +304,8 @@ void Locomotive(void)
                         }
                     }
 
-                    nextSensorGroup = update.prediction[0] / 16 + 'A';
-                    nextSensorId = update.prediction[0] % 16 + 1;
+                    //nextSensorGroup = update.prediction[0] / 16 + 'A';
+                    //nextSensorId = update.prediction[0] % 16 + 1;
 
                     U8 i = 0;
                     for(i = 0; i < 3; ++i)
@@ -315,14 +313,14 @@ void Locomotive(void)
                         predictTime[i] = trainPhysicsGetTime(&physics, update.predictionDistance[i]) / 1000 - update.time[i];
                     }
 
-                    printf(strPredictTrain, train, nextSensorGroup,
-                           nextSensorId, predictTime[0]);
+                    //printf(strPredictTrain, train, nextSensorGroup,
+                    //       nextSensorId, predictTime[0]);
 
-                    printf(strFoundTrain, train, sensorGroup, sensorId,
-                           errorTimer.delta/1000, deltaT,
-                           previousUpdate.time[update.sensorSkip],
-                           distance, traveledDistance, deltaX,
-                           physics.velocity);
+                    //printf(strFoundTrain, train, sensorGroup, sensorId,
+                      //     errorTimer.delta/1000, deltaT,
+                        //   previousUpdate.time[update.sensorSkip],
+                          // distance, traveledDistance, deltaX,
+                          // physics.velocity);
                 }
             }
 
@@ -367,6 +365,11 @@ void Locomotive(void)
 
                 if (throttle != 0)
                 {
+                    if (stopping == 1)
+                    {
+                        previousSensor = 0;
+                    }
+
                     stopping = 0;
                     stopDistance = 0;
                 }
