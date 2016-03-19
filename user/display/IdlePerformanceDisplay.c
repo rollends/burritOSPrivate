@@ -9,10 +9,6 @@ void IdlePerformanceDisplay()
 
     for(;;)
     {
-    #ifdef KERNEL_PERF
-        sysPerfReset();
-    #endif
-
         clockLongDelayBy(clock, 2);
         
     #ifdef KERNEL_PERF

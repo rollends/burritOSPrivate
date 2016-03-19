@@ -3,6 +3,7 @@
 
 #include "user/display/DigitalClockDisplay.h"
 #include "user/display/IdlePerformanceDisplay.h"
+#include "user/display/PerformanceDisplay.h"
 #include "user/display/PromptDisplay.h"
 #include "user/display/SensorDisplay.h"
 #include "user/services/services.h"
@@ -57,6 +58,8 @@ void PromptDisplay(void)
     sysCreate(2, &IdlePerformanceDisplay);
     sysCreate(4, &DigitalClockDisplay);
     displayTasks[0].value = sysCreate(4, &SensorDisplay);
+    displayTasks[1].value = sysCreate(4, &PerformanceDisplay);
+
     sysCreate(2, &DisplayNotifier);
 
     slot1 = -1;
