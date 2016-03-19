@@ -88,7 +88,21 @@ void TrainSensorServer(void)
             {
                 U32 val1 = sensorBuffer[i];
                 U32 val2 = rcvEnv.message.MessageArbitrary.body[i];
-                changed |= ((val1 ^ val2) & ~val1);
+                U16 group = ((val1 ^ val2) & ~val1);
+                U8 c = 0;
+                for(c = 0; c < 16; ++c)
+                {
+                    U8 sensorId = 16 * i + c;
+                    if((aTaskSensorBlocked[sensorId] != 0xFFFF) 
+                        && ((1 << (15-c)) & group))
+                    {
+                        group ^= (1 << (15-c));
+                        rcvEnv.type = MESSAGE_TRAIN_GET_SENSOR;
+                        sysReply(aTaskSensorBlocked[sensorId], &rcvEnv);
+                        aTaskSensorBlocked[sensorId] = 0xFFFF;
+                    }
+                }
+                changed |= group;
                 sensorBuffer[i] = val2;
             }
             if( changed )
@@ -98,32 +112,12 @@ void TrainSensorServer(void)
                 {
                     U16 index;
                     queueU16Pop(&qBodyIndex, &index);
+                    
                     U32* bufOut = qBodyBuffer[index];
-                    
-                    for(i = 0; i < 5; i++)
-                        bufOut[i] = sensorBuffer[i];
-                    
+                    memcpy(bufOut, sensorBuffer, 5);
                     sysReply(task, &rcvEnv);
 
                     queueU16Push(&qBodyFree, index);
-                }
-
-                for(i = 0; i < 5; ++i)
-                {
-                    // Read all sensors
-                    U8 c = 0;
-                    U16 group = (U16)sensorBuffer[i];
-                    for(c = 0; c < 16; ++c)
-                    {
-                        U8 sensorId = 16 * i + c;
-                        if((aTaskSensorBlocked[sensorId] != 0xFFFF) 
-                            && ((1 << (15-c)) & group))
-                        {
-                            rcvEnv.type = MESSAGE_TRAIN_GET_SENSOR;
-                            sysReply(aTaskSensorBlocked[sensorId], &rcvEnv);
-                            aTaskSensorBlocked[sensorId] = 0xFFFF;
-                        }
-                    }
                 }
             }
             break;
