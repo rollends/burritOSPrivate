@@ -67,7 +67,20 @@ static void PhysicsTick(void)
     }
 }
 
-static TrackNode graph[TRACK_MAX]; 
+static TrackNode* getLocomotiveTrackGraph(U8 trainId)
+{
+    TaskID loco;
+
+    if( trainWhoIs(trainId, &loco) < 0 )
+        return 0;
+
+    MessageEnvelope env;
+    env.type = MESSAGE_RPS; // Random number lawl
+    sysSend(loco.value, &env, &env);
+
+    return (TrackNode*)env.message.MessageArbitrary.body;
+}
+
 
 void Locomotive(void)
 {
@@ -77,6 +90,8 @@ void Locomotive(void)
     const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dkt | \033[1mDeltaT %dkt\033[m | Correction: %dkt\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
     //const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Target Speed %d | Velocity %dmm/mt | Acceleration %dmm/mt^2\033[u";
 
+    TrackNode graph[TRACK_MAX]; 
+    
     TaskID parent = VAL_TO_ID( sysPid() );
     TaskID from;
     MessageEnvelope env;
@@ -87,6 +102,9 @@ void Locomotive(void)
     sysReply(from.value, &env);
     U8 train = env.message.MessageU8.body;
    
+    // Register ourselves.
+    trainRegister(train);
+
     // Setup speed 
     TaskID sTrainDriver = nsWhoIs(Train);
     TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
@@ -103,14 +121,14 @@ void Locomotive(void)
     // Startup Radio comm (for commands)
     assert(sysPriority() < 31);
     sysSend(sysCreate(sysPriority()+1, &LocomotiveRadio), &env, &env);
-
-    // Register ourselves.
-    trainRegister(train);
-    
+        
     // Start Train 'GPS' and physics tick
     TaskID tPosGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &PositionUpdateCourier));
     TaskID tPhysicsTick = VAL_TO_ID(sysCreate(sysPriority() - 1, &PhysicsTick));
     TaskID tRandomSpeed = VAL_TO_ID(sysCreate(sysPriority() - 1, &RandomSpeed));
+
+    sysSend(tPosGPS.value, &env, &env);
+
     TimerState tickTimer;
     TimerState errorTimer;
     timerStart(TIMER_4, &tickTimer);
@@ -330,6 +348,11 @@ void Locomotive(void)
         {
             switch(env.type)
             {
+            case MESSAGE_RPS:
+                env.message.MessageArbitrary.body = (U32*)graph;
+                sysReply(from.value, &env);
+                break;
+
             case MESSAGE_TRAIN_STOP:
             {
                 stopSensor = env.message.MessageU32.body;
@@ -480,8 +503,13 @@ static void PositionUpdateCourier(void)
     assert(sysPriority() < 31);
     TaskID gps = VAL_TO_ID(sysCreate(sysPriority() + 1, &LocomotiveGPS));
     TaskID parent = VAL_TO_ID(sysPid());
-    
     MessageEnvelope env;
+    
+    sysReceive(&parent.value, &env);
+    sysReply(parent.value, &env);
+    //U8 train = env.message.MessageU8.body;
+    sysSend(gps.value, &env, &env);
+
     env.message.MessageU32.body = (gps.value << 16) | parent.value;
     sysSend(sysCreate(sysPriority(), &ReverseUpdateCourier), &env, &env);
 
@@ -564,6 +592,17 @@ static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSenso
 }
 static void LocomotiveGPS(void)
 {
+    U8 train = 0;
+    
+    {
+        TaskID temp;
+        MessageEnvelope env;
+        sysReceive(&temp.value, &env);
+        sysReply(temp.value, &env);
+        train = env.message.MessageU8.body;
+    }
+
+    TrackNode* graph = getLocomotiveTrackGraph(train);
     TrackNode* position = 0;
 
     U32 sensors[5], nextSensors[3], distances[3], time[3];
