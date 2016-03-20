@@ -91,21 +91,26 @@ int pathFind(TrackNode* graph, U8 start, U8 end, GraphPath* path)
         U8 ni = 0;
         while(degree--)
         {
-            HeapNodeU16 newNode = 
-                HEAP_NODE(
-                    neighbours[ni].dest - graph, 
-                    cCost + neighbours[ni].dist
-                );
-
-            if(costToNode[newNode.value] > newNode.cost)
+            if(neighbours[ni].dest != 0)
             {
-                mapCameFrom[newNode.value] = cInd;
-                costToNode[newNode.value] = newNode.cost;
-                heapU16Push(&qOpen, newNode);
+                HeapNodeU16 newNode = 
+                    HEAP_NODE(
+                        neighbours[ni].dest - graph, 
+                        cCost + neighbours[ni].dist
+                    );
+
+                if(costToNode[newNode.value] > newNode.cost)
+                {
+                    mapCameFrom[newNode.value] = cInd;
+                    costToNode[newNode.value] = newNode.cost;
+                    heapU16Push(&qOpen, newNode);
+                }
             }
             ++ni;
         }
     }
+
+    if( start == end ) mapCameFrom[end] = start;
 
     if( mapCameFrom[end] == 0xFF ) return -1;
 

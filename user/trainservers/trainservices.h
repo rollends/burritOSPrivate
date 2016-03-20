@@ -5,6 +5,7 @@
 #include "kernel/kernel.h"
 #include "user/services/trainCommand.h"
 
+
 typedef struct
 {
     U32             startTime;
@@ -14,9 +15,19 @@ typedef struct
     SwitchState     direction;
 } SwitchRequest;
 
+struct TrackRequest;
+typedef struct TrackRequest
+{
+    U16                     trainId;
+    U16                     indNode;
+    struct TrackRequest*    pForwardRequest;
+    struct TrackRequest*    pReverseRequest;
+} TrackRequest;
+
 S32 pushTrainCommand(String string);
 S32 pollTrainCommand(U8 trainId, MessageEnvelope* env);
 void trainRegister(U8 trainId);
 S32 trainWhoIs(U8 trainId, TaskID* tid);
+S32 trainAllocateTrack(U8 trainId, TrackRequest* entryNode);
 
 #endif

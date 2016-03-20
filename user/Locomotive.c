@@ -76,7 +76,7 @@ static TrackNode* getLocomotiveTrackGraph(U8 trainId)
     return (TrackNode*)env.message.MessageArbitrary.body;
 }
 
-
+/*
 static S32 clearPath(TrackNode* graph, GraphPath* destinationPath, TrainPhysics *physics, S32 stoppingDistance)
 {
     // Switch dem switches.
@@ -132,8 +132,8 @@ static S32 clearPath(TrackNode* graph, GraphPath* destinationPath, TrainPhysics 
             dist -= graph[current].edge[DIR_AHEAD].dist;
         }
     }
-    return (destinationPath->qPath.count ? 5000 : stoppingDistance - dist);
-}
+    return 0;
+}*/
 
 
 void Locomotive(void)
@@ -170,7 +170,7 @@ void Locomotive(void)
     trainPhysicsSetSpeed(&physics, 0);
     
     // Initialize our track graph
-    init_tracka(graph);
+    init_trackb(graph);
  
     // Startup Radio comm (for commands)
     assert(sysPriority() < 31);
@@ -198,14 +198,14 @@ void Locomotive(void)
     U8      nextSensorId = 0;
     U32     predictTime[3] = { 0 };
     U32     stopSensor = 0xFFFF;
-    S32     stopDistance = 0;
-    U32     stopping = 0;
+//    S32     stopDistance = 0;
+//    U32     stopping = 0;
     U8      setSpeed = 0xFF;
     GPSUpdate previousUpdate;
     GPSUpdate update;
 
     U8      destinationSensor = 46;
-    U32      random = 46;
+    //U32      random = 46;
     GraphPath destinationPath;
     for(;;)
     {
@@ -216,8 +216,49 @@ void Locomotive(void)
             sysReply(from.value, &env);
             timerSample(TIMER_4, &tickTimer);
             S32 delta = trainPhysicsStep(&physics, tickTimer.delta);
-            //printf(strPhysicsTrain, train, physics.targetSpeed, physics.velocity, physics.acceleration);
+
+            S32 requiredDistance = delta + (3*trainPhysicsStopDist(&physics)) / 2;
+            if( previousSensor != 0 && requiredDistance > 5 )
+            {
+                TrackNode* ip = previousSensor;
+                TrackRequest requests[30];
+                U8 iRequest = 0;
+                do
+                {
+                    U32 indCurrent = ip - graph;
+                    TrackEdge* edge = ip->edge + DIR_AHEAD;
+                    if(ip->type == eNodeBranch)
+                    {
+                        env.type = MESSAGE_SWITCH_READ;
+                        env.message.MessageU32.body = (indCurrent - 80) / 2;
+                        sysSend(sSwitchOffice.value, &env, &env);
+
+                        SwitchState sw = (SwitchState)env.message.MessageU32.body;
+                        edge = ip->edge + (sw == eCurved ? DIR_CURVED : DIR_AHEAD);  
+                    }
+
+                    requests[iRequest].trainId = train;
+                    requests[iRequest].indNode = indCurrent / 2;
+                    requests[iRequest].pReverseRequest = 0;
+                    requests[iRequest].pForwardRequest = &requests[iRequest+1];
+                    iRequest++;
+                    requiredDistance -= (edge->dist - edge->dx);
+
+                    ip = edge->dest;
+                } while( requiredDistance > 0 );
             
+                // End off shitty linked list..
+                requests[iRequest-1].pForwardRequest = 0;
+
+                // Make request
+                if(trainAllocateTrack(train, requests) < 0)
+                {
+                    printf("\033[s\033[43;1HTrain %d failed %d\033[u", train, ip - graph);
+                    // Failed request!
+                    trainStop(nsWhoIs(Train));
+                }
+            }
+            /*
             if (stopDistance > 0)
             {
                 U32 stopDist = trainPhysicsStopDist(&physics);
@@ -236,10 +277,10 @@ void Locomotive(void)
                 else if (stopping == 1)
                 {
                     stopDistance -= delta;
-                    if(stopDistance <= 5)
+                    if(stopDistance <= 50)
                     {
                         stopping = 0;
-                        clockDelayBy(nsWhoIs(Clock), 100); 
+                        clockDelayBy(nsWhoIs(Clock), 200); 
                         trainSetSpeed(sTrainDriver, train, throttle);
                         stopSensor = destinationSensor;
 
@@ -252,6 +293,7 @@ void Locomotive(void)
                 }
 
             }
+            */
         }
         else if (from.value == tRandomSpeed.value )
         {
@@ -296,6 +338,7 @@ void Locomotive(void)
                 if( stopSensor < 0xFFFF )
                 {
                     pathFind(graph, currentSensor, stopSensor, &destinationPath);
+                    /*
                     stopDistance = 
                         clearPath(
                             graph, 
@@ -303,6 +346,30 @@ void Locomotive(void)
                             &physics, 
                             trainPhysicsStopDist(&physics)
                         );
+                    stopDistance = 0;
+                    TrackNode* ip = graph + currentSensor;
+                    do
+                    {
+                        if(ip->type == eNodeBranch)
+                        {
+                            MessageEnvelope env;
+                            env.message.MessageU32.body = (ip - (graph + 80)) / 2;
+                            env.type = MESSAGE_SWITCH_READ;
+                            sysSend(sSwitchOffice.value, &env, &env);
+
+                            SwitchState sw = (SwitchState)env.message.MessageU32.body;
+                            U32 swv = ((sw == eCurved) ? DIR_CURVED : DIR_STRAIGHT);
+                            stopDistance += ip->edge[swv].dist;
+                            ip = ip->edge[swv].dest;
+                        }
+                        else
+                        {
+                            stopDistance += ip->edge[DIR_AHEAD].dist;
+                            ip = ip->edge[DIR_AHEAD].dest;
+                        }
+                    } while( stopDistance < 5000 && ( (ip->type != eNodeSensor) || (ip->num != stopSensor) ) );
+                    */
+
                 }
 
                 // Predict
@@ -343,9 +410,9 @@ void Locomotive(void)
                     
                     if (setSpeed < 14)
                     {
-                        //trainPhysicsSetSpeed(&physics, setSpeed);
-                        //trainSetSpeed(sTrainDriver, train, setSpeed);
-                        //setSpeed = 0xFF;
+                        trainPhysicsSetSpeed(&physics, setSpeed);
+                        trainSetSpeed(sTrainDriver, train, setSpeed);
+                        setSpeed = 0xFF;
                     }
 
                     if (accelReport != 1)
@@ -415,12 +482,11 @@ void Locomotive(void)
                 
                 stopSensor = destinationSensor;
                 
-                do
+                /*do
                 {
                     nextRandU32(&random);
                     destinationSensor = random % 80;
-                } while( pathFind(graph, stopSensor, destinationSensor, &destinationPath) < 0 );
-                printf("\033[s\033[50;1HNext Destination is %c%2d\033[u", 'A' + destinationSensor / 16, destinationSensor % 16 + 1);
+                } while( pathFind(graph, stopSensor, destinationSensor, &destinationPath) < 0 );*/
 
                 break;
             }
@@ -457,9 +523,8 @@ void Locomotive(void)
                     {
                         previousSensor = 0;
                     }
-
-                    stopping = 0;
-                    stopDistance = 0;
+                    //stopping = 0;
+                    //stopDistance = 0;
                 }
                 sysReply(from.value, &env);
                 break;

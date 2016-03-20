@@ -21,7 +21,8 @@ typedef enum
     TrainSwitchOffice = 5,
     TrainYard         = 6,
     TrainCommander    = 7,
-    TaskNameCount     = 8,
+    TrackManager      = 8,
+    TaskNameCount     = 9,
 } TaskName;
 
 /** Nameserver Registration Method
