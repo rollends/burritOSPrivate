@@ -434,8 +434,11 @@ static U8 bufferHead;
 void SensorDisplayPoll(void)
 {
     TaskID sensors = nsWhoIs(TrainSensors);
+    TaskID parent = VAL_TO_ID(sysPid());
+
     U16 i = 0;
     bufferHead = 0;
+    MessageEnvelope env;
 
     for(i = 0; i < SENSOR_LIST_COUNT; i++) buffer[i] = 0xFF;
 
@@ -458,12 +461,14 @@ void SensorDisplayPoll(void)
                 }
             }
         }
+
+        sysSend(parent.value, &env, &env);
     }
 }
 
 void SensorDisplay(void)
 {
-    sysCreate(sysPriority()-1, &SensorDisplayPoll);
+    TaskID id = VAL_TO_ID(sysCreate(sysPriority()-1, &SensorDisplayPoll));
 
     U8 index = 0;
     initMapping();
@@ -474,14 +479,23 @@ void SensorDisplay(void)
     for(;;)
     {
         sysReceive(&sender.value, &env);
-        sysReply(sender.value, &env);
 
-        if (env.message.MessageU8.body != index)
+        if (sender.value == id.value)
+        {
+            if (index != 0)
+            {
+                updateSensorUi(buffer, decmod(bufferHead, SENSOR_LIST_COUNT), index); 
+            }
+        }
+        else
         {
             index = env.message.MessageU8.body;
-            initSensorUi(index);
+            if (index != 0)
+            {
+                initSensorUi(index);
+            }
         }
 
-        updateSensorUi(buffer, decmod(bufferHead, SENSOR_LIST_COUNT), index); 
+        sysReply(sender.value, &env);
     }
 }

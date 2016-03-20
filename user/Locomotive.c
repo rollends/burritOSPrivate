@@ -75,7 +75,7 @@ void Locomotive(void)
     const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
     const char * strPredictTrain = "\033[s\033[48;1H\033[2KNext Prediction:\tTrain %2d | Location %c%2d | Time %dkt\033[u";
     const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dkt | \033[1mDeltaT %dkt\033[m | Correction: %dkt\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
-    const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Target Speed %d | Velocity %dmm/mt | Acceleration %dmm/mt^2\033[u";
+    //const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Target Speed %d | Velocity %dmm/mt | Acceleration %dmm/mt^2\033[u";
 
     TaskID parent = VAL_TO_ID( sysPid() );
     TaskID from;
@@ -139,7 +139,7 @@ void Locomotive(void)
             sysReply(from.value, &env);
             timerSample(TIMER_4, &tickTimer);
             S32 delta = trainPhysicsStep(&physics, tickTimer.delta);
-            printf(strPhysicsTrain, train, physics.targetSpeed, physics.velocity, physics.acceleration);
+            //printf(strPhysicsTrain, train, physics.targetSpeed, physics.velocity, physics.acceleration);
             
             if (stopDistance > 0)
             {
@@ -161,7 +161,7 @@ void Locomotive(void)
                     stopDistance -= delta;
                 }
 
-                printf("\033[s\033[43;1HDistance til Stop Sensor %d.\r\n\033[u", stopDistance);
+            //    printf("\033[s\033[43;1HDistance til Stop Sensor %d.\r\n\033[u", stopDistance);
             }
         }
         else if (from.value == tRandomSpeed.value )

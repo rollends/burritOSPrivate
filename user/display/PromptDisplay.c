@@ -13,26 +13,19 @@ static TaskID displayTasks[5];
 static S8 slot1;
 static S8 slot2;
 
-void DisplayNotifier(void)
+void updateSlot(U8 slot)
 {
-    TaskID id = nsWhoIs(Clock);
     MessageEnvelope env;
 
-    for (;;)
+    if (slot == 1 && slot1 >= 0)
     {
-        clockDelayBy(id, 25);
-
-        if (slot1 >= 0)
-        {
-            env.message.MessageU8.body = 4;
-            sysSend(displayTasks[slot1].value, &env, &env);
-        }
-
-        if (slot2 >= 0)
-        {
-            env.message.MessageU8.body = 27;
-            sysSend(displayTasks[slot2].value, &env, &env);
-        }
+        env.message.MessageU8.body = 4;
+        sysSend(displayTasks[slot1].value, &env, &env);
+    }
+    else if (slot == 2 && slot2 >= 0)
+    {
+        env.message.MessageU8.body = 27;
+        sysSend(displayTasks[slot2].value, &env, &env);
     }
 }
 
@@ -41,9 +34,17 @@ void clearSlot(U8 slot)
     U8 i;
     U8 offset = 3;
 
-    if (slot == 2)
+    MessageEnvelope env;
+    env.message.MessageU8.body = 0;
+
+    if (slot == 2 && slot2 >= 0)
     {
         offset = 26;
+        sysSend(displayTasks[slot2].value, &env, &env);
+    }
+    else if (slot1 >= 0)
+    {
+        sysSend(displayTasks[slot1].value, &env, &env);
     }
 
     for (i = 1; i < 23; i++)
@@ -62,8 +63,6 @@ void PromptDisplay(void)
     displayTasks[1].value = sysCreate(4, &PerformanceDisplay);
     displayTasks[4].value = sysCreate(20, &TacoDisplay);
 
-    sysCreate(2, &DisplayNotifier);
-
     slot1 = 0;
     slot2 = -1;
 
@@ -75,6 +74,7 @@ void PromptDisplay(void)
     TaskID sender;
     sysReceive(&sender.value, &env);
 
+    updateSlot(1);
     for(;;)
     {
         char buffer[256];
@@ -123,28 +123,30 @@ void PromptDisplay(void)
 
             if (slot == 1)
             {
+                clearSlot(1);
                 if (slot2 == target)
                 {
                     slot2 = -1;
                     clearSlot(2);
                 }
                 slot1 = target;
+                updateSlot(1);
             }
             else if (slot == 2)
             {
+                clearSlot(2);
                 if (slot1 == target)
                 {
                     slot1 = -1;
                     clearSlot(1);
                 }
                 slot2 = target;
+                updateSlot(2);
             }
             else
             {
                 printf("\033[2;19H\033[2KInvalid UI Slot specified...");
             }
-
-            clearSlot(slot);
         }
         else
         {

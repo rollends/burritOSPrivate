@@ -9,7 +9,7 @@ void IdlePerformanceDisplay()
 
     for(;;)
     {
-        clockLongDelayBy(clock, 2);
+        clockLongDelayBy(clock, 6);
         
     #ifdef KERNEL_PERF
         U32 totalIdlePercent = sysPerfQueryP(0, ePerfBoth);
