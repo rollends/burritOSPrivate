@@ -76,65 +76,6 @@ static TrackNode* getLocomotiveTrackGraph(U8 trainId)
     return (TrackNode*)env.message.MessageArbitrary.body;
 }
 
-/*
-static S32 clearPath(TrackNode* graph, GraphPath* destinationPath, TrainPhysics *physics, S32 stoppingDistance)
-{
-    // Switch dem switches.
-    U8 current, next;
-    queueU8Pop(&destinationPath->qPath, &next);
-   
-    TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
-    S32 dist = stoppingDistance; // 1m stopping
-    U32 currentTime = clockTime(nsWhoIs(Clock));
-    while(dist >= 0 && destinationPath->qPath.count)
-    {
-        current = next;
-        queueU8Pop(&destinationPath->qPath, &next);
-        if(graph[current].type == eNodeBranch)
-        {
-            MessageEnvelope env;
-            env.message.MessageU32.body = (current - 80) / 2;
-            env.type = MESSAGE_SWITCH_READ;
-            sysSend(sSwitchOffice.value, &env, &env);
-
-            SwitchState sw = (SwitchState)env.message.MessageU32.body;
-
-            SwitchRequest request;
-            request.startTime = currentTime 
-                + trainPhysicsGetTime(physics, dist) / 10000
-                - 150;
-            request.branchId = graph[current].num;
-            request.indBranchNode = current;
-            
-            env.type = MESSAGE_SWITCH_ALLOCATE;
-            env.message.MessageArbitrary.body = (U32*)&request;
-
-            // Which branch is it?
-            if( (graph[current].edge[DIR_AHEAD].dest - graph) == next)
-            {
-                request.direction = eStraight;
-                dist -= graph[current].edge[DIR_AHEAD].dist;
-            }
-            else
-            {
-                request.direction = eCurved;
-                dist -= graph[current].edge[DIR_CURVED].dist;
-            }
-            request.endTime = request.startTime
-                + trainPhysicsGetTime(physics, dist) / 10000
-                - 150;
-            
-            if(request.direction != sw)
-                sysSend(sSwitchOffice.value, &env, &env);
-        }
-        else
-        {
-            dist -= graph[current].edge[DIR_AHEAD].dist;
-        }
-    }
-    return 0;
-}*/
-
 
 void Locomotive(void)
 {
@@ -198,8 +139,8 @@ void Locomotive(void)
     U8      nextSensorId = 0;
     U32     predictTime[3] = { 0 };
     U32     stopSensor = 0xFFFF;
-//    S32     stopDistance = 0;
-//    U32     stopping = 0;
+    S32     stopDistance = 0;
+    U32     stopping = 0;
     U8      setSpeed = 0xFF;
     GPSUpdate previousUpdate;
     GPSUpdate update;
@@ -258,7 +199,7 @@ void Locomotive(void)
                     trainStop(nsWhoIs(Train));
                 }
             }
-            /*
+            
             if (stopDistance > 0)
             {
                 U32 stopDist = trainPhysicsStopDist(&physics);
@@ -280,20 +221,11 @@ void Locomotive(void)
                     if(stopDistance <= 50)
                     {
                         stopping = 0;
-                        clockDelayBy(nsWhoIs(Clock), 200); 
-                        trainSetSpeed(sTrainDriver, train, throttle);
-                        stopSensor = destinationSensor;
-
-                        do
-                        {
-                            nextRandU32(&random);
-                            destinationSensor = random % 80;
-                        } while( pathFind(graph, stopSensor, destinationSensor, &destinationPath) < 0 );
                     }
                 }
 
             }
-            */
+            
         }
         else if (from.value == tRandomSpeed.value )
         {
