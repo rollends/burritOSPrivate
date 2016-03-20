@@ -22,6 +22,15 @@ S32 pollTrainCommand(U8 trainId, MessageEnvelope* env)
     return OK;
 }
 
+S32 isTrainAvailable(U8 trainId)
+{
+    MessageEnvelope env;
+    env.type = 2;
+    env.message.MessageU8.body = trainId;
+    sysSend(nsWhoIs(TrainCommander).value, &env, &env);
+    return (env.type == MESSAGE_FAILURE ? -1 : 0);
+}
+
 static U8 parseTrainCommand(String string, U8* type, U32* info)
 {
     ConstString cstring = (ConstString)string;
@@ -115,6 +124,14 @@ void TrainCommanderServer(void)
                     env.type = MESSAGE_FAILURE;  
             }
             else 
+                env.type = MESSAGE_FAILURE;  
+            sysReply(from.value, &env);
+            break;
+        }
+
+        case 2:
+        {
+            if(trainWaiting[env.message.MessageU8.body] == 0xFFFF)
                 env.type = MESSAGE_FAILURE;  
             sysReply(from.value, &env);
             break;

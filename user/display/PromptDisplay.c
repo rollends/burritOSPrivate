@@ -8,6 +8,7 @@
 #include "user/display/SensorDisplay.h"
 #include "user/display/TacoDisplay.h"
 #include "user/services/services.h"
+#include "user/trainservers/trainservices.h"
 
 static TaskID displayTasks[5];
 static U8 index[2];
@@ -99,6 +100,11 @@ void PromptDisplay(void)
             printf("Finished playing with trains... :)\r\n");
             sysReply(sender.value, &env);
             break; 
+        }
+        else if( buffer[0] == 'l' && (buffer[1] == 'a' || buffer[1] == 'b') )
+        {
+            U8 train = (buffer[1] == 'a' ? 68 : 64);
+            trainLaunch(train);
         }
         else if (buffer[0] == 's' && buffer[1] == 'u')
         {

@@ -1,7 +1,9 @@
 #include "kernel/kernel.h"
 #include "user/messageTypes.h"
 #include "user/services/services.h"
+#include "user/Locomotive.h"
 #include "user/trainservers/TrainYard.h"
+#include "user/trainservers/trainservices.h"
 
 void TrainYardServer(void)
 {
@@ -32,8 +34,25 @@ void TrainYardServer(void)
             sysReply(from.value, &env);
             break;
         }
+
+        case MESSAGE_TRAIN_GO:
+        {
+            sysSend(sysCreate(6, &Locomotive), &env, &env);
+            sysReply(from.value, &env);
+            break;
+        }
         }
     }
+}
+
+void trainLaunch(U8 trainId)
+{
+    MessageEnvelope env;
+    env.type = MESSAGE_TRAIN_GO;
+    env.message.MessageU8.body = trainId;
+    sysSend(nsWhoIs(TrainYard).value, &env, &env);
+
+    //while(isTrainAvailable(trainId) < 0);
 }
 
 void trainRegister(U8 trainId)

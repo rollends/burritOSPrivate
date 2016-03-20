@@ -115,8 +115,6 @@ void Locomotive(void)
  
     // Startup Radio comm (for commands)
     assert(sysPriority() < 31);
-    TaskID tRadio = VAL_TO_ID(sysCreate(sysPriority()+1, &LocomotiveRadio));
-    sysSend(tRadio.value, &env, &env);
 
     // Start Train 'GPS' and physics tick
     TaskID tPosGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &PositionUpdateCourier));
@@ -142,12 +140,14 @@ void Locomotive(void)
     S32     stopDistance = 0;
     U32     stopping = 0;
     U8      setSpeed = 0xFF;
+    U8      isLaunching = 1;
     GPSUpdate previousUpdate;
     GPSUpdate update;
 
     U8      destinationSensor = 46;
-    //U32      random = 46;
     GraphPath destinationPath;
+
+    trainSetSpeed(sTrainDriver, train, 5);
     for(;;)
     {
         sysReceive(&from.value, &env);
@@ -394,6 +394,15 @@ void Locomotive(void)
                            distance, traveledDistance, deltaX,
                            physics.velocity);
                 }
+            }
+            else if( isLaunching )
+            {
+                isLaunching = 0;
+                trainSetSpeed(sTrainDriver, train, 0);
+                
+                TaskID tRadio = VAL_TO_ID(sysCreate(sysPriority()+1, &LocomotiveRadio));
+                env.message.MessageU8.body = train;
+                sysSend(tRadio.value, &env, &env);
             }
 
             previousSensor = graph + currentSensor;
