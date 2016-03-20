@@ -119,4 +119,16 @@ static inline TaskDescriptor* taskGetDescriptor(TaskTable* table,
     return &(table->descriptors[tid.fields.id]);
 }
 
+/**
+ * Returns the number of task descriptors currentl allocated
+ *
+ * @param   table       The table to check allocations in
+ *
+ * @return  The number of allocated tasks
+ */
+static inline U32 taskTableCount(TaskTable* table)
+{
+    return TASK_COUNT - table->allocationQueue.count;
+}
+
 #endif

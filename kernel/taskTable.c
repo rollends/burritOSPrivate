@@ -14,6 +14,7 @@ S32 taskTableInit(TaskTable* table)
         table->descriptors[i].tid.fields.generation = 0;
         table->descriptors[i].pid.value = 0;
         table->descriptors[i].state = eZombie;
+        table->descriptors[i].name = "<unused>";
         assertOk(queueU8Push(&(table->allocationQueue), i));
     }
 
@@ -75,6 +76,7 @@ S32 taskTableFree(TaskTable* table, const TaskID tid)
     desc->tid.fields.generation++;
     desc->pid.value = 0;
     desc->state = eZombie;
+    desc->name = "<unused>";
 
     assertOk(memoryAllocatorFree(&table->memoryAllocator, desc->stack + 15));
 

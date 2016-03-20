@@ -98,11 +98,15 @@ static int _printHexByte(String *output, U8 value)
     return 0;
 }
 
-static int _printStringNoFormat(String* output, char const * str, U32 len)
+static int _printStringNoFormat(String* output, char const * str, S32 len)
 {
     char c;
     while( (c = *(str++)) && len--)
         *((*output)++) = c;
+
+    while (len-- > 0)
+        *((*output)++) = ' ';
+
     return 0;
 }
 

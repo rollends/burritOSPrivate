@@ -10,41 +10,31 @@
 #include "user/services/services.h"
 
 static TaskID displayTasks[5];
-static S8 slot1;
-static S8 slot2;
+static U8 index[2];
+static S8 slots[2];
 
 void updateSlot(U8 slot)
 {
     MessageEnvelope env;
 
-    if (slot == 1 && slot1 >= 0)
+    if (slots[slot] >= 0)
     {
-        env.message.MessageU8.body = 4;
-        sysSend(displayTasks[slot1].value, &env, &env);
-    }
-    else if (slot == 2 && slot2 >= 0)
-    {
-        env.message.MessageU8.body = 27;
-        sysSend(displayTasks[slot2].value, &env, &env);
+        env.message.MessageU8.body = index[slot] + 1;
+        sysSend(displayTasks[slots[slot]].value, &env, &env);
     }
 }
 
 void clearSlot(U8 slot)
 {
     U8 i;
-    U8 offset = 3;
+    U8 offset = index[slot];
 
     MessageEnvelope env;
     env.message.MessageU8.body = 0;
 
-    if (slot == 2 && slot2 >= 0)
+    if (slots[slot] >= 0)
     {
-        offset = 26;
-        sysSend(displayTasks[slot2].value, &env, &env);
-    }
-    else if (slot1 >= 0)
-    {
-        sysSend(displayTasks[slot1].value, &env, &env);
+        sysSend(displayTasks[slots[slot]].value, &env, &env);
     }
 
     for (i = 1; i < 23; i++)
@@ -63,8 +53,11 @@ void PromptDisplay(void)
     displayTasks[1].value = sysCreate(4, &PerformanceDisplay);
     displayTasks[4].value = sysCreate(20, &TacoDisplay);
 
-    slot1 = 0;
-    slot2 = -1;
+    index[0] = 3;
+    index[1] = 26;
+
+    slots[0] = 0;
+    slots[1] = -1;
 
     printf("\033[s\033[3;1H---------------------------------------------------------------------------------------------\033[u");
     printf("\033[s\033[26;1H---------------------------------------------------------------------------------------------\033[u");
@@ -74,7 +67,7 @@ void PromptDisplay(void)
     TaskID sender;
     sysReceive(&sender.value, &env);
 
-    updateSlot(1);
+    updateSlot(0);
     for(;;)
     {
         char buffer[256];
@@ -114,39 +107,30 @@ void PromptDisplay(void)
             strskipws(&str);
             U8 slot = stratoui(&str);
             strskipws(&str);
-            U8 target = stratoui(&str);
+            U8 display = stratoui(&str);
 
-            if (target > 4)
+            if (display > 4)
             {
-                printf("\033[2;19H\033[2KInvalid target specified....");
+                printf("\033[2;19H\033[2KInvalid display specified....");
             }
 
-            if (slot == 1)
+            if (slot > 1)
             {
-                clearSlot(1);
-                if (slot2 == target)
-                {
-                    slot2 = -1;
-                    clearSlot(2);
-                }
-                slot1 = target;
-                updateSlot(1);
+                printf("\033[2;19H\033[2KInvalid slot specified....");
             }
-            else if (slot == 2)
+
+            clearSlot(slot);
+
+            U8 other = (slot + 1) % 2;
+            if (slots[other] == display)
             {
-                clearSlot(2);
-                if (slot1 == target)
-                {
-                    slot1 = -1;
-                    clearSlot(1);
-                }
-                slot2 = target;
-                updateSlot(2);
+                clearSlot(other);
+                slots[other] = -1;
             }
-            else
-            {
-                printf("\033[2;19H\033[2KInvalid UI Slot specified...");
-            }
+
+            slots[slot] = display;
+            updateSlot(slot);
+
         }
         else
         {

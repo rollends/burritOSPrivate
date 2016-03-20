@@ -35,7 +35,7 @@ static inline void trainInit69(TrainPhysics* physics)
                          225787);
 
     trainPhysicsAccelMap(physics, 5,
-                         -112558,
+                         -147558,
                          0,
                          88367,
                          170081,

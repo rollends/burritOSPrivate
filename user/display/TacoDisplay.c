@@ -5,8 +5,6 @@
 
 void TacoDisplay()
 {
-    U8 index = 0;
-
     MessageEnvelope env;
     TaskID sender;
 
@@ -15,9 +13,10 @@ void TacoDisplay()
         sysReceive(&sender.value, &env);
         sysReply(sender.value, &env);
 
-        index = env.message.MessageU8.body;
+        U8 index = env.message.MessageU8.body;
         if (index != 0)
         {
+            printf("\033[s\033[%d;35H..................... \r\n\033[u", 4+index);
             printf("\033[s\033[%d;35H..................... \r\n\033[u", 5+index);
             printf("\033[s\033[%d;35H........╭╯╭╯╭╯....... \r\n\033[u", 6+index);
             printf("\033[s\033[%d;35H.......______   ..... \r\n\033[u", 7+index);
@@ -27,6 +26,7 @@ void TacoDisplay()
             printf("\033[s\033[%d;35H.....▏ \\____/ ▕╮▕.... \r\n\033[u", 11+index);
             printf("\033[s\033[%d;35H.....╲_________╲╱.... \r\n\033[u", 12+index);
             printf("\033[s\033[%d;35H..................... \r\n\033[u", 13+index);
+            printf("\033[s\033[%d;35H.......burritOS...... \r\n\033[u", 14+index);
         }
     }
 }

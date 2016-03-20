@@ -183,6 +183,11 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
                                   arg1,
                                   kernel.perfState.total);
         }
+
+        case SYS_CALL_PERF_COUNT_ID:
+        {
+            return taskTableCount(&kernel.tasks);
+        }
 #endif
         
         case SYS_CALL_WRITE_ID:

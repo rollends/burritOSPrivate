@@ -3,7 +3,7 @@
 
 #include "trains/trainPhysics.h"
 /**
- * Initializes a train struct with data for train 62
+ * Initializes a train struct with data for train 68
  *
  * @param   physics     The TrainPhysics data to initialize
  *
