@@ -14,7 +14,7 @@ void TerminalDriver(void)
                 outputId     = { sysCreate(sysPriority() - 1, &TermOutNotif) };
 
     U16 const   inputBufferLength           = 32,
-                outputBufferLength          = 2048;
+                outputBufferLength          = 4096;
     U8          inputBuffer[inputBufferLength];
     U8          outputBuffer[outputBufferLength];
     QueueU8     qInput;

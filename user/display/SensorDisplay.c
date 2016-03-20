@@ -1,3 +1,4 @@
+#include "user/display/SensorDisplay.h"
 #include "user/services/services.h"
 
 #define SENSOR_LIST_COUNT 14
@@ -7,9 +8,9 @@ typedef struct
     U8 r;
     U8 c;
     char s;
-} MapEntry;
+} SensorMapEntry;
 
-static MapEntry sMapping[255];
+static SensorMapEntry sMapping[255];
 
 static U32 decmod(U32 val, U32 mod)
 {
@@ -103,7 +104,7 @@ static void initSensorUi(U8 index)
     printf("\033[s\033[%d;18H_.____._\\______._\\_____________/_.__________\033[u",   14 + index);
 }
 
-static void initMapping()
+static void initSensorMapping()
 {
     sMapping[0x00].r = 4;
     sMapping[0x00].c = 6;
@@ -471,7 +472,7 @@ void SensorDisplay(void)
     TaskID id = VAL_TO_ID(sysCreate(sysPriority()-1, &SensorDisplayPoll));
 
     U8 index = 0;
-    initMapping();
+    initSensorMapping();
 
     MessageEnvelope env;
     TaskID sender;

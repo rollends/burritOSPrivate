@@ -6,6 +6,7 @@
 #include "user/display/PerformanceDisplay.h"
 #include "user/display/PromptDisplay.h"
 #include "user/display/SensorDisplay.h"
+#include "user/display/SwitchDisplay.h"
 #include "user/display/TacoDisplay.h"
 #include "user/services/services.h"
 #include "user/trainservers/trainservices.h"
@@ -51,7 +52,8 @@ void PromptDisplay(void)
     sysCreate(2, &IdlePerformanceDisplay);
     sysCreate(4, &DigitalClockDisplay);
     displayTasks[0].value = sysCreate(4, &SensorDisplay);
-    displayTasks[1].value = sysCreate(4, &PerformanceDisplay);
+    displayTasks[1].value = sysCreate(4, &SwitchDisplay);
+    displayTasks[2].value = sysCreate(4, &PerformanceDisplay);
     displayTasks[4].value = sysCreate(20, &TacoDisplay);
 
     index[0] = 3;
