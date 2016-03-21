@@ -11,6 +11,20 @@ typedef struct
 } SensorMapEntry;
 
 static SensorMapEntry sSensorMapping[255];
+static U8 lastSensorMapping[80][2];
+
+static U8 sensorColor(U8 owner)
+{
+    switch (owner)
+    {
+        case 64:
+            return 34;
+        case 69:
+            return 35;
+        default:
+            return 37;
+    }
+}
 
 static U32 decmod(U32 val, U32 mod)
 {
@@ -24,7 +38,7 @@ static U32 decmod(U32 val, U32 mod)
     }
 }
 
-static void updateSensor(U8 val, U8 clear, U8 index)
+static void updateSensor(U8 val, U8 clear, U8 color, U8 index)
 {
     U8 r = sSensorMapping[val].r + index;
     U8 c = sSensorMapping[val].c + 24;
@@ -36,41 +50,50 @@ static void updateSensor(U8 val, U8 clear, U8 index)
     }
     else
     {
-        printf("\033[s\033[%d;%dH\033[1m%c\033[m\033[u", r, c, symbol);
+        printf("\033[s\033[%d;%dH\033[%d;1m%c\033[m\033[u", r, c, color, symbol);
     }
 }
 
 static void updateSensorUi( U8* recentList, U8* ownerList, U8 recentHead, U8 index )
 {
     U8 i;
-    U8 lastVal = 0;
     for(i = 3; i < SENSOR_LIST_COUNT; ++i )
     {
         U8 val = recentList[recentHead];
+        U8 owner = ownerList[recentHead];
+
         if( val == 0xFF )
         {
-            return;
+            break;
         }
        
         if (i == 3)
         {
             printf("\033[s\033[%d;4H\033[1m%c%2d\033[m\033[u", i + index + 1, 'A' + (val >> 4), 1 + (val & 0x0F));
-            lastVal = val;
-        }
-        else if (i == 4)
-        {
-            printf("\033[s\033[%d;4H%c%2d\033[u", i + index + 1, 'A' + (val >> 4), 1 + (val & 0x0F));
-            updateSensor(val, 1, index);
-            updateSensor(lastVal, 0, index);
         }
         else
         {
             printf("\033[s\033[%d;4H%c%2d\033[u", i + index + 1, 'A' + (val >> 4), 1 + (val & 0x0F));
         }
 
-        printf("\033[s\033[%d;10H%b\033[u", i + index + 1, ownerList[recentHead]);
-
+        printf("\033[s\033[%d;10H%b\033[u", i + index + 1, owner);
         recentHead = decmod(recentHead, SENSOR_LIST_COUNT);
+    }
+
+    for (i = 60; i < 70; i++)
+    {
+        if (lastSensorMapping[i][0] != 0xFF)
+        {
+            updateSensor(lastSensorMapping[i][0], 0, sensorColor(i), index);
+
+            if (lastSensorMapping[i][1] != 0xFF &&
+                lastSensorMapping[i][0] != lastSensorMapping[i][1])
+            {
+                updateSensor(lastSensorMapping[i][1], 1, sensorColor(i), index);
+            }
+
+            lastSensorMapping[i][1] = lastSensorMapping[i][0];
+        }
     }
 }
 
@@ -81,11 +104,11 @@ static void initSensorUi(U8 index)
     {
         if (i == 3)
         {
-            printf("\033[s\033[%d;2H|  v  |      |\033[u", i + index);
+            printf("\033[s\033[%d;2H|     |      |\033[u", i + index);
         }
         else if (i == SENSOR_LIST_COUNT + 1)
         {
-            printf("\033[s\033[%d;2H|  ^  |      |\033[u", i + index);
+            printf("\033[s\033[%d;2H|     |      |\033[u", i + index);
         }
         else
         {
@@ -451,6 +474,12 @@ void SensorDisplayPoll(void)
         owner[i] = 0x00;
     }
 
+    for (i = 0; i < 80; i++)
+    {
+        lastSensorMapping[i][0] = 0xFF;
+        lastSensorMapping[i][1] = 0xFF;
+    }
+
     for(;;)
     {
         U32 sensorValues[5];
@@ -469,7 +498,12 @@ void SensorDisplayPoll(void)
 
                     att.message.MessageU8.body = (i-1)*16 + c;
                     sysSend(attrib.value, &att, &att);
-                    owner[bufferHead] = att.message.MessageU8.body;
+                    U8 ownerValue = att.message.MessageU8.body;
+                    owner[bufferHead] = ownerValue; 
+                    if (ownerValue != 0)
+                    {
+                        lastSensorMapping[owner[bufferHead]][0] = storedValue;
+                    }
 
                     bufferHead = (bufferHead + 1) % SENSOR_LIST_COUNT;
                 }

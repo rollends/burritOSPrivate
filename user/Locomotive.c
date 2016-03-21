@@ -755,6 +755,7 @@ static void LocomotiveGPS(void)
     TaskID tPosCourier = VAL_TO_ID(sysPid());
     U8 courierWaiting = 0;
 
+    TaskID tAttrib = nsWhoIs(NodeAttribution);
     GPSUpdate update;
     for(;;)
     {
@@ -777,12 +778,21 @@ static void LocomotiveGPS(void)
                 {
                     U16 isHit = (sensors[i] & (1 << (15-c)));
                     
-                    if( !isHit ) continue;
+                    if( !isHit ) 
+                        continue;
                     
+                    U8 v = i * 16 + c;
+                    MessageEnvelope att;
+                    att.message.MessageU8.body = v;
+                    sysSend(tAttrib.value, &att, &att);
+
+                    if( att.message.MessageU8.body != train && att.message.MessageU8.body != 0)
+                        continue;
+
                     if( !position )
                     {
                         sensorHit = 1;
-                        nextSensors[0] = c + i * 16;
+                        nextSensors[0] = v;
                         distances[0] = 0;
                     }
                     else
@@ -790,7 +800,7 @@ static void LocomotiveGPS(void)
                         U8 s = 0;
                         for(s = 1; s <= 3; ++s)
                         {
-                            if(nextSensors[s - 1] == (c + i * 16))
+                            if(nextSensors[s - 1] == v)
                             {
                                 sensorHit = min(sensorHit, s);
                                 break;
