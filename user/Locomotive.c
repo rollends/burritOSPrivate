@@ -83,7 +83,7 @@ void Locomotive(void)
     const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
     const char * strPredictTrain = "\033[s\033[48;1H\033[2KNext Prediction:\tTrain %2d | Location %c%2d | Time %dkt\033[u";
     const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dkt | \033[1mDeltaT %dkt\033[m | Correction: %dkt\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
-    //const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Target Speed %d | Velocity %dmm/mt | Acceleration %dmm/mt^2\033[u";
+    const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Target Speed %d | Velocity %dmm/mt | Acceleration %dmm/mt^2\033[u";
 
     TrackNode graph[TRACK_MAX]; 
     
@@ -111,7 +111,7 @@ void Locomotive(void)
     trainPhysicsSetSpeed(&physics, 0);
     
     // Initialize our track graph
-    init_trackb(graph);
+    init_tracka(graph);
  
     // Startup Radio comm (for commands)
     assert(sysPriority() < 31);
@@ -142,6 +142,7 @@ void Locomotive(void)
     U8      setSpeed = 0xFF;
     U8      isLaunching = 1;
     U8      hasConflict = 0;
+    U32     random = 46;
     GPSUpdate previousUpdate;
     GPSUpdate update;
 
@@ -159,23 +160,27 @@ void Locomotive(void)
             timerSample(TIMER_4, &tickTimer);
             S32 delta = trainPhysicsStep(&physics, tickTimer.delta);
 
+            printf(strPhysicsTrain, train, physics.speed, physics.velocity, physics.acceleration);
+
             S32 requiredDistance = delta + (3*trainPhysicsStopDist(&physics)) / 2;
-            if( previousSensor != 0 && ((requiredDistance > 5) || hasConflict) )
+            if( previousSensor != 0 )
             {
                 TrackNode* ip = previousSensor;   
                 TrackRequest requests[30];
                 U8 iRequest = 0;
                 U8 indNext = 0xFF;
 
+                requiredDistance = 300;
                 if(hasConflict)
                 {
-                    requiredDistance = 100;
+                    requiredDistance = 200;
                 }
-                
+               
+                ListU32Node* node = 0;
                 if( stopSensor < 0xFFFF )
                 {
-                    pathFind(graph, previousSensor - graph, stopSensor, &destinationPath);
-                    queueU8Pop(&destinationPath.qPath, &indNext);
+                    node = destinationPath.path.head;
+                    indNext = node->data;
                 }
                 
                 U8 aBranchAction[4], aBranchId[4];
@@ -183,11 +188,16 @@ void Locomotive(void)
                 queueU8Init(&qBranchAction, aBranchAction, 4);
                 queueU8Init(&qBranchId, aBranchId, 4);
                 U8 sensorCount = 0;
+                U32 distToTravel = 0;
                 do
                 {
                     if( indNext != 0xFF )
                     {
-                        queueU8Pop(&destinationPath.qPath, &indNext);
+                        node = node->next;
+                        if( node )
+                            indNext = node->data;
+                        else
+                            indNext = 0xFF;
                     }
 
                     U32 indCurrent = ip - graph;
@@ -196,22 +206,24 @@ void Locomotive(void)
                     {
                         SwitchState sw = eStraight;
                         
+                        env.type = MESSAGE_SWITCH_READ;
+                        env.message.MessageU32.body = (indCurrent - 80) / 2;
+                        sysSend(sSwitchOffice.value, &env, &env);
+                        sw = (SwitchState)env.message.MessageU32.body;
+
                         if( indNext != 0xFF )
                         {
-                            sw = ((ip->edge[DIR_AHEAD].dest - graph) == indNext 
+                            SwitchState swn = ((ip->edge[DIR_AHEAD].dest - graph) == indNext 
                                 ? eStraight 
                                 : eCurved);
-                            queueU8Push(&qBranchId, ip->num);
-                            queueU8Push(&qBranchAction, sw);
+                            if( swn != sw && (distToTravel >= 50) )
+                            {
+                                queueU8Push(&qBranchId, ip->num);
+                                queueU8Push(&qBranchAction, swn);
+                            }
+                            sw = swn;
                         }
-                        else
-                        {
-                            env.type = MESSAGE_SWITCH_READ;
-                            env.message.MessageU32.body = (indCurrent - 80) / 2;
-                            sysSend(sSwitchOffice.value, &env, &env);
-                            sw = (SwitchState)env.message.MessageU32.body;
-                        }
-                        edge = ip->edge + (sw == eCurved ? DIR_CURVED : DIR_AHEAD);  
+                        edge = &ip->edge[(sw == eCurved ? DIR_CURVED : DIR_AHEAD)];  
                     }
                     else if(ip->type == eNodeSensor)
                         sensorCount++;
@@ -221,12 +233,13 @@ void Locomotive(void)
                     requests[iRequest].pReverseRequest = 0;
                     requests[iRequest].pForwardRequest = &requests[iRequest+1];
                     iRequest++;
-                    requiredDistance -= (edge->dist - edge->dx);
-                  
+                    requiredDistance -= (edge->dist);// - edge->dx);
+                    distToTravel += (edge->dist);
+
                   if( ip->type == eNodeExit ) break;
                   
                     ip = edge->dest;
-                } while( (requiredDistance > 0) || (sensorCount < 2) );
+                } while( (requiredDistance > 0) || (sensorCount < 3) );
 
                 // End off shitty linked list..
                 requests[iRequest-1].pForwardRequest = 0;
@@ -241,7 +254,7 @@ void Locomotive(void)
                 else if(trainAllocateTrack(train, requests) < 0)
                 {
                     // Failed allocation
-                    throttle = (throttle > 2 ? throttle - 2 : 0);
+                    throttle = 0;
                     trainSetSpeed(sTrainDriver, train, throttle);
                     trainPhysicsSetSpeed(&physics, throttle);
                     hasConflict = 1;
@@ -256,6 +269,7 @@ void Locomotive(void)
                 }
                 else if( stopSensor < 0xFFFF )
                 {
+                    
                     while(qBranchAction.count)
                     {
                         U8 action, branch;
@@ -264,8 +278,8 @@ void Locomotive(void)
                         
                         MessageEnvelope e;
                         SwitchRequest req;
-                        req.startTime = 0;
-                        req.endTime = 0;
+                        req.startTime = clockTime(nsWhoIs(Clock));
+                        req.endTime = req.startTime;
                         req.indBranchNode = 2 * branch + 80;
                         req.branchId = branch;
                         req.direction = (SwitchState)action;
@@ -275,6 +289,7 @@ void Locomotive(void)
 
                         sysSend(sSwitchOffice.value, &e, &e);
                     }
+                   
                 }
             }
             /* 
@@ -327,7 +342,16 @@ void Locomotive(void)
  
             timerSample(TIMER_4, &errorTimer);
             
-            if(previousSensor != 0)
+            if( isLaunching )
+            {
+                isLaunching = 0;
+                trainSetSpeed(sTrainDriver, train, 0);
+                
+                TaskID tRadio = VAL_TO_ID(sysCreate(sysPriority()+1, &LocomotiveRadio));
+                env.message.MessageU8.body = train;
+                sysSend(tRadio.value, &env, &env);
+            }
+            else if( stopSensor < 0xFFFF && previousSensor != 0)
             {
                 timerSample(TIMER_4, &tickTimer);
                 trainPhysicsStep(&physics, tickTimer.delta);
@@ -343,6 +367,20 @@ void Locomotive(void)
                 else
                 {
                     printf(strPredictClearTrain);
+                }
+
+                if( stopSensor == currentSensor )
+                {
+                    do
+                    {
+                        nextRandU32(&random);
+                        destinationSensor = random % 80;
+                    } while( pathFind(graph, currentSensor, destinationSensor, &destinationPath) < 0 );
+                    stopSensor = destinationSensor;
+                }
+                else if( stopSensor < 0xFFFF )
+                {
+                    pathFind(graph, currentSensor, stopSensor, &destinationPath);
                 }
 
                 // Predict
@@ -411,15 +449,6 @@ void Locomotive(void)
                            physics.velocity);
                 }
             }
-            else if( isLaunching )
-            {
-                isLaunching = 0;
-                trainSetSpeed(sTrainDriver, train, 0);
-                
-                TaskID tRadio = VAL_TO_ID(sysCreate(sysPriority()+1, &LocomotiveRadio));
-                env.message.MessageU8.body = train;
-                sysSend(tRadio.value, &env, &env);
-            }
 
             previousSensor = graph + currentSensor;
         }
@@ -435,18 +464,14 @@ void Locomotive(void)
             case MESSAGE_TRAIN_STOP:
             {
                 destinationSensor = env.message.MessageU32.body;
-                sysReply(from.value, &env);
+                
+                throttle = 5;
+                trainSetSpeed(sTrainDriver, train, 5); 
+                trainPhysicsSetSpeed(&physics, throttle);
                 
                 stopSensor = destinationSensor;
-               
-                /*
-                do
-                {
-                    nextRandU32(&random);
-                    destinationSensor = random % 80;
-                } while( pathFind(graph, stopSensor, destinationSensor, &destinationPath) < 0 );
-                */
-
+                pathFind(graph, previousSensor - graph, stopSensor, &destinationPath);
+                sysReply(from.value, &env);
                 break;
             }
 

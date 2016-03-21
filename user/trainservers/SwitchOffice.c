@@ -138,7 +138,10 @@ void SwitchExecutive(void)
                 newInterval->request = *request;
                 newInterval->next = 0;
                 switchCalendar[cid] = newInterval;
-                    
+                
+                // First one in...set it.
+                switches[cid] = request->direction;
+                
                 sysReply(person.value, &env);
                 env.message.MessageArbitrary.body = (U32*)(&newInterval->request);
                 sysSend(sysCreate(priority - 1, &SwitchWorker), &env, &env);    
@@ -147,13 +150,15 @@ void SwitchExecutive(void)
 
             SwitchRequest cRequest = cNode->request;
             IntervalNode* next = cNode->next;
-            for(;;)
+            U8 taken = 0;
+            while(!taken)
             {
                 if( ((cRequest.startTime <= request->endTime) && (cRequest.endTime >= request->startTime))
                  || ((cRequest.endTime <= request->startTime) && (cRequest.startTime >= request->endTime)))
                 {
                     // Fail! The switch is taken!
                     sysReply(person.value, &env);
+                    taken = 1;
                     //assert(0);
                 }
 
@@ -164,6 +169,9 @@ void SwitchExecutive(void)
                 }
                 cNode = next;
             }
+
+            if( taken )
+                break;
 
             assert(switchFreeList);
             IntervalNode* newInterval = switchFreeList;
