@@ -22,7 +22,8 @@ typedef enum
     TrainYard         = 6,
     TrainCommander    = 7,
     TrackManager      = 8,
-    TaskNameCount     = 9,
+    NodeAttribution   = 9,
+    TaskNameCount     = 10,
 } TaskName;
 
 /** Nameserver Registration Method

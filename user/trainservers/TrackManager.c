@@ -19,15 +19,34 @@ S32 trainAllocateTrack(U8 trainId, TrackRequest* entryNode)
     return 0;
 }
 
+static U8 ownershipGraph[TRACK_MAX / 2];
+
+void NodeAttributionServer(void)
+{
+    nsRegister(NodeAttribution);
+
+    for (;;)
+    {
+        TaskID from;
+        MessageEnvelope env;
+
+        sysReceive(&from.value, &env);
+        U8 node = env.message.MessageU8.body;
+        env.message.MessageU8.body = ownershipGraph[node/2];
+        sysReply(from.value, &env);
+    }
+}
+
 void TrackManagerServer(void)
 {
     //TrackNode graph[TRACK_MAX];
     //init_trackb(graph);
     U8 i = 0;
-    U16 ownershipGraph[TRACK_MAX / 2];
-    memset(ownershipGraph, 0xFF, sizeof(U16) * TRACK_MAX / 2);
+    memset(ownershipGraph, 0x00, sizeof(U8) * TRACK_MAX / 2);
 
     nsRegister(TrackManager);
+    sysCreate(5, &NodeAttributionServer);
+
     for(;;)
     {
         TaskID from;
@@ -44,12 +63,12 @@ void TrackManagerServer(void)
             // Revoke any other requests.
             for(i = 0; i < (TRACK_MAX/2); ++i)
                 if( ownershipGraph[i] == ir->trainId )
-                    ownershipGraph[i] = 0xFFFF;
+                    ownershipGraph[i] = 0x00;
             
             // Allocate the request.
             do
             {
-                if((ownershipGraph[ir->indNode] != ir->trainId) && (ownershipGraph[ir->indNode] != 0xFFFF))
+                if((ownershipGraph[ir->indNode] != ir->trainId) && (ownershipGraph[ir->indNode] != 0x00))
                 {
                     // CONFLICT
                     env.type = MESSAGE_FAILURE;

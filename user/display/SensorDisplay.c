@@ -27,7 +27,7 @@ static U32 decmod(U32 val, U32 mod)
 static void updateSensor(U8 val, U8 clear, U8 index)
 {
     U8 r = sSensorMapping[val].r + index;
-    U8 c = sSensorMapping[val].c + 18;
+    U8 c = sSensorMapping[val].c + 24;
     char symbol = sSensorMapping[val].s;
 
     if (clear == 1)
@@ -40,7 +40,7 @@ static void updateSensor(U8 val, U8 clear, U8 index)
     }
 }
 
-static void updateSensorUi( U8* recentList, U8 recentHead, U8 index )
+static void updateSensorUi( U8* recentList, U8* ownerList, U8 recentHead, U8 index )
 {
     U8 i;
     U8 lastVal = 0;
@@ -68,6 +68,8 @@ static void updateSensorUi( U8* recentList, U8 recentHead, U8 index )
             printf("\033[s\033[%d;4H%c%2d\033[u", i + index + 1, 'A' + (val >> 4), 1 + (val & 0x0F));
         }
 
+        printf("\033[s\033[%d;10H%b\033[u", i + index + 1, ownerList[recentHead]);
+
         recentHead = decmod(recentHead, SENSOR_LIST_COUNT);
     }
 }
@@ -79,30 +81,30 @@ static void initSensorUi(U8 index)
     {
         if (i == 3)
         {
-            printf("\033[s\033[%d;2H|  v  |\033[u", i + index);
+            printf("\033[s\033[%d;2H|  v  |      |\033[u", i + index);
         }
         else if (i == SENSOR_LIST_COUNT + 1)
         {
-            printf("\033[s\033[%d;2H|  ^  |\033[u", i + index);
+            printf("\033[s\033[%d;2H|  ^  |      |\033[u", i + index);
         }
         else
         {
-            printf("\033[s\033[%d;2H|     |\033[u", i + index);
+            printf("\033[s\033[%d;2H|     |      |\033[u", i + index);
         }
     }
 
     printf("\033[s\033[%d;80H\033[1mSENSORS\033[m\033[u", index);
-    printf("\033[s\033[%d;18H______.______._____________________.___\033[u",          4 + index);
-    printf("\033[s\033[%d;18H_____._/ /___.________.___.________.___\\\033[u",        5 + index);
-    printf("\033[s\033[%d;18H  __._/ //           \\     /           \\\\.\033[u",    6 + index);
-    printf("\033[s\033[%d;18H       //            .\\ | /.           .\\\\\033[u",    7 + index);
-    printf("\033[s\033[%d;18H       |.             .\\|/.              |\033[u",      8 + index);
-    printf("\033[s\033[%d;18H       |                |                |\033[u",       9 + index);
-    printf("\033[s\033[%d;18H       |.             ./|\\.              |\033[u",      10 + index);
-    printf("\033[s\033[%d;18H  _.__ \\\\            ./ | \\.           .//\033[u",    11 + index);
-    printf("\033[s\033[%d;18H_.__._\\ \\\\___._______/.___.\\_______.___//.\033[u",   12 + index);
-    printf("\033[s\033[%d;18H_.___._\\ \\___.____.___________.____.___/\033[u",       13 + index);
-    printf("\033[s\033[%d;18H_.____._\\______._\\_____________/_.__________\033[u",   14 + index);
+    printf("\033[s\033[%d;24H______.______._____________________.___\033[u",          4 + index);
+    printf("\033[s\033[%d;24H_____._/ /___.________.___.________.___\\\033[u",        5 + index);
+    printf("\033[s\033[%d;24H  __._/ //           \\     /           \\\\.\033[u",    6 + index);
+    printf("\033[s\033[%d;24H       //            .\\ | /.           .\\\\\033[u",    7 + index);
+    printf("\033[s\033[%d;24H       |.             .\\|/.              |\033[u",      8 + index);
+    printf("\033[s\033[%d;24H       |                |                |\033[u",       9 + index);
+    printf("\033[s\033[%d;24H       |.             ./|\\.              |\033[u",      10 + index);
+    printf("\033[s\033[%d;24H  _.__ \\\\            ./ | \\.           .//\033[u",    11 + index);
+    printf("\033[s\033[%d;24H_.__._\\ \\\\___._______/.___.\\_______.___//.\033[u",   12 + index);
+    printf("\033[s\033[%d;24H_.___._\\ \\___.____.___________.____.___/\033[u",       13 + index);
+    printf("\033[s\033[%d;24H_.____._\\______._\\_____________/_.__________\033[u",   14 + index);
 }
 
 static void initSensorMapping()
@@ -299,7 +301,6 @@ static void initSensorMapping()
     sSensorMapping[0x2F].c = 18;
     sSensorMapping[0x2F].s = '<';
 
-
     sSensorMapping[0x30].r = 8;
     sSensorMapping[0x30].c = 26;
     sSensorMapping[0x30].s = 'v';
@@ -363,7 +364,6 @@ static void initSensorMapping()
     sSensorMapping[0x3F].r = 11;
     sSensorMapping[0x3F].c = 27;
     sSensorMapping[0x3F].s = 'v';
-
 
     sSensorMapping[0x40].r = 8;
     sSensorMapping[0x40].c = 22;
@@ -431,18 +431,25 @@ static void initSensorMapping()
 }
 
 static U8 buffer[SENSOR_LIST_COUNT];
+static U8 owner[SENSOR_LIST_COUNT];
 static U8 bufferHead;
 
 void SensorDisplayPoll(void)
 {
     TaskID sensors = nsWhoIs(TrainSensors);
+    TaskID attrib = nsWhoIs(NodeAttribution);
     TaskID parent = VAL_TO_ID(sysPid());
 
     U16 i = 0;
     bufferHead = 0;
     MessageEnvelope env;
+    MessageEnvelope att;
 
-    for(i = 0; i < SENSOR_LIST_COUNT; i++) buffer[i] = 0xFF;
+    for(i = 0; i < SENSOR_LIST_COUNT; i++)
+    {
+        buffer[i] = 0xFF;
+        owner[i] = 0x00;
+    }
 
     for(;;)
     {
@@ -459,6 +466,11 @@ void SensorDisplayPoll(void)
                 {
                     U8 storedValue = ((i-1) << 4) | c;
                     buffer[bufferHead] = storedValue;
+
+                    att.message.MessageU8.body = (i-1)*16 + c;
+                    sysSend(attrib.value, &att, &att);
+                    owner[bufferHead] = att.message.MessageU8.body;
+
                     bufferHead = (bufferHead + 1) % SENSOR_LIST_COUNT;
                 }
             }
@@ -486,7 +498,7 @@ void SensorDisplay(void)
         {
             if (index != 0)
             {
-                updateSensorUi(buffer, decmod(bufferHead, SENSOR_LIST_COUNT), index); 
+                updateSensorUi(buffer, owner, decmod(bufferHead, SENSOR_LIST_COUNT), index); 
             }
         }
         else
