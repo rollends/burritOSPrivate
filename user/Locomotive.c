@@ -83,7 +83,6 @@ void Locomotive(void)
     const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
     const char * strPredictTrain = "\033[s\033[48;1H\033[2KNext Prediction:\tTrain %2d | Location %c%2d | Time %dkt\033[u";
     const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dkt | \033[1mDeltaT %dkt\033[m | Correction: %dkt\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
-    const char * strPhysicsTrain = "\033[s\033[50;1H\033[2KPhysics:\t\tTrain %2d | Target Speed %d | Velocity %dmm/mt | Acceleration %dmm/mt^2\033[u";
 
     TrackNode graph[TRACK_MAX]; 
     
@@ -149,7 +148,7 @@ void Locomotive(void)
     U8      destinationSensor = 46;
     GraphPath destinationPath;
 
-    trainSetSpeed(sTrainDriver, train, 3);
+    trainSetSpeed(sTrainDriver, train, 5);
     for(;;)
     {
         sysReceive(&from.value, &env);
@@ -160,8 +159,6 @@ void Locomotive(void)
             timerSample(TIMER_4, &tickTimer);
             S32 delta = trainPhysicsStep(&physics, tickTimer.delta);
 
-            printf(strPhysicsTrain, train, physics.speed, physics.velocity, physics.acceleration);
-
             S32 requiredDistance = delta + (3*trainPhysicsStopDist(&physics)) / 2;
             if( previousSensor != 0 )
             {
@@ -170,14 +167,13 @@ void Locomotive(void)
                 U8 iRequest = 0;
                 U8 indNext = 0xFF;
 
-                requiredDistance = 300;
-                if(hasConflict)
+                if (hasConflict)
                 {
                     requiredDistance = 200;
                 }
                
                 ListU32Node* node = 0;
-                if( stopSensor < 0xFFFF )
+                if (stopSensor < 0xFFFF)
                 {
                     node = destinationPath.path.head;
                     indNext = node->data;
@@ -216,12 +212,13 @@ void Locomotive(void)
                             SwitchState swn = ((ip->edge[DIR_AHEAD].dest - graph) == indNext 
                                 ? eStraight 
                                 : eCurved);
-                            if( swn != sw && (distToTravel >= 50) )
+                            U32 kticks = trainPhysicsGetTime(&physics, distToTravel) / 1000;
+                            if( swn != sw && ( kticks >= 800) )
                             {
                                 queueU8Push(&qBranchId, ip->num);
                                 queueU8Push(&qBranchAction, swn);
+                                sw = swn;
                             }
-                            sw = swn;
                         }
                         edge = &ip->edge[(sw == eCurved ? DIR_CURVED : DIR_AHEAD)];  
                     }
@@ -233,8 +230,8 @@ void Locomotive(void)
                     requests[iRequest].pReverseRequest = 0;
                     requests[iRequest].pForwardRequest = &requests[iRequest+1];
                     iRequest++;
-                    requiredDistance -= (edge->dist);// - edge->dx);
-                    distToTravel += (edge->dist);
+                    requiredDistance -= (edge->dist - edge->dx);
+                    distToTravel += (edge->dist - edge->dx);
 
                   if( ip->type == eNodeExit ) break;
                   
@@ -465,8 +462,8 @@ void Locomotive(void)
             {
                 destinationSensor = env.message.MessageU32.body;
                 
-                throttle = 5;
-                trainSetSpeed(sTrainDriver, train, 5); 
+                throttle = 8;
+                trainSetSpeed(sTrainDriver, train, 8); 
                 trainPhysicsSetSpeed(&physics, throttle);
                 
                 stopSensor = destinationSensor;

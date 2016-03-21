@@ -83,6 +83,7 @@ void PerformanceDisplay()
             index = env.message.MessageU8.body;
             if (index != 0)
             {
+                printf("\033[s\033[%d;80H\033[1mPERFORMANCE\033[m\033[u", index);
                 printf("\033[s\033[%d;2H\033[7mTaskId\t\t\tTsk %%\tKrnl %%\tTtl %%\tTsk us\t\tKrnl us\t\tTtl us\033[m\033[u", index + 2);
 
             }

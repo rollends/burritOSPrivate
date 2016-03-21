@@ -10,7 +10,7 @@ typedef struct
     char straight;
 } SwitchMapEntry;
 
-static SwitchMapEntry sMapping[22];
+static SwitchMapEntry sSwitchMapping[22];
 static U8 switchState[22];
 
 static U8 id2Sw(U8 id)
@@ -35,17 +35,19 @@ static void updateSwitchUi(U8 index)
     for(i = 0; i < 22; ++i )
     {
         char symbol = (switchState[i] == eCurved ? 'C' : 'S');
-        char marker = (switchState[i] == eCurved ? sMapping[i].curved : sMapping[i].straight);
+        char marker = (switchState[i] == eCurved ? sSwitchMapping[i].curved : sSwitchMapping[i].straight);
         printf("\033[s\033[%d;17H%c\033[u", i + index, symbol);
         printf("\033[s\033[%d;%dH\033[1m%c\033[m\033[u",
-                    sMapping[i].r + index,
-                    sMapping[i].c + 25,
+                    sSwitchMapping[i].r + index,
+                    sSwitchMapping[i].c + 25,
                     marker);
     }
 }
 
 static void initSwitchUi(U8 index)
 {
+    printf("\033[s\033[%d;80H\033[1mSWITCHES\033[m\033[u", index);
+
     printf("\033[s\033[%d;25H______________________________________\033[u",          4 + index);
     printf("\033[s\033[%d;25H_______/  /                           \\\033[u",          5 + index);
     printf("\033[s\033[%d;25H  ____/  /_____________________________\\\033[u",        6 + index);
@@ -65,11 +67,11 @@ static void initSwitchUi(U8 index)
     {
         U8 sw = id2Sw(i);
         char symbol = (switchState[i] == eCurved ? 'C' : 'S');
-        char marker = (switchState[i] == eCurved ? sMapping[i].curved : sMapping[i].straight);
+        char marker = (switchState[i] == eCurved ? sSwitchMapping[i].curved : sSwitchMapping[i].straight);
         printf("\033[s\033[%d;2H| %3d | %b | %c |\033[u", i + index, sw, sw, symbol);
         printf("\033[s\033[%d;%dH\033[1m%c\033[m\033[u",
-                    sMapping[i].r + index,
-                    sMapping[i].c + 25,
+                    sSwitchMapping[i].r + index,
+                    sSwitchMapping[i].c + 25,
                     marker);
     }
 }
@@ -79,121 +81,121 @@ static void initSwitchMapping()
     U8 i;
     for (i = 0; i < 22; i++)
     {
-        sMapping[i].r = 1;
-        sMapping[i].c = 1;
-        sMapping[i].curved = ' ';
-        sMapping[i].straight = ' ';
+        sSwitchMapping[i].r = 1;
+        sSwitchMapping[i].c = 1;
+        sSwitchMapping[i].curved = ' ';
+        sSwitchMapping[i].straight = ' ';
     }
 
-    sMapping[0].r = 14;
-    sMapping[0].c = 7;
-    sMapping[0].curved = '\\';
-    sMapping[0].straight = '_';
+    sSwitchMapping[0].r = 14;
+    sSwitchMapping[0].c = 7;
+    sSwitchMapping[0].curved = '\\';
+    sSwitchMapping[0].straight = '_';
 
-    sMapping[1].r = 15;
-    sMapping[1].c = 8;
-    sMapping[1].curved = '\\';
-    sMapping[1].straight = '_';
+    sSwitchMapping[1].r = 15;
+    sSwitchMapping[1].c = 8;
+    sSwitchMapping[1].curved = '\\';
+    sSwitchMapping[1].straight = '_';
 
-    sMapping[2].r = 16;
-    sMapping[2].c = 9;
-    sMapping[2].curved = '\\';
-    sMapping[2].straight = '_';
+    sSwitchMapping[2].r = 16;
+    sSwitchMapping[2].c = 9;
+    sSwitchMapping[2].curved = '\\';
+    sSwitchMapping[2].straight = '_';
 
-    sMapping[3].r = 6;
-    sMapping[3].c = 6;
-    sMapping[3].curved = '/';
-    sMapping[3].straight = ' ';
+    sSwitchMapping[3].r = 6;
+    sSwitchMapping[3].c = 6;
+    sSwitchMapping[3].curved = '/';
+    sSwitchMapping[3].straight = ' ';
 
-    sMapping[4].r = 16;
-    sMapping[4].c = 32;
-    sMapping[4].curved = '/';
-    sMapping[4].straight = '_';
+    sSwitchMapping[4].r = 16;
+    sSwitchMapping[4].c = 32;
+    sSwitchMapping[4].curved = '/';
+    sSwitchMapping[4].straight = '_';
 
-    sMapping[5].r = 15;
-    sMapping[5].c = 17;
-    sMapping[5].curved = '\\';
-    sMapping[5].straight = ' ';
+    sSwitchMapping[5].r = 15;
+    sSwitchMapping[5].c = 17;
+    sSwitchMapping[5].curved = '\\';
+    sSwitchMapping[5].straight = ' ';
 
-    sMapping[6].r = 15;
-    sMapping[6].c = 33;
-    sMapping[6].curved = '/';
-    sMapping[6].straight = ' ';
+    sSwitchMapping[6].r = 15;
+    sSwitchMapping[6].c = 33;
+    sSwitchMapping[6].curved = '/';
+    sSwitchMapping[6].straight = ' ';
 
-    sMapping[7].r = 14;
-    sMapping[7].c = 39;
-    sMapping[7].curved = '_';
-    sMapping[7].straight = '/';
+    sSwitchMapping[7].r = 14;
+    sSwitchMapping[7].c = 39;
+    sSwitchMapping[7].curved = '_';
+    sSwitchMapping[7].straight = '/';
 
-    sMapping[8].r = 6;
-    sMapping[8].c = 39;
-    sMapping[8].curved = '_';
-    sMapping[8].straight = '\\';
+    sSwitchMapping[8].r = 6;
+    sSwitchMapping[8].c = 39;
+    sSwitchMapping[8].curved = '_';
+    sSwitchMapping[8].straight = '\\';
 
-    sMapping[9].r = 6;
-    sMapping[9].c = 27;
-    sMapping[9].curved = '-';
-    sMapping[9].straight = '_';
+    sSwitchMapping[9].r = 6;
+    sSwitchMapping[9].c = 27;
+    sSwitchMapping[9].curved = '-';
+    sSwitchMapping[9].straight = '_';
 
-    sMapping[10].r = 5;
-    sMapping[10].c = 10;
-    sMapping[10].curved = '/';
-    sMapping[10].straight = '-';
+    sSwitchMapping[10].r = 5;
+    sSwitchMapping[10].c = 10;
+    sSwitchMapping[10].curved = '/';
+    sSwitchMapping[10].straight = '-';
 
-    sMapping[11].r = 5;
-    sMapping[11].c = 7;
-    sMapping[11].curved = '/';
-    sMapping[11].straight = '-';
+    sSwitchMapping[11].r = 5;
+    sSwitchMapping[11].c = 7;
+    sSwitchMapping[11].curved = '/';
+    sSwitchMapping[11].straight = '-';
 
-    sMapping[12].r = 6;
-    sMapping[12].c = 21;
-    sMapping[12].curved = '-';
-    sMapping[12].straight = '_';
+    sSwitchMapping[12].r = 6;
+    sSwitchMapping[12].c = 21;
+    sSwitchMapping[12].curved = '-';
+    sSwitchMapping[12].straight = '_';
 
-    sMapping[13].r = 6;
-    sMapping[13].c = 9;
-    sMapping[13].curved = '_';
-    sMapping[13].straight = '/';
+    sSwitchMapping[13].r = 6;
+    sSwitchMapping[13].c = 9;
+    sSwitchMapping[13].curved = '_';
+    sSwitchMapping[13].straight = '/';
 
-    sMapping[14].r = 14;
-    sMapping[14].c = 9;
-    sMapping[14].curved = ' ';
-    sMapping[14].straight = '\\';
+    sSwitchMapping[14].r = 14;
+    sSwitchMapping[14].c = 9;
+    sSwitchMapping[14].curved = ' ';
+    sSwitchMapping[14].straight = '\\';
 
-    sMapping[15].r = 13;
-    sMapping[15].c = 22;
-    sMapping[15].curved = '-';
-    sMapping[15].straight = '_';
+    sSwitchMapping[15].r = 13;
+    sSwitchMapping[15].c = 22;
+    sSwitchMapping[15].curved = '-';
+    sSwitchMapping[15].straight = '_';
 
-    sMapping[16].r = 13;
-    sMapping[16].c = 26;
-    sMapping[16].curved = '-';
-    sMapping[16].straight = '_';
+    sSwitchMapping[16].r = 13;
+    sSwitchMapping[16].c = 26;
+    sSwitchMapping[16].curved = '-';
+    sSwitchMapping[16].straight = '_';
 
-    sMapping[17].r = 16;
-    sMapping[17].c = 18;
-    sMapping[17].curved = '\\';
-    sMapping[17].straight = '_';
+    sSwitchMapping[17].r = 16;
+    sSwitchMapping[17].c = 18;
+    sSwitchMapping[17].curved = '\\';
+    sSwitchMapping[17].straight = '_';
 
-    sMapping[18].r = 11;
-    sMapping[18].c = 23;
-    sMapping[18].curved = '/';
-    sMapping[18].straight = ']';
+    sSwitchMapping[18].r = 11;
+    sSwitchMapping[18].c = 23;
+    sSwitchMapping[18].curved = '/';
+    sSwitchMapping[18].straight = ']';
 
-    sMapping[19].r = 11;
-    sMapping[19].c = 25;
-    sMapping[19].curved = '\\';
-    sMapping[19].straight = '[';
+    sSwitchMapping[19].r = 11;
+    sSwitchMapping[19].c = 25;
+    sSwitchMapping[19].curved = '\\';
+    sSwitchMapping[19].straight = '[';
 
-    sMapping[20].r = 9;
-    sMapping[20].c = 25;
-    sMapping[20].curved = '/';
-    sMapping[20].straight = '[';
+    sSwitchMapping[20].r = 9;
+    sSwitchMapping[20].c = 25;
+    sSwitchMapping[20].curved = '/';
+    sSwitchMapping[20].straight = '[';
 
-    sMapping[21].r = 9;
-    sMapping[21].c = 23;
-    sMapping[21].curved = '\\';
-    sMapping[21].straight = ']';
+    sSwitchMapping[21].r = 9;
+    sSwitchMapping[21].c = 23;
+    sSwitchMapping[21].curved = '\\';
+    sSwitchMapping[21].straight = ']';
 }
 
 void SwitchDisplayPoll(void)

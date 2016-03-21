@@ -3,6 +3,7 @@
 
 #include "user/display/DigitalClockDisplay.h"
 #include "user/display/IdlePerformanceDisplay.h"
+#include "user/display/OwnerDisplay.h"
 #include "user/display/PerformanceDisplay.h"
 #include "user/display/PromptDisplay.h"
 #include "user/display/SensorDisplay.h"
@@ -53,13 +54,14 @@ void PromptDisplay(void)
     sysCreate(4, &DigitalClockDisplay);
     displayTasks[0].value = sysCreate(4, &SensorDisplay);
     displayTasks[1].value = sysCreate(4, &SwitchDisplay);
-    displayTasks[2].value = sysCreate(4, &PerformanceDisplay);
+    displayTasks[2].value = sysCreate(4, &OwnerDisplay);
+    displayTasks[3].value = sysCreate(4, &PerformanceDisplay);
     displayTasks[4].value = sysCreate(20, &TacoDisplay);
 
     index[0] = 3;
     index[1] = 26;
 
-    slots[0] = 0;
+    slots[0] = 2;
     slots[1] = -1;
 
     printf("\033[s\033[3;1H---------------------------------------------------------------------------------------------\033[u");
