@@ -147,7 +147,7 @@ void Locomotive(void)
 
     U8      destinationSensor = 46;
     GraphPath destinationPath;
-
+    S32     previousStopDistance = 0;
     trainSetSpeed(sTrainDriver, train, 5);
     for(;;)
     {
@@ -159,7 +159,17 @@ void Locomotive(void)
             timerSample(TIMER_4, &tickTimer);
             S32 delta = trainPhysicsStep(&physics, tickTimer.delta);
 
-            S32 requiredDistance = delta + (3*trainPhysicsStopDist(&physics)) / 2;
+            S32 requiredDistance = delta;
+            if(!physics.targetSpeed)
+            {
+                requiredDistance += previousStopDistance;
+            }
+            else
+            {
+                previousStopDistance = trainPhysicsStopDist(&physics);
+                requiredDistance += (3*previousStopDistance) / 2;
+            }
+
             if( previousSensor != 0 )
             {
                 TrackNode* ip = previousSensor;   

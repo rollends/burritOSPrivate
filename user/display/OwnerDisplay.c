@@ -150,7 +150,7 @@ static void initOwnerMapping()
     sOwnerMapping[0x16].c = 16;
     sOwnerMapping[0x16].s = '*';
 
-    sOwnerMapping[0x17].r = 14;
+    sOwnerMapping[0x17].r = 15;
     sOwnerMapping[0x17].c = 21;
     sOwnerMapping[0x17].s = '*';
 
@@ -186,7 +186,7 @@ static void initOwnerMapping()
     sOwnerMapping[0x1F].c = 30;
     sOwnerMapping[0x1F].s = '*';
 
-    sOwnerMapping[0x20].r = 38;
+    sOwnerMapping[0x20].r = 8;
     sOwnerMapping[0x20].c = 25;
     sOwnerMapping[0x20].s = '*';
 
@@ -207,7 +207,7 @@ static void initOwnerMapping()
     sOwnerMapping[0x24].s = '*';
 
     sOwnerMapping[0x25].r = 15;
-    sOwnerMapping[0x25].c = 39;
+    sOwnerMapping[0x25].c = 38;
     sOwnerMapping[0x25].s = '*';
 
     sOwnerMapping[0x26].r = 14;
