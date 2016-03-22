@@ -5,7 +5,7 @@
 #include "trains/trackData.h"
 
 #define GRAPH_DEGREE            2
-#define GRAPH_PATH_LENGTH       128
+#define GRAPH_PATH_LENGTH       TRACK_MAX
 
 typedef struct
 {

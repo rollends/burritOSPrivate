@@ -58,7 +58,7 @@ static void PhysicsTick(void)
     for(;;)
     {
         clockDelayBy(nsWhoIs(Clock), 3);
-        sysSend(sysPid(), &env, &env); 
+        sysSend(sysPid(), &env, &env);
     }
 }
 
@@ -102,6 +102,7 @@ void Locomotive(void)
     // Setup speed 
     TaskID sTrainDriver = nsWhoIs(Train);
     TaskID sSwitchOffice = nsWhoIs(TrainSwitchOffice);
+    TaskID sClock = nsWhoIs(Clock);
     trainSetSpeed(sTrainDriver, train, 0);
 
     // Initialize Physics
@@ -141,13 +142,15 @@ void Locomotive(void)
     U8      setSpeed = 0xFF;
     U8      isLaunching = 1;
     U8      hasConflict = 0;
-    U32     random = 46;
+    U32     random = (train + 1) ^ (0x1a3fb13f);
     GPSUpdate previousUpdate;
     GPSUpdate update;
 
     U8      destinationSensor = 46;
     GraphPath destinationPath;
     S32     previousStopDistance = 0;
+    U32     distancePastPreviousSensor = 0;
+
     trainSetSpeed(sTrainDriver, train, 5);
     for(;;)
     {
@@ -158,53 +161,56 @@ void Locomotive(void)
             sysReply(from.value, &env);
             timerSample(TIMER_4, &tickTimer);
             S32 delta = trainPhysicsStep(&physics, tickTimer.delta);
+            
+            distancePastPreviousSensor += delta;
+            S32 requiredDistance = distancePastPreviousSensor;
 
-            S32 requiredDistance = delta;
             if(!physics.targetSpeed)
             {
-                requiredDistance += (5*previousStopDistance) / 2;
+                requiredDistance += ((previousStopDistance) + 300);
             }
             else
             {
                 previousStopDistance = trainPhysicsStopDist(&physics);
-                requiredDistance += (5*previousStopDistance) / 2;
+                requiredDistance += ((previousStopDistance) + 300);
             }
-                
-            if (hasConflict)
+            
+            if(stopping)
             {
                 stopping = (physics.speed != 0);
+            }
+
+            if (hasConflict)
+            {
                 if(!stopping)
                 {
                     // Try a reallocation.
+                    // we already stopped, wait a random amount (doesn't matter if physics tick is delayed. calculations are 
+                    // not being done for the 0 speed)
+                    clockDelayBy(sClock, 100 + 50*(nextRandU32(&random) % 10));
                     hasConflict = 0;
                 }
             }
-            else if (previousSensor != 0)
+            else if (!stopping && stopSensor < 0xFFFF)
             {
                 TrackNode* ip = previousSensor;   
-                TrackRequest requests[30];
+                TrackRequest requests[50];
                 U8 iRequest = 0;
-                U8 indNext = 0xFF;
 
-                if (hasConflict)
-                {
-                    requiredDistance = 200;
-                }
-               
-                ListU32Node* node = 0;
-                if (stopSensor < 0xFFFF)
-                {
-                    node = destinationPath.path.head;
-                    indNext = node->data;
-                }
+                ListU32Node* node = destinationPath.path.head;
+                U8 indNext = node->data;
                 
                 U8 aBranchAction[4], aBranchId[4];
                 QueueU8 qBranchAction, qBranchId;
                 queueU8Init(&qBranchAction, aBranchAction, 4);
                 queueU8Init(&qBranchId, aBranchId, 4);
                 U32 distToTravel = 0;
+                U32 sensorCount = 0;
+                TrackNode* nextSensor = 0;
+                U32 distToNextSensor = 0;
                 do
                 {
+                    assert(iRequest < 50);
                     if( indNext != 0xFF )
                     {
                         node = node->next;
@@ -240,7 +246,15 @@ void Locomotive(void)
                         }
                         edge = &ip->edge[(sw == eCurved ? DIR_CURVED : DIR_AHEAD)];  
                     }
-
+                    else if(ip->type == eNodeSensor)
+                    {
+                        if(!nextSensor)
+                        {
+                            nextSensor = ip;
+                            distToNextSensor = distToTravel;
+                        }
+                        sensorCount++;
+                    }
                     requests[iRequest].trainId = train;
                     requests[iRequest].indNode = indCurrent / 2;
                     requests[iRequest].pReverseRequest = 0;
@@ -252,24 +266,32 @@ void Locomotive(void)
                   if( ip->type == eNodeExit ) break;
                   
                     ip = edge->dest;
-                } while( (requiredDistance > 0) );
+                } while( (requiredDistance > 0) || (sensorCount < 2) );
 
                 // End off shitty linked list..
                 requests[iRequest-1].pForwardRequest = 0;
-
-                if(ip->type == eNodeExit)
+               
+                S32 failedNode = trainAllocateTrack(train, requests);
+                if(requiredDistance > 0)
                 {
-                    // Reached an exit node...shit.
+                    // STOP!
+                    stopSensor = 0xFFFF;
+                    stopping = 1;
                     throttle = 0;
                     trainSetSpeed(sTrainDriver, train, throttle);
                     trainPhysicsSetSpeed(&physics, throttle);
                 }
-                else if(trainAllocateTrack(train, requests) < 0)
+                else if(failedNode < 0)
                 {
+                    printf("\033[s\033[%d;1H[Train %d] Failed Allocation at %d.\033[u", 
+                        (train == 64 ? 51 : 52), 
+                        train, 
+                        2*(U32)(-failedNode));
+                    hasConflict = 1;
+                    
                     // Failed allocation
                     if (throttle == 0)
                     {
-                        // we already stopped
                         if(reverseCourierState == 1)
                         {
                             // Courier is waiting for us to send command.
@@ -283,7 +305,9 @@ void Locomotive(void)
                             reverseCourierState = 2;
                             // Make sure when courier comes around we send it the reverse command.
                         }
-                        previousSensor = previousSensor->reverse;
+                        distancePastPreviousSensor = distToNextSensor - distancePastPreviousSensor;
+                        previousSensor = nextSensor->reverse;
+                        
                         pathFind(graph, previousSensor->num, stopSensor, &destinationPath);
 
                         env.type = MESSAGE_TRAIN_REVERSE;
@@ -292,18 +316,17 @@ void Locomotive(void)
                     }
                     else
                     {
+                        stopping = 1;
                         throttle = 0;
                         trainSetSpeed(sTrainDriver, train, throttle);
                         trainPhysicsSetSpeed(&physics, throttle);
-                        hasConflict = 1;
-                        stopping = 1;
                     }
                 }
-                else if( stopSensor < 0xFFFF )
+                else
                 {    
                     if (throttle == 0)
                     {
-                        throttle = 8;
+                        throttle = 11;
                         trainSetSpeed(sTrainDriver, train, throttle);
                         trainPhysicsSetSpeed(&physics, throttle);
                     }
@@ -326,7 +349,7 @@ void Locomotive(void)
                         e.message.MessageArbitrary.body = (U32*)&req;
 
                         sysSend(sSwitchOffice.value, &e, &e);
-                    }                   
+                    }                
                 }
             }
         }
@@ -361,7 +384,8 @@ void Locomotive(void)
                 env.message.MessageU8.body = train;
                 sysSend(tRadio.value, &env, &env);
             }
-            else if( stopSensor < 0xFFFF && previousSensor != 0)
+            
+            if( stopSensor < 0xFFFF && previousSensor != 0)
             {
                 timerSample(TIMER_4, &tickTimer);
                 trainPhysicsStep(&physics, tickTimer.delta);
@@ -461,6 +485,7 @@ void Locomotive(void)
             }
 
             previousSensor = graph + currentSensor;
+            distancePastPreviousSensor = 0;
         }
         else
         {
@@ -473,15 +498,11 @@ void Locomotive(void)
 
             case MESSAGE_TRAIN_STOP:
             {
-                destinationSensor = env.message.MessageU32.body;
-                
-                //throttle = 8;
-                //trainSetSpeed(sTrainDriver, train, 8); 
-                //trainPhysicsSetSpeed(&physics, throttle);
-                
-                stopSensor = destinationSensor;
-                pathFind(graph, previousSensor - graph, stopSensor, &destinationPath);
                 sysReply(from.value, &env);
+                destinationSensor = env.message.MessageU32.body;
+                stopSensor = destinationSensor;
+                printf("\033[s\033[51;1H%d %d %d %d\033[u", previousSensor->num, stopSensor, train, 0);
+                assert( pathFind(graph, previousSensor->num, stopSensor, &destinationPath) >= 0 );
                 break;
             }
 
@@ -741,7 +762,6 @@ static void LocomotiveGPS(void)
     TaskID tPosCourier = VAL_TO_ID(sysPid());
     U8 courierWaiting = 0;
 
-    TaskID tAttrib = nsWhoIs(NodeAttribution);
     GPSUpdate update;
     for(;;)
     {
@@ -768,11 +788,12 @@ static void LocomotiveGPS(void)
                         continue;
                     
                     U8 v = i * 16 + c;
-                    MessageEnvelope att;
-                    att.message.MessageU8.body = v;
-                    sysSend(tAttrib.value, &att, &att);
+                    U8 owner = trainWhoOwnsTrack(v);
+                    
+                    if( owner != train && (owner != 0))
+                        continue;
 
-                    if( att.message.MessageU8.body != train && att.message.MessageU8.body != 0)
+                    if( owner == 0 && position != 0 )
                         continue;
 
                     if( !position )

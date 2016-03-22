@@ -13,10 +13,21 @@ S32 trainAllocateTrack(U8 trainId, TrackRequest* entryNode)
     env.message.MessageArbitrary.body = (U32*)entryNode;
     sysSend(nsWhoIs(TrackManager).value, &env, &env);
 
-    if( env.type == MESSAGE_FAILURE ) 
-        return -1;
-
+    if( env.type == MESSAGE_FAILURE )
+    {
+        TrackRequest* nFail = (TrackRequest*)env.message.MessageArbitrary.body;
+        return -((S32)nFail->indNode);
+    }
     return 0;
+}
+
+U8 trainWhoOwnsTrack(U8 nodeIndex)
+{
+    MessageEnvelope env;
+    env.type = 2;
+    env.message.MessageU8.body = nodeIndex;
+    sysSend(nsWhoIs(TrackManager).value, &env, &env);
+    return env.message.MessageU8.body;
 }
 
 static U8 ownershipGraph[TRACK_MAX / 2];
@@ -56,6 +67,13 @@ void TrackManagerServer(void)
         
         switch(env.type)
         {
+        case 2:
+        {
+            env.message.MessageU8.body = ownershipGraph[env.message.MessageU8.body / 2];
+            sysReply(from.value, &env);
+            break;
+        }
+
         case 1:
         {
             TrackRequest* ir = (TrackRequest*)env.message.MessageArbitrary.body;

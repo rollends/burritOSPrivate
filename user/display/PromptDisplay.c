@@ -52,9 +52,9 @@ void PromptDisplay(void)
 
     sysCreate(2, &IdlePerformanceDisplay);
     sysCreate(4, &DigitalClockDisplay);
-    displayTasks[0].value = sysCreate(4, &SensorDisplay);
-    displayTasks[1].value = sysCreate(4, &SwitchDisplay);
-    displayTasks[2].value = sysCreate(4, &OwnerDisplay);
+    displayTasks[0].value = sysCreate(10, &SensorDisplay);
+    displayTasks[1].value = sysCreate(10, &SwitchDisplay);
+    displayTasks[2].value = sysCreate(10, &OwnerDisplay);
     displayTasks[3].value = sysCreate(4, &PerformanceDisplay);
     displayTasks[4].value = sysCreate(20, &TacoDisplay);
 

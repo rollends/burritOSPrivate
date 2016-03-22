@@ -31,5 +31,6 @@ S32 pollTrainCommand(U8 trainId, MessageEnvelope* env);
 void trainRegister(U8 trainId);
 S32 trainWhoIs(U8 trainId, TaskID* tid);
 S32 trainAllocateTrack(U8 trainId, TrackRequest* entryNode);
+U8 trainWhoOwnsTrack(U8 nodeIndex);
 
 #endif
