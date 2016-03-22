@@ -21,44 +21,15 @@ static void LocomotiveRadio(void);
 static void LocomotiveGPS(void);
 static void PositionUpdateCourier(void);
 
-static void RandomSpeed(void)
-{
-    MessageEnvelope env;
-    
-    U32 random = 19;
-    U32 zero = 0;
-    for(;;)
-    {
-        nextRandU32(&random);
-        U8 delay = random % 40 + 30;
-
-        nextRandU32(&random);
-        U8 speed = random % 9 + 5;
-        if (zero == 0)
-        {
-            speed = 0;
-            zero = 1;
-        }
-        else
-        {
-            zero = 0;
-        }
-
-        clockLongDelayBy(nsWhoIs(Clock), delay);
-
-        env.message.MessageU8.body = speed;
-        sysSend(sysPid(), &env, &env); 
-    }
-}
-
 static void PhysicsTick(void)
 {
     MessageEnvelope env;
+    TaskID clock = nsWhoIs(Clock);
     
     for(;;)
     {
-        clockDelayBy(nsWhoIs(Clock), 3);
-        sysSend(sysPid(), &env, &env);
+        clockDelayBy(clock, 3);
+        sysSend(sysPid(), &env, &env); 
     }
 }
 
@@ -119,7 +90,6 @@ void Locomotive(void)
     // Start Train 'GPS' and physics tick
     TaskID tPosGPS = VAL_TO_ID(sysCreate(sysPriority() + 1, &PositionUpdateCourier));
     TaskID tPhysicsTick = VAL_TO_ID(sysCreate(sysPriority() - 1, &PhysicsTick));
-    TaskID tRandomSpeed = VAL_TO_ID(sysCreate(sysPriority() - 1, &RandomSpeed));
 
     sysSend(tPosGPS.value, &env, &env);
 
@@ -237,8 +207,9 @@ void Locomotive(void)
                             SwitchState swn = ((ip->edge[DIR_AHEAD].dest - graph) == indNext 
                                 ? eStraight 
                                 : eCurved);
-                            U32 kticks = trainPhysicsGetTime(&physics, distToTravel) / 1000;
-                            if( swn != sw && (kticks >= 800) && (distToTravel >= 50) )
+
+                            U32 kticks = trainPhysicsGetTime(&physics, distToTravel - physics.distance) / 1000;
+                            if( swn != sw && (kticks >= 500) )
                             {
                                 queueU8Push(&qBranchId, ip->num);
                                 queueU8Push(&qBranchAction, swn);
@@ -371,17 +342,6 @@ void Locomotive(void)
                 }
             }
         }
-        else if (from.value == tRandomSpeed.value )
-        {
-            sysReply(from.value, &env);
-            /*setSpeed = env.message.MessageU8.body;
-            if (physics.velocity == 0)
-            {
-                trainPhysicsSetSpeed(&physics, setSpeed);
-                trainSetSpeed(sTrainDriver, train, setSpeed);
-                setSpeed = 0xFF;
-            }*/
-        }
         else if( from.value == tPosGPS.value )
         {
             previousUpdate = update; 
@@ -440,66 +400,65 @@ void Locomotive(void)
                 S32 traveledDistance = trainPhysicsGetDistance(&physics);
                 S32 deltaX = distance - traveledDistance;
                 TrackEdge* edgeFrom = (graph + currentSensor)->reverse->edge->reverse;
-                               
-                if( distance < 5000 )
+                
+                assert(distance < 5000);
+
+                S32 accelReport = trainPhysicsReport(&physics, distance, errorTimer.delta, deltaT);
+                
+                if (setSpeed < 14)
                 {
-                    S32 accelReport = trainPhysicsReport(&physics, distance, errorTimer.delta, deltaT);
-                    
-                    if (setSpeed < 14)
-                    {
-                        throttle = setSpeed;
-                        trainPhysicsSetSpeed(&physics, setSpeed);
-                        trainSetSpeed(sTrainDriver, train, setSpeed);
-                        setSpeed = 0xFF;
-                    }
-
-                    if (accelReport != 1)
-                    {
-                        S32 trueDelta = deltaT + previousUpdate.time[update.sensorSkip];
-
-                        if (((deltaT < 120 && deltaT > 10) || (deltaT > -120 && deltaT < -10)))
-                        {
-                            if (edgeFrom->dt == 0)
-                            {
-                                edgeFrom->dt = trueDelta/2;
-                            }
-                            else
-                            {
-                                edgeFrom->dt = (edgeFrom->dt * 1900 + trueDelta * 100)/2000;
-                            }
-                        }
-
-                        if (deltaX < 50 && deltaX > -50)
-                        {
-                            if (edgeFrom->dx == 0)
-                            {
-                                edgeFrom->dx = deltaX;
-                            }
-                            else
-                            {
-                                edgeFrom->dx = (edgeFrom->dx * 900 + deltaX * 100)/1000;
-                            }
-                        }
-                    }
-
-                    nextSensorGroup = update.prediction[0] / 16 + 'A';
-                    nextSensorId = update.prediction[0] % 16 + 1;
-
-                    U8 i = 0;
-                    for(i = 0; i < 4; ++i)
-                    {
-                        predictTime[i] = trainPhysicsGetTime(&physics, update.predictionDistance[i]) / 1000 - update.time[i];
-                    }
-
-                    printf(strPredictTrain, train, nextSensorGroup,
-                           nextSensorId, predictTime[0]);
-
-                    printf(strFoundTrain, train, sensorGroup, sensorId,
-                           errorTimer.delta/1000, deltaT,
-                           previousUpdate.time[update.sensorSkip],
-                           distance, traveledDistance, deltaX,
-                           physics.velocity);
+                    throttle = setSpeed;
+                    trainPhysicsSetSpeed(&physics, setSpeed);
+                    trainSetSpeed(sTrainDriver, train, setSpeed);
+                    setSpeed = 0xFF;
                 }
+
+                if (accelReport != 1)
+                {
+                    S32 trueDelta = deltaT + previousUpdate.time[update.sensorSkip];
+
+                    if (((deltaT < 120 && deltaT > 10) || (deltaT > -120 && deltaT < -10)))
+                    {
+                        if (edgeFrom->dt == 0)
+                        {
+                            edgeFrom->dt = trueDelta/2;
+                        }
+                        else
+                        {
+                            edgeFrom->dt = (edgeFrom->dt * 1900 + trueDelta * 100)/2000;
+                        }
+                    }
+
+                    if (deltaX < 50 && deltaX > -50)
+                    {
+                        if (edgeFrom->dx == 0)
+                        {
+                            edgeFrom->dx = deltaX;
+                        }
+                        else
+                        {
+                            edgeFrom->dx = (edgeFrom->dx * 900 + deltaX * 100)/1000;
+                        }
+                    }
+                }
+
+                nextSensorGroup = update.prediction[0] / 16 + 'A';
+                nextSensorId = update.prediction[0] % 16 + 1;
+
+                U8 i = 0;
+                for(i = 0; i < 4; ++i)
+                {
+                    predictTime[i] = trainPhysicsGetTime(&physics, update.predictionDistance[i]) / 1000 - update.time[i];
+                }
+
+                printf(strPredictTrain, train, nextSensorGroup,
+                       nextSensorId, predictTime[0]);
+
+                printf(strFoundTrain, train, sensorGroup, sensorId,
+                       errorTimer.delta/1000, deltaT,
+                       previousUpdate.time[update.sensorSkip],
+                       distance, traveledDistance, deltaX,
+                       physics.velocity);
             }
 
             previousSensor = graph + currentSensor;

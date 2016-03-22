@@ -120,6 +120,8 @@ S32 trainPhysicsReport(TrainPhysics* physics,
     ktick += 5;
     ktick /= 10;
 
+    physics->distance = 0;
+    
     if (physics->acceleration == 0 && physics->initialVelocity == 0)
     {
         if (physics->calibrationCount[physics->speed] > 0 &&
@@ -153,7 +155,6 @@ S32 trainPhysicsReport(TrainPhysics* physics,
         return a;
     }
 
-    physics->distance = 0;
     return 0;
 }
 
