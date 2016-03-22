@@ -122,7 +122,6 @@ void trainReverseDirection(TaskID server, U8 train)
 
 void trainSetSpeed(TaskID server, U8 train, U8 speed)
 {
-    assert( speed < 15 );
     assert( train <= 80 && train >= 1 );
 
     //trainSpeedHack[train] = speed;

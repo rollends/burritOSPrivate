@@ -37,8 +37,9 @@
 #define     MESSAGE_TRAIN_SWITCH_CURVED         0x22 // 34
 #define     MESSAGE_TRAIN_GO                    0x60 // 96
 #define     MESSAGE_TRAIN_STOP                  0x61 // 97
-#define     MESSAGE_TRAIN_DUMP_ACCEL            0x62 // 98
-#define     MESSAGE_TRAIN_DUMP_VEL              0x63
+#define     MESSAGE_TRAIN_GOTO                  0x62
+#define     MESSAGE_TRAIN_DUMP_ACCEL            0x63 // 98
+#define     MESSAGE_TRAIN_DUMP_VEL              0x64
 #define     MESSAGE_TRAIN_SENSOR_RESET_OFF      0x80 // 128
 #define     MESSAGE_TRAIN_GET_SENSOR_ABCDE      0x85 // 133
 #define     MESSAGE_TRAIN_GET_SENSOR            0xC0 // (192, 224) is reserved
