@@ -24,7 +24,7 @@ S32 trainAllocateTrack(U8 trainId, TrackRequest* entryNode)
 U8 trainWhoOwnsTrack(U8 nodeIndex)
 {
     MessageEnvelope env;
-    env.type = 2;
+    env.type = 3;
     env.message.MessageU8.body = nodeIndex;
     sysSend(nsWhoIs(TrackManager).value, &env, &env);
     return env.message.MessageU8.body;
@@ -67,7 +67,7 @@ void TrackManagerServer(void)
         
         switch(env.type)
         {
-        case 2:
+        case 3:
         {
             env.message.MessageU8.body = ownershipGraph[env.message.MessageU8.body / 2];
             sysReply(from.value, &env);

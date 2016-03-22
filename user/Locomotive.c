@@ -12,9 +12,9 @@ typedef struct
     U32 triggeredSensor;
     U32 sensorSkip;
     U32 distance;
-    U32 predictionDistance[3];
-    U32 prediction[3];
-    S32 time[3];
+    U32 predictionDistance[4];
+    U32 prediction[4];
+    S32 time[4];
 } GPSUpdate;
 
 static void LocomotiveRadio(void);
@@ -135,7 +135,7 @@ void Locomotive(void)
     S16     throttle = 0;
     char    nextSensorGroup = 0;
     U8      nextSensorId = 0;
-    U32     predictTime[3] = { 0 };
+    U32     predictTime[4] = { 0 };
     U32     stopSensor = 0xFFFF;
     //S32     stopDistance = 0;
     U32     stopping = 0;
@@ -191,7 +191,7 @@ void Locomotive(void)
                     hasConflict = 0;
                 }
             }
-            else if (!stopping && stopSensor < 0xFFFF)
+            else if (stopSensor < 0xFFFF)
             {
                 TrackNode* ip = previousSensor;   
                 TrackRequest requests[50];
@@ -206,6 +206,7 @@ void Locomotive(void)
                 queueU8Init(&qBranchId, aBranchId, 4);
                 U32 distToTravel = 0;
                 U32 sensorCount = 0;
+                U32 distToFinalSensor = 0;
                 TrackNode* nextSensor = 0;
                 U32 distToNextSensor = 0;
                 do
@@ -253,6 +254,10 @@ void Locomotive(void)
                             nextSensor = ip;
                             distToNextSensor = distToTravel;
                         }
+                        else if(sensorCount < 2)
+                        {
+                            distToFinalSensor = distToTravel;
+                        }
                         sensorCount++;
                     }
                     requests[iRequest].trainId = train;
@@ -272,10 +277,21 @@ void Locomotive(void)
                 requests[iRequest-1].pForwardRequest = 0;
                
                 S32 failedNode = trainAllocateTrack(train, requests);
-                if(requiredDistance > 0)
+
+                if(stopping)
+                {
+                    // do nothing.
+                }
+                else if(distancePastPreviousSensor > distToFinalSensor)
+                {
+                    distancePastPreviousSensor = 0;
+                    printf("\033[s\033[%d;1H[Train %d] Potential dead zone?\033[u",
+                        (train == 64 ? 51 : 52));
+                }
+                else if(requiredDistance > 0 && ip->type == eNodeExit)
                 {
                     // STOP!
-                    stopSensor = 0xFFFF;
+                    //stopSensor = 0xFFFF;
                     stopping = 1;
                     throttle = 0;
                     trainSetSpeed(sTrainDriver, train, throttle);
@@ -283,10 +299,12 @@ void Locomotive(void)
                 }
                 else if(failedNode < 0)
                 {
+                    /*
                     printf("\033[s\033[%d;1H[Train %d] Failed Allocation at %d.\033[u", 
                         (train == 64 ? 51 : 52), 
                         train, 
                         2*(U32)(-failedNode));
+                    */
                     hasConflict = 1;
                     
                     // Failed allocation
@@ -385,7 +403,7 @@ void Locomotive(void)
                 sysSend(tRadio.value, &env, &env);
             }
             
-            if( stopSensor < 0xFFFF && previousSensor != 0)
+            if( previousSensor != 0)
             {
                 timerSample(TIMER_4, &tickTimer);
                 trainPhysicsStep(&physics, tickTimer.delta);
@@ -403,7 +421,7 @@ void Locomotive(void)
                     printf(strPredictClearTrain);
                 }
 
-                if( stopSensor == currentSensor )
+                if( !stopping && (stopSensor == currentSensor) )
                 {
                     do
                     {
@@ -468,7 +486,7 @@ void Locomotive(void)
                     nextSensorId = update.prediction[0] % 16 + 1;
 
                     U8 i = 0;
-                    for(i = 0; i < 3; ++i)
+                    for(i = 0; i < 4; ++i)
                     {
                         predictTime[i] = trainPhysicsGetTime(&physics, update.predictionDistance[i]) / 1000 - update.time[i];
                     }
@@ -678,10 +696,10 @@ static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSenso
     TrackNode* ip = current;
     U8 i = 0;
     
-    TrackNode* ipFail = 0;
-    memset(dist, 0, sizeof(U32)*3);
-    memset(time, 0, sizeof(U32)*3);
-    memset(nextSensors, 0xFF, sizeof(U32)*3);
+    TrackNode* ipFail[2] = { 0, 0 };
+    memset(dist, 0, sizeof(U32)*4);
+    memset(time, 0, sizeof(U32)*4);
+    memset(nextSensors, 0xFF, sizeof(U32)*4);
 
     while(ip->type != eNodeExit)
     {
@@ -689,7 +707,7 @@ static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSenso
         {
             nextSensors[i++] = ip->num; 
 
-            if( i >= 3 ) 
+            if( i >= 4 ) 
             {
                 break;
             }
@@ -698,14 +716,10 @@ static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSenso
                 dist[i] = dist[i-1];
                 time[i] = time[i-1];
             }
-            else if( ipFail )
-            {
-                ip = ipFail;
-                continue;
-            }
             else
             {
-                break;
+                ip = ipFail[ i - 2 ];
+                continue;
             }
         }
 
@@ -719,12 +733,20 @@ static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSenso
             SwitchState sw = (SwitchState)env.message.MessageU32.body;
             U32 swv = ((sw == eCurved) ? DIR_CURVED : DIR_STRAIGHT);
             
-            // Only look at the first possible failure.
-            if(!ipFail) {
+            if(!ipFail[0]) 
+            {
                 U32 swf = ((sw == eCurved) ? DIR_STRAIGHT: DIR_CURVED);
                 dist[2] = dist[i] + ip->edge[swf].dist;
                 time[2] = time[i] + ip->edge[swf].dt;
-                ipFail = ip->edge[swf].dest;
+                ipFail[0] = ip->edge[swf].dest;
+            }
+            else if(!ipFail[1])
+            {
+                U32 swf = ((sw == eCurved) ? DIR_STRAIGHT: DIR_CURVED);
+                dist[3] = dist[i] + ip->edge[swf].dist;
+                time[3] = time[i] + ip->edge[swf].dt;
+                ipFail[1] = ip->edge[swf].dest;
+
             }
             
             dist[i] += ip->edge[swv].dist;
@@ -754,7 +776,7 @@ static void LocomotiveGPS(void)
     TrackNode* graph = getLocomotiveTrackGraph(train);
     TrackNode* position = 0;
 
-    U32 sensors[5], nextSensors[3], distances[3], time[3];
+    U32 sensors[5], nextSensors[4], distances[4], time[4];
     U32 i = 0;
  
     assert(sysPriority() < 31);
@@ -805,7 +827,7 @@ static void LocomotiveGPS(void)
                     else
                     {
                         U8 s = 0;
-                        for(s = 1; s <= 3; ++s)
+                        for(s = 1; s <= 4; ++s)
                         {
                             if(nextSensors[s - 1] == v)
                             {
@@ -817,7 +839,7 @@ static void LocomotiveGPS(void)
                 }
             }
             // Its what we predicted!
-            if(sensorHit <= 3 && sensorHit >= 1)
+            if(sensorHit <= 4 && sensorHit >= 1)
             {
                 position = graph + nextSensors[sensorHit-1];
                 
@@ -827,7 +849,7 @@ static void LocomotiveGPS(void)
                 update.distance = distances[sensorHit-1];
 
                 findNextSensors(graph, position->edge[0].dest, nextSensors, distances, time);
-                for(i = 0; i < 3; ++i)
+                for(i = 0; i < 4; ++i)
                 {
                     distances[i] += position->edge[0].dist;
                     time[i] += position->edge[0].dt;
