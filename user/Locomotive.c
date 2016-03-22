@@ -701,7 +701,7 @@ static void findNextSensors(TrackNode* graph, TrackNode* current, U32* nextSenso
     memset(time, 0, sizeof(U32)*4);
     memset(nextSensors, 0xFF, sizeof(U32)*4);
 
-    while(ip->type != eNodeExit)
+    while(ip && ip->type != eNodeExit)
     {
         if(ip->type == eNodeSensor)
         {
@@ -815,8 +815,8 @@ static void LocomotiveGPS(void)
                     if( owner != train && (owner != 0))
                         continue;
 
-                    if( owner == 0 && position != 0 )
-                        continue;
+                    //if( owner == 0 && position != 0 )
+                    //    continue;
 
                     if( !position )
                     {
