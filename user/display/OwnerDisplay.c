@@ -18,7 +18,7 @@ static U8 ownerColor(U8 owner)
     switch (owner)
     {
         case 64:
-            return 34;
+            return 31;
         case 69:
             return 35;
         default:
@@ -217,20 +217,124 @@ static void initOwnerMapping()
     sOwnerMapping[0x27].r = 7;
     sOwnerMapping[0x27].c = 24;
     sOwnerMapping[0x27].s = '*';
+
+    sOwnerMapping[0x28].r = 15;
+    sOwnerMapping[0x28].c = 9;
+    sOwnerMapping[0x28].s = '#';
+
+    sOwnerMapping[0x29].r = 16; 
+    sOwnerMapping[0x29].c = 10;  
+    sOwnerMapping[0x29].s = '#';
+
+    sOwnerMapping[0x2A].r = 17; 
+    sOwnerMapping[0x2A].c = 11;  
+    sOwnerMapping[0x2A].s = '#'; 
+
+    sOwnerMapping[0x2B].r = 5; 
+    sOwnerMapping[0x2B].c = 9;  
+    sOwnerMapping[0x2B].s = '#';
+
+    sOwnerMapping[0x2C].r = 17; 
+    sOwnerMapping[0x2C].c = 33;  
+    sOwnerMapping[0x2C].s = '#'; 
+
+    sOwnerMapping[0x2D].r = 16; 
+    sOwnerMapping[0x2D].c = 20;  
+    sOwnerMapping[0x2D].s = '#'; 
+
+    sOwnerMapping[0x2E].r = 16; 
+    sOwnerMapping[0x2E].c = 34;  
+    sOwnerMapping[0x2E].s = '#'; 
+
+    sOwnerMapping[0x2F].r = 14; 
+    sOwnerMapping[0x2F].c = 42;  
+    sOwnerMapping[0x2F].s = '#';
+
+    sOwnerMapping[0x30].r = 5; 
+    sOwnerMapping[0x30].c = 41;  
+    sOwnerMapping[0x30].s = '#';
+
+    sOwnerMapping[0x31].r = 6;
+    sOwnerMapping[0x31].c = 31;
+    sOwnerMapping[0x31].s = '#';
+
+    sOwnerMapping[0x32].r = 4;
+    sOwnerMapping[0x32].c = 14;
+    sOwnerMapping[0x32].s = '#';
+
+    sOwnerMapping[0x33].r = 4;
+    sOwnerMapping[0x33].c = 10;
+    sOwnerMapping[0x33].s = '#';
+
+    sOwnerMapping[0x34].r = 6;
+    sOwnerMapping[0x34].c = 23;
+    sOwnerMapping[0x34].s = '#';
+
+    sOwnerMapping[0x35].r = 5;
+    sOwnerMapping[0x35].c = 13;
+    sOwnerMapping[0x35].s = '#';
+
+    sOwnerMapping[0x36].r = 14;
+    sOwnerMapping[0x36].c = 12;
+    sOwnerMapping[0x36].s = '#';
+
+    sOwnerMapping[0x37].r = 14;
+    sOwnerMapping[0x37].c = 23;
+    sOwnerMapping[0x37].s = '#';
+
+    sOwnerMapping[0x38].r = 14;
+    sOwnerMapping[0x38].c = 31;
+    sOwnerMapping[0x38].s = '#';
+
+    sOwnerMapping[0x39].r = 17;
+    sOwnerMapping[0x39].c = 21;
+    sOwnerMapping[0x39].s = '#';
+
+    sOwnerMapping[0x3A].r = 11;
+    sOwnerMapping[0x3A].c = 26;
+    sOwnerMapping[0x3A].s = '#';
+
+    sOwnerMapping[0x3B].r = 11; 
+    sOwnerMapping[0x3B].c = 28;
+    sOwnerMapping[0x3B].s = '#';
+
+    sOwnerMapping[0x3C].r = 9; 
+    sOwnerMapping[0x3C].c = 28;
+    sOwnerMapping[0x3C].s = '#';
+
+    sOwnerMapping[0x3D].r = 9; 
+    sOwnerMapping[0x3D].c = 26;
+    sOwnerMapping[0x3D].s = '#';
 }
+
+static U8 volatile * volatile ownershipGraph;
+static volatile U8 ownershipLast[72];
 
 void OwnerDisplayPoll(void)
 {
     TaskID parent = VAL_TO_ID(sysPid());
+    TaskID manager = nsWhoIs(TrackManager);
     TaskID clock = nsWhoIs(Clock);
+
     MessageEnvelope env;
+    env.type = 2;
+
+    sysSend(manager.value, &env, &env);
+    ownershipGraph = (U8*)(env.message.MessageU32.body);
+
+    U8 i;
+    for (i = 0; i < 62; i++)
+    {
+        ownershipLast[i] = ownershipGraph[i];
+    }
 
     for(;;)
     {
+        clockDelayBy(clock, 10);
         sysSend(parent.value, &env, &env);
-        clockLongDelayBy(clock, 2);
     }
 }
+
 
 void OwnerDisplay(void)
 {
@@ -241,8 +345,6 @@ void OwnerDisplay(void)
 
     MessageEnvelope env;
     TaskID sender;
-    U32 rand1 = 45;
-    U32 rand2 = 47;
 
     for(;;)
     {
@@ -252,10 +354,15 @@ void OwnerDisplay(void)
         {
             if (index != 0)
             {
-                U32 owner = (nextRandU32(&rand1) % 2 == 0) ? 69 : 64;
-                U32 sensor = nextRandU32(&rand2) % 80;
-                sensor /= 2;
-                updateOwnerUi(index, sensor, owner);
+                U8 i;
+                for (i = 0; i < 62; i++)
+                {
+                    if (ownershipLast[i] != ownershipGraph[i])
+                    {
+                        ownershipLast[i] = ownershipGraph[i];
+                        updateOwnerUi(index, i, ownershipGraph[i]);
+                    }
+                }
             }
         }
         else

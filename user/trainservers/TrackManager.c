@@ -45,7 +45,7 @@ void TrackManagerServer(void)
     memset(ownershipGraph, 0x00, sizeof(U8) * TRACK_MAX / 2);
 
     nsRegister(TrackManager);
-    sysCreate(5, &NodeAttributionServer);
+    sysCreate(sysPriority() + 1, &NodeAttributionServer);
 
     for(;;)
     {
@@ -81,6 +81,13 @@ void TrackManagerServer(void)
             } while( ir );
             
             // Reply
+            sysReply(from.value, &env);
+            break;
+        }
+
+        case 2:
+        {
+            env.message.MessageU32.body = (U32)(ownershipGraph);
             sysReply(from.value, &env);
             break;
         }
