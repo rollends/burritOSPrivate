@@ -11,6 +11,20 @@ typedef struct IntervalNode
     struct IntervalNode *   next;
 } IntervalNode;
 
+static TrackNode switchServerGraph[TRACK_MAX];
+static volatile SwitchState switches[22];
+
+static U32 indexForBranch(TrackNode* graph, U32 branchId)
+{
+    U32 i = 0;
+    for(i = 0; i < TRACK_MAX; ++i)
+    {
+        if( graph[i].type == eNodeBranch && graph[i].num == branchId )
+            return (i - 80)/2;
+    }
+    return 0xFFFFFFFF;
+}
+
 static void SwitchWorker(void)
 {
     TaskID task;
@@ -24,22 +38,27 @@ static void SwitchWorker(void)
     TaskID clock = nsWhoIs(Clock);
     TaskID sw = nsWhoIs(TrainSwitches);
     clockDelayUntil(clock, request.startTime);
+    
     trainSwitch(sw, request.branchId, request.direction);
-    
-    sysSend(sysPid(), &env, &env);
-    
-    clockDelayUntil(clock, request.endTime);
-}
+  
+    U8 cid = indexForBranch(switchServerGraph, request.branchId);
+    switches[cid] = request.direction;
 
-static U32 indexForBranch(TrackNode* graph, U32 branchId)
-{
-    U32 i = 0;
-    for(i = 0; i < TRACK_MAX; ++i)
+    if((request.branchId == 156) && (request.direction == eCurved))
     {
-        if( graph[i].type == eNodeBranch && graph[i].num == branchId )
-            return (i - 80)/2;
+        cid = indexForBranch(switchServerGraph, 155);
+        trainSwitch(sw, 155, eStraight);
+        switches[cid] = eStraight;
     }
-    return 0xFFFFFFFF;
+    else if((request.branchId == 154) && (request.direction == eCurved))
+    {
+        cid = indexForBranch(switchServerGraph, 153);
+        trainSwitch(sw, 153, eStraight);
+        switches[cid] = eStraight;
+    }
+
+    sysSend(sysPid(), &env, &env);
+    clockDelayUntil(clock, request.endTime);
 }
 
 void SwitchExecutive(void)
@@ -50,13 +69,11 @@ void SwitchExecutive(void)
 
     U8 i = 0;
 
-    TrackNode graph[TRACK_MAX];
-    init_tracka(graph);
+    init_tracka(switchServerGraph);
 
     IntervalNode switchIntervalNodes[32];
     IntervalNode *switchFreeList = switchIntervalNodes;
     IntervalNode *switchCalendar[22];
-    SwitchState switches[22];
 
 
     for(i = 0; i < 31; ++i)
@@ -80,7 +97,7 @@ void SwitchExecutive(void)
 
     for(i = 80; i < 123 ; i += 2)
     {
-        TrackNode* iSwitch = graph + i;
+        TrackNode* iSwitch = switchServerGraph + i;
         trainSwitch(nsWhoIs(TrainSwitches), iSwitch->num, switches[(i-80)/2]);
     }
 
@@ -96,7 +113,7 @@ void SwitchExecutive(void)
         {
             // Pop Node ( SHOULD ALWAYS BE HEAD! )
             SwitchRequest* request = (SwitchRequest*)env.message.MessageArbitrary.body;
-            U32 cid = indexForBranch(graph, request->branchId); // Get Calendar Index
+            U32 cid = indexForBranch(switchServerGraph, request->branchId); // Get Calendar Index
             assert(cid <= 21);
             IntervalNode* cNode = switchCalendar[cid];
             
@@ -107,7 +124,6 @@ void SwitchExecutive(void)
 
             cNode->next = switchFreeList;
             switchFreeList = cNode;
-            switches[cid] = request->direction;
             
             sysReply(person.value, &env);
             break;
@@ -125,7 +141,7 @@ void SwitchExecutive(void)
         {
             
             SwitchRequest* request = (SwitchRequest*)env.message.MessageArbitrary.body;
-            U32 cid = indexForBranch(graph,request->branchId); // Get Calendar Index
+            U32 cid = indexForBranch(switchServerGraph,request->branchId); // Get Calendar Index
             assert(cid <= 21);
             IntervalNode* cNode = switchCalendar[cid];
             

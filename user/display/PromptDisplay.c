@@ -107,7 +107,7 @@ void PromptDisplay(void)
         }
         else if( buffer[0] == 'l' && (buffer[1] == 'a' || buffer[1] == 'b') )
         {
-            U8 train = (buffer[1] == 'a' ? 64 : 69);
+            U8 train = (buffer[1] == 'a' ? 58 : 69);
             trainLaunch(train);
         }
         else if (buffer[0] == 's' && buffer[1] == 'u')

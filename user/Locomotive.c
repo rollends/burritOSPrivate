@@ -209,7 +209,7 @@ void Locomotive(void)
                                 : eCurved);
 
                             U32 kticks = trainPhysicsGetTime(&physics, distToTravel - physics.distance) / 1000;
-                            if( swn != sw && (kticks >= 500) )
+                            if( swn != sw && (kticks >= 250) )
                             {
                                 queueU8Push(&qBranchId, ip->num);
                                 queueU8Push(&qBranchAction, swn);
@@ -256,8 +256,6 @@ void Locomotive(void)
                 else if(distancePastPreviousSensor > distToFinalSensor)
                 {
                     distancePastPreviousSensor = 0;
-                    printf("\033[s\033[%d;1H[Train %d] Potential dead zone?\033[u",
-                        (train == 64 ? 51 : 52));
                 }
                 else if(requiredDistance > 0 && ip->type == eNodeExit)
                 {
@@ -270,12 +268,12 @@ void Locomotive(void)
                 }
                 else if(failedNode < 0)
                 {
-                    /*
+                    
                     printf("\033[s\033[%d;1H[Train %d] Failed Allocation at %d.\033[u", 
                         (train == 64 ? 51 : 52), 
                         train, 
                         2*(U32)(-failedNode));
-                    */
+                    
                     hasConflict = 1;
                     
                     // Failed allocation
@@ -295,8 +293,10 @@ void Locomotive(void)
                             // Make sure when courier comes around we send it the reverse command.
                         }
                         distancePastPreviousSensor = distToNextSensor - distancePastPreviousSensor;
-                        previousSensor = nextSensor->reverse;
-                        
+                        //previousSensor = nextSensor->reverse;
+                        distancePastPreviousSensor = 0;
+                        previousSensor = previousSensor->reverse;
+
                         pathFind(graph, previousSensor->num, stopSensor, &destinationPath);
 
                         env.type = MESSAGE_TRAIN_REVERSE;
@@ -315,7 +315,7 @@ void Locomotive(void)
                 {    
                     if (throttle == 0)
                     {
-                        throttle = 11;
+                        throttle = 13;
                         trainSetSpeed(sTrainDriver, train, throttle);
                         trainPhysicsSetSpeed(&physics, throttle);
                     }
@@ -478,7 +478,6 @@ void Locomotive(void)
                 sysReply(from.value, &env);
                 destinationSensor = env.message.MessageU32.body;
                 stopSensor = destinationSensor;
-                printf("\033[s\033[51;1H%d %d %d %d\033[u", previousSensor->num, stopSensor, train, 0);
                 assert( pathFind(graph, previousSensor->num, stopSensor, &destinationPath) >= 0 );
                 break;
             }

@@ -17,6 +17,8 @@ static U8 ownerColor(U8 owner)
 {
     switch (owner)
     {
+        case 58:
+            return 36;
         case 64:
             return 31;
         case 69:
