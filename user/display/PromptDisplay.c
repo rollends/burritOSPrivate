@@ -105,9 +105,12 @@ void PromptDisplay(void)
             sysReply(sender.value, &env);
             break; 
         }
-        else if( buffer[0] == 'l' && (buffer[1] == 'a' || buffer[1] == 'b') )
+        else if( buffer[0] == 'l' && buffer[1] == 'a' )
         {
-            U8 train = (buffer[1] == 'a' ? 58 : 69);
+            const char* str = buffer;
+            str += 2;
+            strskipws(&str);
+            U8 train = stratoui(&str);
             trainLaunch(train);
         }
         else if (buffer[0] == 's' && buffer[1] == 'u')
