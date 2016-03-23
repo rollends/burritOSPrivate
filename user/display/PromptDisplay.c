@@ -62,7 +62,7 @@ void PromptDisplay(void)
     index[1] = 26;
 
     slots[0] = 2;
-    slots[1] = -1;
+    slots[1] = 0;
 
     printf("\033[s\033[3;1H---------------------------------------------------------------------------------------------\033[u");
     printf("\033[s\033[26;1H---------------------------------------------------------------------------------------------\033[u");
@@ -73,6 +73,7 @@ void PromptDisplay(void)
     sysReceive(&sender.value, &env);
 
     updateSlot(0);
+    updateSlot(1);
     for(;;)
     {
         char buffer[256];
@@ -104,6 +105,10 @@ void PromptDisplay(void)
             printf("Finished playing with trains... :)\r\n");
             sysReply(sender.value, &env);
             break; 
+        }
+        else if (buffer[0] == 'k')
+        {
+            sysKill();
         }
         else if( buffer[0] == 'l' && buffer[1] == 'a' )
         {

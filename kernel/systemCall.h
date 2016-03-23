@@ -8,30 +8,31 @@
 #define SYS_CALL_PASS_ID            1
 #define SYS_CALL_RUNNING_ID         2
 #define SYS_CALL_SHUTDOWN_ID        3
+#define SYS_CALL_KILL_ID            4
 
-#define SYS_CALL_CREATE_ID          4
-#define SYS_CALL_NAME_ID            5
-#define SYS_CALL_TID_ID             6
-#define SYS_CALL_PID_ID             7
-#define SYS_CALL_PRIORITY_ID        8
+#define SYS_CALL_CREATE_ID          5
+#define SYS_CALL_NAME_ID            6
+#define SYS_CALL_TID_ID             7
+#define SYS_CALL_PID_ID             8
+#define SYS_CALL_PRIORITY_ID        9
 
-#define SYS_CALL_SEND_ID            9
-#define SYS_CALL_RECEIVE_ID         10
-#define SYS_CALL_REPLY_ID           11
+#define SYS_CALL_SEND_ID            10
+#define SYS_CALL_RECEIVE_ID         11
+#define SYS_CALL_REPLY_ID           12
 
 #ifdef KERNEL_PERF
-      #define SYS_CALL_PERF_RESET_ID      12
-      #define SYS_CALL_PERF_QUERYP_ID     13
-      #define SYS_CALL_PERF_QUERYT_ID     14
-      #define SYS_CALL_PERF_COUNT_ID      15
+      #define SYS_CALL_PERF_RESET_ID      13
+      #define SYS_CALL_PERF_QUERYP_ID     14
+      #define SYS_CALL_PERF_QUERYT_ID     15
+      #define SYS_CALL_PERF_COUNT_ID      16
 #endif
 
-#define SYS_CALL_AWAIT_ID           16
-#define SYS_CALL_READ_ID            17
-#define SYS_CALL_WRITE_ID           18
+#define SYS_CALL_AWAIT_ID           17
+#define SYS_CALL_READ_ID            18
+#define SYS_CALL_WRITE_ID           19
 
-#define SYS_CALL_ALLOC_ID           19
-#define SYS_CALL_FREE_ID            20
+#define SYS_CALL_ALLOC_ID           20
+#define SYS_CALL_FREE_ID            21
 
 #define sysExit() \
             __sysCall0((U32)SYS_CALL_EXIT_ID)
@@ -41,6 +42,9 @@
             __sysCall0((U32)SYS_CALL_RUNNING_ID)
 #define sysShutdown() \
             __sysCall0((U32)SYS_CALL_SHUTDOWN_ID)
+#define sysKill() \
+            __sysCall0((U32)SYS_CALL_KILL_ID)
+
 #define sysCreate(pri, entry) \
             __sysCall3((U32)SYS_CALL_CREATE_ID, (U32)(pri), (U32)(entry), (U32)(STRINGIFY(entry)))
 #define sysName(tid) \

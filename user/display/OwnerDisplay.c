@@ -21,6 +21,8 @@ static U8 ownerColor(U8 owner)
             return 36;
         case 64:
             return 31;
+        case 68:
+            return 33;
         case 69:
             return 35;
         default:
@@ -33,8 +35,16 @@ static void updateOwnerUi(U8 index, U8 node, U8 owner)
     U8 row = sOwnerMapping[node].r + index;
     U8 col = sOwnerMapping[node].c + 18;
 
-    printf("\033[s\033[%d;%dH\033[%dm%c\033[m\033[u",
+    if (owner == 0)
+    {
+        printf("\033[s\033[%d;%dH\033[%dm%c\033[m\033[u",
                     row, col, ownerColor(owner), sOwnerMapping[node].s);
+    }
+    else
+    {
+        printf("\033[s\033[%d;%dH\033[%d;1m%c\033[m\033[u",
+                    row, col, ownerColor(owner), sOwnerMapping[node].s);
+    }
 }
 
 static void initOwnerUi(U8 index)

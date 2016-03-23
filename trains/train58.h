@@ -18,9 +18,9 @@ static inline void trainInit58(TrainPhysics* physics)
                          398728,
                          457684,
                          508239,
-                         571681,
-                         616784,
-                         624907);
+                         386573,
+                         586784,
+                         594907);
 
     trainPhysicsAccelMap(physics, 0,
                          0,
@@ -107,8 +107,8 @@ static inline void trainInit58(TrainPhysics* physics)
                           206189);
 
     trainPhysicsAccelMap(physics, 11,
-                         -325196,
-                         -325114,
+                         -205196,
+                         -205114,
                          -295228,
                          -285160,
                          -280885,

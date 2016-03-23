@@ -21,6 +21,8 @@ static U8 sensorColor(U8 owner)
             return 36;
         case 64:
             return 31;
+        case 68:
+            return 33;
         case 69:
             return 35;
         default:
@@ -78,7 +80,8 @@ static void updateSensorUi( U8* recentList, U8* ownerList, U8 recentHead, U8 ind
             printf("\033[s\033[%d;4H%c%2d\033[u", i + index + 1, 'A' + (val >> 4), 1 + (val & 0x0F));
         }
 
-        printf("\033[s\033[%d;10H%b\033[u", i + index + 1, owner);
+        printf("\033[s\033[%d;10H\033[%dm%2d\033[m\033[u", i + index + 1, sensorColor(owner),
+                owner);
         recentHead = decmod(recentHead, SENSOR_LIST_COUNT);
     }
 
@@ -106,15 +109,15 @@ static void initSensorUi(U8 index)
     {
         if (i == 3)
         {
-            printf("\033[s\033[%d;2H|     |      |\033[u", i + index);
+            printf("\033[s\033[%d;2H|     |    |\033[u", i + index);
         }
         else if (i == SENSOR_LIST_COUNT + 1)
         {
-            printf("\033[s\033[%d;2H|     |      |\033[u", i + index);
+            printf("\033[s\033[%d;2H|     |    |\033[u", i + index);
         }
         else
         {
-            printf("\033[s\033[%d;2H|     |      |\033[u", i + index);
+            printf("\033[s\033[%d;2H|     |    |\033[u", i + index);
         }
     }
 

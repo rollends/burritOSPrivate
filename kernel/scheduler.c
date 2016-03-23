@@ -7,6 +7,9 @@
 
 U32* scheduler(U32* sp)
 {
+    if (kernel.systemRunning == 2)
+        return 0;
+
     TaskDescriptor* desc = kernel.activeTask;
     TaskID tid = desc->tid;
     desc->stack = sp;

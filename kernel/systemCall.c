@@ -41,6 +41,12 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             break;
         }
 
+        case SYS_CALL_KILL_ID:
+        {
+            kernel.systemRunning = 2;
+            break;
+        }
+
         case SYS_CALL_CREATE_ID:
         {
             U16 result = taskTableAlloc(&kernel.tasks,

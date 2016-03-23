@@ -2,6 +2,7 @@
 .global _interruptCall
 .global _start
 .global _systemCall
+.global kernelEnd
 
 @
 @ Entry point to the kernel, called by Redboot when the kernel starts. This
@@ -60,7 +61,7 @@ _interruptCall:                     @ Called when an hardware interrupt occurs
 
     cmp     r0, #0                  @ Check if the kernel should exit
     bne     enterTask               @ Enter next task
-    b       kernelEnd               @ Exit - should not ever occur in practice
+    b       kernelEnd              @ Exit - should not ever occur in practice
 
 @
 @ Called when a sofware interrupt (system call) occurs. Task state is stored 
@@ -93,7 +94,7 @@ _systemCall:                        @ Called when an SWI occurs
 @ Exits the kernel by restoring the saved LR into the PC, thus returning to the 
 @ Redboot code
 @
-kernelEnd:                          @ Exists the kernel
+kernelEnd:                         @ Exists the kernel
     bl      cleanup                 @ Cleanup the kernel
     ldmfd   sp!, {pc}               @ Load the LR into PC to return to redboot
 
