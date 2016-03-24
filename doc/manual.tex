@@ -335,6 +335,31 @@ The \textit{Locomotive} creates the following subsystems:
 
 The reasoning behind the decision to implement the \textit{Locomotive GPS} as a server with courier-communication is non-trivial. The driving motivation lay in the guarantee that the \textit{Locomotive} never wastes time. Missing a physics tick (or delaying a physics tick) can result in inaccurate calculations. Delaying an urgent user command due to a sensor read can lead to catastrophic results. It only follows that the \textit{Locomotive} task should almost never block. This is, of course, impossible without a very extensive design since it has to send commands to the driver (which blocks temporarily). Nevertheless, we attempt to minimize time spent blocked using couriers to transfer commands and position/prediction updates.
 
+\subsection{Tasks - Milestone 2}
+Milestone 2 extends from the previous milestone by adding additional functionality to the Train processes. The major (though simple) change involved adding track ownership. All other modifications extend from track ownership by simply considering which train owns what track piece. Our policy to prevent collisions simply requires that we can calculate the stopping distance of any train and allocate track ahead. Once this requirement is met, trains (the \textit{Locomotive} task) must only work with track nodes (branches, sensors) that they own. As long as all trains follow these policies, they cannot possibly collide. It is easy to show that any operation that violates these policies will likely lead to a system failure.
+
+\subsubsection{Track Ownership}
+
+\textbf{trainAllocateTrack(train, requestList)} - Revokes any previous allocation and attempts to allocate a new set of nodes to the train. Assumes the list be a contiguous sequence of nodes in the graph. \\\\
+\textbf{trainWhoOwnsTrack(nodeId)} - Asks the \textit{Track Manager} which train owns the track node specified. \\\\
+
+Track ownership is stored by an independent server known as the \textit{Track Manager}. The \textit{Track Manager} does not provide any protection to prevent ownership issues (such as leap-frogging) but instead provides a framework that supports ownership policies. That is, it serves as a central location to perform and store ownership information. The server provides an interface that permits a \textit{Locomotive} to allocate a sequence of nodes (path) atomically. Any allocation is preceded by a full revocation of all nodes owned by the requestor train. This gives the \textit{Locomotive} task freedom to only consider nodes it needs instead of those that it may have used in the past. This operation is atomic with respect to the \textit{Track Manager} ensuring that all contiguous path requests will remain contiguous.
+
+\subsubsection{Locomotive Task - Path Finding}
+Path finding is not treated as a separate task and is instead treated as an operation in the \textit{Locomotive}. The Dijkstra Algorithm is used to find the shortest path from any given node to any other node. It is performed at every sensor hit easily handling failed branches or a missed target sensor. Reverse path finding is not performed yet.
+
+Path finding doesn't modify the branch state of the board since this can cause conflicts with other trains. Instead, as part of the ownership process of the train, the \textit{Locomotive} switches branches that it owns to the correct configuration. It uses physics calculations to determine whether the branch can be switched in time. If it cannot, path finding will be performed again at the next sensor and the \textit{Locomotive} will attempt a new approach towards the target sensor.
+
+\subsubsection{Locomotive Task - Sensor Attribution}
+Sensor attribution extends from the previous milestone by, once again, simply looking at the node ownership. Since the \textit{Locomotive} task owns nodes (instead of just branches, or edges), the \textit{Locomotive} can determine if the train actually should consider itself at a given sensor. Under the assumption that trains only travel on track they own, a fired sensor must be caused by the train that owns that sensor. Any other situation describes a context in which tracking of trains has failed.
+
+\subsubsection{Locomotive Task - Collision Avoidance}
+Collision avoidance simply uses track ownership, as described in the \textit{Track Manager}. The \textit{Locomotive} always attempts to allocate enough track ahead of its current position that permits it to stop with some extra room. If there is a conflict (i.e. a failure to allocate track), the \textit{Locomotive} task stops the train and then delays for a random amount.
+
+The random amount is placed in order to give a chance for one train to own track in the reverse direction and reduce the chance of a long-lasting live-lock. If the train can reallocate after this time has passed, it then resumes in the same direction. Otherwise, the train will reverse and try again.
+
+Unfortunately, there are occasions in which the train loses tracking during a reversal. This bug shall be fixed in the final submission.
+
 \section{Train Modeling}
 
 \subsection{Static Model}
@@ -378,7 +403,7 @@ The actual stopping distance calcuation in the Trains 1 Demo code is hacked toge
 
 \subsection{Dynamic Model}
 
-Run time corrections are made to the model to improve accuracy. During the first ten sensor triggers the velocity model is updated to account for any discrepencies between the train and the static model. On subsequent sensor triggers, any timing error was stored on the sensor node so that future predictions could account for it. The assumption was that in most cases, if the train was late to a sensor once it would have a decent chance of being late again. 
+Run time corrections are made to the model to improve accuracy. During the first ten sensor triggers the velocity model is updated to account for any discrepencies between the train and the static model. On subsequent sensor triggers, any timing error was stored on the sensor node so that future predictions could account for it. The assumption was that in most cases, if the train was late to a sensor once it would have a decent chance of being late again.
 
 The combination of the static model and run time corrections to the dynamic model was sufficiently accurate for the demo. We were generally able to stop the train within a few centimeters of the target location and accurate predict the arrival time at sensors with less than 30ms of error.
 
