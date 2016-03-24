@@ -1,0 +1,383 @@
+\documentclass[twoside,a4paper]{refart}
+\usepackage{makeidx}
+\usepackage{ifthen}
+\usepackage{hyperref}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows}
+
+\def\bs{\char'134 }
+\newcommand{\ie}{i.\,e.,}
+\newcommand{\eg}{e.\,g..}
+\DeclareRobustCommand\cs[1]{\texttt{\char`\\#1}}
+\settextfraction{0.9}
+\setlength\parskip {0.15in}
+
+\title{burritOS System Manual}
+\author{Rollen D'Souza (20418141) \\
+rs2dsouz@uwaterloo.ca \\
+Taylor Petrick (20413951) \\
+tpetrick@uwaterloo.ca \\}
+
+\date{\textbf{CS 452 - Real Time With Bill Cowan \\ Trains 2 Demo \\ \today}}
+\emergencystretch1em  %
+
+\pagestyle{myfootings}
+\markboth{burritOS System Manual}%
+         {burritOS System Manual}
+
+\makeindex
+\setcounter{tocdepth}{2}
+\begin{document}
+\maketitle
+
+
+\textbf{THIS IS A DELTA DOCUMENT FROM THE PREVIOUS SUBMISSION}\\\\
+\textbf{Noteworthy Changes}\\\\
+This submission include the neccessary user space services to complete the Trains 2 milestone, as well as a new UI management system.
+
+Track graph data, taken from the course website, was added to the project for use during path finding. A variety of new tasks were also added to perform track ownership, sensor attribution and collision avoidance.
+
+A new user interface manager was added, and display code was refactored and moved into the \textit{./user/display/} directory.
+
+\newpage
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Compiling and Running}
+A compiled version of our Trains 1 submission can be found in the following directory on the student environment:
+\begin{center}
+\textit{/u/cs452/tftp/ARM/tpetrick/t2.elf}\\
+\textit{md5 hash: 393bd3e1fb230b38b3a5542aee63d423}
+\end{center}
+The source code for our submission has been shared with the CS 452 TA via the UW GitLab, and can be accessed at the following URL:
+\begin{center}
+\url{https://git.uwaterloo.ca/tpetrick/CS452_Project}\\
+\textit{md5 hash: ?}
+\end{center}
+Additionally, the course code can also be downloaded as an archive from Taylor’s personal web server:
+\begin{center}
+\url{https://www.taylorpetrick.com/cs452/t2.tar.gz}\\
+\textit{md5 hash: 4c5631aa5b0b0cad6dcaad835886df19}
+\end{center}
+Both source code locations contain the files listed in the File Listings section of this report.
+
+To compile the source code, simply run \textit{make} in the top level source directory. This will produce the binary file \textit{/bin/t2.elf}, which should be identical to the elf file listed above. Running \textit{make clean} will remove all build output files, and \textit{make doc} will generate documentation from the source files if Doxygen is installed on the system.
+
+By default, code is built using a unity build technique. The makefile runs \textit{cat} on all of the source files to produce a single source file, which is then built with GCC. This can be disabled by passing \textit{UNITY=0} when running \textit{make}.
+
+The file can be loaded and run on the TS7200 board with the following Redboot commands:
+
+\textit{\textgreater load -b 0x50000 -h 10.15.167.5 /u/cs452/tftp/ARM/tpetrick/t2.elf}\\
+\textit{\textgreater go}\\\\
+
+\textbf{CAUTION:}  The load address has changed since our past submissions. We no longer use the default address of \textit{0x218000}, and require that code is loaded at \textit{0x50000} instead. This should be handled automatically by the linker script and \textit{.elf} file, however it may be necessary to specify the \textit{-b} parameter when loading to Redboot.
+
+\section{Hardware Interface}
+\section{Kernel Design}
+
+\section{System Calls}
+\subsection{System State}
+\textbf{sysKill(void)} - Forces the system to shutdown and does not necessarily peform any clean up. Processes are not notified of the shutdown. This should only be used when the system is hung, as a last alternative to reseting the hardware itself.
+\subsection{Task Management}
+\subsection{Messaging}
+\subsection{Performance}
+
+\textbf{sysPerfCount(void)} - Queries the number of tasks currently running.
+
+\section{Debugging and Assertions}
+
+\section{Userspace}
+\subsection{Services}
+\subsection{Tasks - Milestone 1}
+\subsection{Tasks - Milestone 2}
+Milestone 2 extends from the previous milestone by adding additional functionality to the Train tasks. The major (though simple) change involved adding track ownership. All other modifications extend from track ownership by simply considering which train owns what track piece. Our policy to prevent collisions simply requires that we can calculate the stopping distance of any train and allocate track ahead. Once this requirement is met, trains (the \textit{Locomotive} task) must only work with track nodes (branches, sensors) that they own. As long as all trains follow these policies, they cannot possibly collide. It is easy to show that any operation that violates these policies will likely lead to a system failure.
+
+\subsubsection{Track Ownership}
+
+\textbf{trainAllocateTrack(train, requestList)} - Revokes any previous allocation and attempts to allocate a new set of nodes to the train. Assumes the list be a contiguous sequence of nodes in the graph. \\\\
+\textbf{trainWhoOwnsTrack(nodeId)} - Asks the \textit{Track Manager} which train owns the track node specified. \\\\
+
+Track ownership is stored by an independent server known as the \textit{Track Manager}. The \textit{Track Manager} does not provide any protection to prevent ownership issues (such as leap-frogging) but instead provides a framework that supports ownership policies. That is, it serves as a central location to perform and store ownership information. The server provides an interface that permits a \textit{Locomotive} to allocate a sequence of nodes (path) atomically. Any allocation is preceded by a full revocation of all nodes owned by the requestor train. This gives the \textit{Locomotive} task freedom to only consider nodes it needs instead of those that it may have used in the past. This operation is atomic with respect to the \textit{Track Manager} ensuring that all contiguous path requests will remain contiguous.
+
+\subsubsection{Locomotive Task - Path Finding}
+Path finding is not treated as a separate task and is instead treated as an operation in the \textit{Locomotive}. The Dijkstra Algorithm is used to find the shortest path from any given node to any other node. It is performed at every sensor hit easily handling failed branches or a missed target sensor. Reverse path finding is not performed yet.
+
+Path finding doesn't modify the branch state of the board since this can cause conflicts with other trains. Instead, as part of the ownership task of the train, the \textit{Locomotive} switches branches that it owns to the correct configuration. It uses physics calculations to determine whether the branch can be switched in time. If it cannot, path finding will be performed again at the next sensor and the \textit{Locomotive} will attempt a new approach towards the target sensor.
+
+\subsubsection{Locomotive Task - Sensor Attribution}
+Sensor attribution extends from the previous milestone by, once again, simply looking at the node ownership. Since the \textit{Locomotive} task owns nodes (instead of just branches, or edges), the \textit{Locomotive} can determine if the train actually should consider itself at a given sensor. Under the assumption that trains only travel on track they own, a fired sensor must be caused by the train that owns that sensor. Any other situation describes a context in which tracking of trains has failed.
+
+\subsubsection{Locomotive Task - Collision Avoidance}
+Collision avoidance simply uses track ownership, as described in the \textit{Track Manager}. The \textit{Locomotive} always attempts to allocate enough track ahead of its current position that permits it to stop with some extra room. If there is a conflict (i.e. a failure to allocate track), the \textit{Locomotive} task stops the train and then delays for a random amount.
+
+The random amount is placed in order to give a chance for one train to own track in the reverse direction and reduce the chance of a long-lasting live-lock. If the train can reallocate after this time has passed, it then resumes in the same direction. Otherwise, the train will reverse and try again.
+
+Unfortunately, there are occasions in which the train loses tracking during a reversal. This bug shall be fixed in the final submission.
+
+\subsection{User Interface}
+\subsubsection{Layout and Control}
+The text display is separated into three main regions: the input prompt, and two UI task slots. The prompt contains system summary information, such as the running time and idle performance, and looks something like the following:
+\begin{verbatim}
+[10:15.1 | 98.54%] > 
+\end{verbatim}
+
+The prompt occupies the entire first line of the display, and one line below the prompt is reserved for printing information about failed command inputs.
+
+User tasks that have been added to the user interface task list can be displayed in one of the UI slots. Each slot is 23 characters tall, and fills the entire horizontal screen width. When a task is assigned to a slot, the main display task will send it a message containing the screen index that it can draw to. A second message containing an index of 0 is sent when the UI task should stop drawing, usually due to a different UI task replacing it. The UI tasks are switched with the \textit{su [slot] [task]} command. For example, to display UI task one in the first slot: \textit{su 0 1}.
+
+UI task must provide their own mechanism for determining when to redraw/refresh the display - there is no global UI refresh rate. Some UI tasks, such as the ownership display, refresh at a fixed rate of 100ms. Others refresh only when new data is found, such as the sensor display. Most tasks have an initialization block that prints the majority of the contents, such as ASCII art output, and smaller update routines that print individual components of the UI.
+
+A collection of display tasks are included the system, primarily for debugging train and track state. The tasks and their IDs are as follows:
+\begin{verbatim}
+Sensor Display      0
+Switch Display      1
+Ownership Display   2
+Performance Summary 3
+Taco Logo           4
+\end{verbatim}
+\subsubsection{Sensor Display}
+
+The sensor display task uses the sensor attribution to server to provide visual updates each time a train triggers a sensor. The sensor direction is also display, using the $<$ and $>$ symbols. A sample ASCII output from the sensor display is shown below. Dots ($.$) indicate untriggered sensors. The sensor task also provides a rolling list of the past sensor triggers, as well as a train ID for each of the sensors in the list. Output is colorized to distinguish between train IDs.
+
+\begin{verbatim}
+______.______._____________________<___    
+_____._/ /___.________.___.________.___\ 
+  __._/ //           \     /           \\.
+       //            .\ | /.           .\\ 
+       |v             .\|/.              |  
+       |                |                |   
+       |.             ./|\.              |   
+  _.__ \\            ./ | \.           .// 
+_.__._\ \\___._______/.___.\_______.___//.
+_.___._\ \___.____>___________.____>___/  
+_.____._\______._\_____________/_.__________
+\end{verbatim}
+
+The task works by spawn a second helper task to poll the sensor server for changing sensors. The sensor attribution server is then used to determine the owner of the sensor nodes, after which a UI update is triggered. The relavent sensors are then redrawn in bulk by the main display task.
+
+\subsubsection{Switch Display}
+The switch display shows the current state of the switches on the track, as shown below. Gaps indicate that a switch has been toggled. When running on the hardware, switch task output is bolded and colorized to improve readability. Additionally, a table of switches next to the ASCII output shows the current state of all 22 switches on the track.
+
+\begin{verbatim}
+______________________________________
+_______/  /                           \
+  ____/  ______________________________\
+        /            \     /            \
+       /              \ | /              \
+       |               \|/               |
+       |                |                |
+       |               ||\               |
+       \              / | \              /
+  _____ \____________/_____\____________/
+_______\ \_____________________________/
+________\        \               /
+_________\______________________/____________
+\end{verbatim}
+
+The switch task works in a similar way as the sensor display, however it uses a simpler polling model. A secondary polling task is used to check the state of all 22 switches every ~450 millseconds. After the switch state is polled a UI is redraw is triggered. Since there are only 22 switches, a naive poll/read model worked fine in practice.
+
+\subsubsection{Ownership Display}
+
+The ownership display task prints a colorized output that indicates the owner of each node in the track. There are a total of 72 distinct nodes - 40 sensors, 22 branches and 10 end pieces. A large ASCII diagram is used to display all of the nodes. The $@$ symbol is used to represent an end segment, $*$ represents a sensor and $\#$ represents a branch.
+
+\begin{verbatim}
+@______*________*_____________________*__
+@____*___/#  /#                          \
+@__*____/#  /#__*________*___*________*__#\
+           /           #\     /#           \*
+          /             *\ @ /*            *\
+         |*              *\|/*              |
+         |                #|#               |
+         |                 |                |
+         |                #|#               |
+         |*              */|\*              |
+          \             */ @ \*            */
+@_*_____   \#___*______#/*___*\#______*___#/*
+@_*__*__\#  \___*____*___________*____*___/
+@_*___*__\#        \#             #/  
+@_*____*__\#______*_\#___________#/_*_________@
+\end{verbatim}
+
+The ownership process holds a read-only pointer to the main ownership graph, as well as its own local copy of the graph. Every 100ms it checks the graph to see if anything has changed between its local copy and the main copy; if anything has, an update is triggered for that entry in the graph.
+
+\subsubsection{Performance Summary}
+
+The performance display shows the performance of each task in the system, updated at a 2.5 second refresh rate. The output of the task is the same as the example discussed in \textbf{Section 3.6}. It is intended to be used in conjunction with the idle task performance to debug infinite loops or excessive computation in user space tasks.
+
+\subsubsection{Taco Logo}
+
+The taco logo is a useless UI task that simple prints a happy taco ASCII art to the screen.
+
+\begin{verbatim}
+....................
+....................
+......______ .......
+...../      \ \.....
+..../  ^  ^  \n\....
+...|          hn|...
+...|  \____/  hn|...
+....\_________\/....
+....................
+......burritOS......
+....................
+\end{verbatim}
+
+\subsection{Prompt Commands}
+\begin{verbatim}
+q                   Cleanly shutdown the system
+k                   Forcibly kill the system
+
+la [id]             Launch train #id for calibration
+tr [id][speed]      Set train #id to a target speed
+rv [id]             Reverse train #id
+
+gt [id][sensor]     Drive train #id to the sensor
+sa [id][sensor]     Drive train #id to the sensor and stop
+
+sw [id][C|S]        Set branch #id to curved or straight
+
+su [slot][id]       Set UI slot to use display task #id
+\end{verbatim}
+
+\section{Train Modeling}
+
+\section{File Listings}
+The following listing contains the name and hash of all of the source files in the current project:
+\begin{verbatim}
+4bb8b1b57ce3bb774a4a1797376558be  common/common.h
+dbc1e1f655ec2eb5634d253a4e225901  common/error.h
+2d19eb27d9841b9d69477d156070414d  common/heap.c
+4599b661bc0cd5b2794afbd41e1186c7  common/heap.h
+53a48b4ad52229bbb8f8ec71a8d491b5  common/list.c
+0b6cd0ee4dab7252e4fc056e9d4cb8d3  common/list.h
+0a75e9ea015602357e05992d269d1cae  common/memcpy.h
+4ad96714a59e326dd08f49fa87ac8edf  common/memcpy.s
+65491591f39cd860d49c262b3541a11e  common/memset.c
+06d14c9b85a344d1794fd1de3aca1cc1  common/memset.h
+adcf35544f06b19164f55b953995d1ff  common/priorityQueue.c
+5111780c98f90c807e28c9051a957bd1  common/priorityQueue.h
+9a51fd55cbaa0561763a09336f2a2eea  common/queue.c
+7a570500eaaa3aaece0e2c3ab932806c  common/queue.h
+839e67159271fe8335ef3f12755443f0  common/random.c
+f989ae83d0f804388cdc9cbaa41a95f5  common/random.h
+51f48f7fffd96b988d0d424119850596  common/string.c
+0eb10e8842dc414bcd499341a23cc5db  common/string.h
+1aca0ab83913d5a7432db2ce8b3e46b4  common/timerState.h
+a7d11483d9452d5d8f9f784bb26e8209  common/types.h
+7884ba72dbec8e0e3a09a2193cc1cd6c  common/utils.h
+7fdf99d4a9ea148c4e8d4d8b2777404d  common/vaList.h
+
+4541004aefa37b3c3e19d8c184deb2f6  hardware/hardware.h
+98f10a0ba0008da70ef80f36cd2a9031  hardware/interrupt.h
+c71fbd7b3723c4bf4d0d104902b01487  hardware/memory.h
+6c5930b3f894fe526814ea0ce188ed4e  hardware/timer.h
+d5f38025b527f774835847d5f79ad85b  hardware/uart.h
+
+87306d757b7eda3d725cad19dc6bf919  hardware/ts7200/interrupt.c
+4b8ad1779a2c1b2c7c767a76d067e160  hardware/ts7200/start.s
+20421e2c6a4e0d22bce2d9c812680b34  hardware/ts7200/timer.c
+6055b18f1d4b2f2d6a200ff8cbcbeebf  hardware/ts7200/ts7200.h
+4e90444ef3fbdfb1078e8682dee3084e  hardware/ts7200/uart.c
+ac2247029448237de4c4590f27698a85  hardware/ts7200/vector.s
+
+b9ccd6cc031e6d339d7bc7bd18f7f895  kernel/assert.c
+caac750f901b606a3b2f951f3483d091  kernel/assert.h
+74845107469cf4a11eb30e63ccedb531  kernel/bootstrap.c
+60aed85beecdff6275fe0e71a48c6df2  kernel/config.h
+59e283c66c5a66e627e33f3ef39a6f58  kernel/event.c
+26f5ecdbe74ff55fddc97b6127cee60e  kernel/event.h
+027b87b518651720441978c985804ce4  kernel/kernel.h
+8169ff0345038b3337e244491a014d07  kernel/kernelData.c
+f6c4b6303c324dcfecf1e6333b7ba02c  kernel/kernelData.h
+c1b8f89e01d797c5b606726807ac6e4b  kernel/kernelUtils.s
+f8a30fe67fb0ab3ae7905cf429aaf5a0  kernel/kernelUtils.h
+c7abe47341dd218cace01e289281a9fe  kernel/memoryAllocator.c
+4b77d920ca414341407ba26669285f02  kernel/memoryAllocator.h
+269831580f0cb96b0128c175c677d590  kernel/message.h
+7617ed11988f83aa8440410517efd7f7  kernel/print.c
+6a21b1817843435936a212ce8f594f85  kernel/print.h
+d896e422a71fd553fc0b695a0f75cf25  kernel/scheduler.c
+80542279eecadf24ab1e286c34f90c92  kernel/systemCall.c
+5ee47548f3c85994e65f7fa60d72d60a  kernel/systemCall.h
+e1f4e45f2752c7d539018a020a6ba8e6  kernel/taskDescriptor.h
+523c980a823bb2647fa8e24856ad8119  kernel/taskTable.c
+e46bc116c4450befc0c0260ca9a7b0d2  kernel/taskTable.h
+
+80a2f12e7e8b279566bcb5aa9604288e  trains/train58.h
+5b3c0f265f184d7e95a1b8bedff3c1b4  trains/train62.h
+0d838afb51970bbd49f6e934eb8a581b  trains/train64.h
+fdd798504c0c09e1690671c7fc655142  trains/train68.h
+f052165bf1d5c1e8873f1c219f7e967c  trains/train69.h
+35cb22a2ad726e5826e1f9939098f967  trains/trains.h
+7db7a1caaeb62879ba800f5fda5f3269  trains/trackData.c
+5a817f17542a9ca277a0e38779eff468  trains/trackData.h
+ba00aee82786403eb2c0d44e03a0cb47  trains/trackGraph.c
+874ca00be75e9da06367e24843222759  trains/trackGraph.h
+3f14531d9bf03b41d7709500d4aae942  trains/trainInit.h
+1161c63d1c0f24c6f1b4c173d39d750d  trains/trainMath.h
+a51fee6be16c32e8298b2e8d6739cd3f  trains/trackNode.h
+0477ae09fa076576861e3eb4dbaf9418  trains/trainPhysics.c
+49d2fd40778d63d150dd6d43fff7ce04  trains/trainPhysics.h
+
+a01d7f95458f44436a20e7ffc626b890  user/IdleTask.c
+e7ff85ba8f14ce99e0229fff7dd87d52  user/IdleTask.h
+082374ab9378b4a318dc5ba1d27096de  user/InitialTask.c
+63bb9b7bc6d198c30c328b2f2e0850f8  user/InitialTask.h
+d064dd6e925384de97a94fd3f45a9fcb  user/messageTypes.h
+e68473801de983e536d60334df591eed  user/Locomotive.c
+a833fcdae45fb79e86cbfe8aa52b4553  user/Locomotive.h
+
+f9294be93d928ddce26df31ae3bdb363  user/display/DigitalClockDisplay.c
+8b58af96d06a52275d686e4f172ff3f6  user/display/DigitalClockDisplay.h
+113e3b392cce650717fd3e628859a81d  user/display/IdlePerformanceDisplay.c
+821497be16c6603ca5787db3c01c2417  user/display/IdlePerformanceDisplay.h
+aec4776c794cac90c28b22c8d7f8bbf6  user/display/OwnerDisplay.h
+352f7ad9efcb9c68e69c29ccfd2e7c1e  user/display/OwnerDisplay.c
+7956317e33a4c00896fe77516fadf99b  user/display/PerformanceDisplay.c
+046f035fbbd7081ce01790317e495379  user/display/PerformanceDisplay.h
+4be6cf13b6f2c96dc2bc387ad9ae0815  user/display/PromptDisplay.c
+886ba450f91dfc7e80becb1a71d208cf  user/display/PromptDisplay.h
+21323d6014461243aed84d074d29a3fb  user/display/SensorDisplay.c
+f720cb5f7c54893a176e1ffb53a53845  user/display/SensorDisplay.h
+7c2b30e0ab3e6d53a97db217700780ee  user/display/SwitchDisplay.c
+ed96aad50758f00249b6acc3ed6010b2  user/display/SwitchDisplay.h
+eae13b64433c0e191fb92e7ef6033a07  user/display/TacoDisplay.c
+d98a03a75c12e9db847fe90204ef14c4  user/display/TacoDisplay.h
+
+1c77c18014d4834bf7d8cc1e110f3639  user/servers/ClockNotifier.c
+fda7de6c69066a709f71851d409038c8  user/servers/ClockNotifier.h
+17927bdd3663deee85ddb9224d147384  user/servers/ClockServer.c
+368242d16e123c6910bce9bbd9be9cd0  user/servers/ClockServer.h
+5ce850a0ca90fbba0277955dfc8d74db  user/servers/NameServer.c
+7c8d6a256a3bd5ee748c79806a3e2225  user/servers/NameServer.h
+a172fa9d55a825ef2dfa891b91279ec5  user/servers/TrainDriver.c
+b1228054cb0be753d947d59480718fa5  user/servers/TrainDriver.h
+7ce679bd48689b913805726b327d8d4e  user/servers/TerminalDriver.c
+6fd529e84ccf8f4264e0c9d22870e626  user/servers/TerminalDriver.h
+5eacdcdff21ef6905c5936b6d946d105  user/servers/TrainSensorServer.c
+a07aac2ee986a67505582d1248c13e9c  user/servers/TrainSwitchServer.c
+
+db36bdd1dc6ef57eb26049aa6fe1e45a  user/services/clockService.h
+c56436accee020788546e56ff0a8cc32  user/services/clockService.c
+b1d37cb42c79cdaa0b5728477f5dad9b  user/services/nameService.c
+5e7e5d08fc2b22e0ba0cbcdf1c7a1ee0  user/services/nameService.h
+cbb0a6db7a3fa6c7758e2907aa62e831  user/services/services.c
+9abbea9cf81b40755d6176a08bb9cc73  user/services/services.h
+7f1328e84e61f4d301cd6c344b500aa2  user/services/terminal.c
+bdf4cdc781bc41b9684787c8fa4b7ad3  user/services/terminal.h
+e56c99c4d12c2d3323a2189f5a28d9ab  user/services/trainCommand.c
+396ee7e3ab6ac2f220e0fda6f4432d81  user/services/trainCommand.h
+
+7134217e5a46d741e7510c5b49fc97f7  user/trainservers/trains.c
+27f1ceba9fd6a96ee341608130834ed2  user/trainservers/trainservers.h
+b1fef31c4c71d8d4ec451cf3bbf1d141  user/trainservers/trainservices.h
+de6c2eb8299d2cf9c5cdde78d714bf0b  user/trainservers/SwitchOffice.c
+d831166af2f3ddc79d042e05fc67992e  user/trainservers/SwitchOffice.h
+e8a06c97f7c370dd3b8b8e0bce7a202b  user/trainservers/TrainCommander.c
+7a35d1a942d01548f0074a8bccab2a9a  user/trainservers/TrainCommander.h
+609c2a14ff539d4c5f60e174ec142ab3  user/trainservers/TrackManager.c
+a0d9ba883788bfe3e888e46171b9e58e  user/trainservers/TrackManager.h
+b98e1c08d16711687ba827b199b77eba  user/trainservers/TrainYard.c
+94b7fa2046faaba2d46baa3fbf5edcd7  user/trainservers/TrainYard.h
+\end{verbatim}
+\end{document}
