@@ -105,8 +105,10 @@ void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed);
  *
  * @param   physics   The TrainPhysics model containing physics data
  * @param   velocity  The velocity in um/mt
+ *
+ * @return  The low oscillation speed
  */
-void trainPhysicsSetVelocity(TrainPhysics* physics, const U32 velocity);
+U8 trainPhysicsSetVelocity(TrainPhysics* physics, const U32 velocity);
 
 /**
  * Reports empirical measurements

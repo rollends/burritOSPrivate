@@ -137,7 +137,7 @@ void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed)
     }
 }
 
-void trainPhysicsSetVelocity(TrainPhysics* physics, const U32 velocity)
+U8 trainPhysicsSetVelocity(TrainPhysics* physics, const U32 velocity)
 {
     U8 i;
     U32 last = physics->speedMap[0];
@@ -153,9 +153,12 @@ void trainPhysicsSetVelocity(TrainPhysics* physics, const U32 velocity)
             physics->oscillateHigh = i;
             physics->oscillateVelocity = velocity;
             physics->oscillateTick = 10;
-            break;
+
+            return i - 1;
         }
     }
+
+    return physics->targetSpeed;
 }
 
 S32 trainPhysicsReport(TrainPhysics* physics,

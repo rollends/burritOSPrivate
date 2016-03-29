@@ -47,6 +47,18 @@ static U8 parseTrainCommand(String string, U8* type, U32* info)
         *info = speed;
         return train;
     }
+    else if( cstring[0] == 't' && cstring[1] == 'v' )
+    {
+        cstring += 2;
+        strskipws(&cstring);
+        U8 train = stratoui(&cstring);
+        strskipws(&cstring);
+        U32 speed = stratoui(&cstring);
+        
+        *type = MESSAGE_TRAIN_SET_VELOCITY;
+        *info = speed;
+        return train;
+    }
     else if( cstring[0] == 'r' && cstring[1] == 'v' )
     {
         cstring += 2;
