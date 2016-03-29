@@ -7,6 +7,9 @@ void trainPhysicsInit(TrainPhysics* physics)
     physics->acceleration = 0;
     physics->targetVelocity = 0;
     physics->speed = 0;
+    physics->oscillateLow = 0;
+    physics->oscillateHigh = 0;
+    physics->oscillateVelocity = 0;
     physics->targetSpeed = 0;
     physics->distance = 0;
     physics->initialVelocity = 0;
@@ -66,11 +69,32 @@ void trainPhysicsAccelMap(TrainPhysics* physics,
     physics->accelMap[speed][13] = v13;
 }
 
-U32 trainPhysicsStep(TrainPhysics* physics, const U32 delta)
+U8 trainPhysicsStep(TrainPhysics* physics, const U32 delta)
 {
+    U8 ret = 0;
+
     U32 ktick = (delta/100);
     ktick += 5;
     ktick /= 10;
+
+    if (physics->oscillateHigh != 0)
+    {
+        physics->oscillateTick--;
+        if (physics->oscillateTick == 0)
+        {
+            physics->oscillateTick = 10;
+            if (physics->velocity > physics->oscillateVelocity)
+            {
+                trainPhysicsSetSpeed(physics, physics->oscillateLow);
+                ret = physics->oscillateLow;
+            }
+            else
+            {
+                trainPhysicsSetSpeed(physics, physics->oscillateHigh);
+                ret = physics->oscillateHigh;
+            }
+        }
+    }
 
     if (physics->acceleration != 0)
     {
@@ -95,8 +119,7 @@ U32 trainPhysicsStep(TrainPhysics* physics, const U32 delta)
     steadyDist = ((steadyDist/1000) + 5)/10;
 
     physics->distance += steadyDist;
-
-    return steadyDist;
+    return ret;
 }
 
 void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed)
@@ -108,6 +131,30 @@ void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed)
         physics->acceleration = physics->accelMap[physics->speed][speed];
         physics->initialVelocity = physics->velocity;
         physics->initialSpeed = physics->speed;
+        physics->oscillateLow = 0;
+        physics->oscillateHigh = 0;
+        physics->oscillateVelocity = 0;
+    }
+}
+
+void trainPhysicsSetVelocity(TrainPhysics* physics, const U32 velocity)
+{
+    U8 i;
+    U32 last = physics->speedMap[0];
+
+    physics->oscillateLow = 0;
+    physics->oscillateHigh = 0;
+
+    for (i = 1; i < 14; i++)
+    {
+        if (last <= velocity && physics->speedMap[i] >= velocity)
+        {
+            physics->oscillateLow = i - 1;
+            physics->oscillateHigh = i;
+            physics->oscillateVelocity = velocity;
+            physics->oscillateTick = 10;
+            break;
+        }
     }
 }
 

@@ -29,6 +29,9 @@ typedef struct
     /// The target velocity of the train
     S32 targetVelocity;
 
+    /// The oscillation velocity
+    S32 oscillateVelocity;
+
     /// The distance since the last report
     S32 distance;
 
@@ -37,6 +40,15 @@ typedef struct
 
     /// The target speed of the train
     U8  targetSpeed;
+
+    /// The low oscillation speed
+    U8  oscillateLow;
+
+    /// The high oscillation speed
+    U8  oscillateHigh;
+
+    /// The oscillation ticker
+    U8  oscillateTick;
 } TrainPhysics;
 
 /**
@@ -75,8 +87,10 @@ void trainPhysicsAccelMap(TrainPhysics* physics,
  *
  * @param   physics   The TrainPhysics simulation
  * @param   delta     The time delta, in ticks
+ *
+ * @return  The speed to set on the train, or 0 if the train is in steady state
  */
-U32 trainPhysicsStep(TrainPhysics* physics, const U32 delta);
+U8 trainPhysicsStep(TrainPhysics* physics, const U32 delta);
 
 /**
  * Sets the desired train speed, as sent to the train controller
@@ -85,6 +99,14 @@ U32 trainPhysicsStep(TrainPhysics* physics, const U32 delta);
  * @param   speed     The speed, from 0 to 14
  */
 void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed);
+
+/**
+ * Sets the desired velocity, possibly a blend between multiple speeds
+ *
+ * @param   physics   The TrainPhysics model containing physics data
+ * @param   velocity  The velocity in um/mt
+ */
+void trainPhysicsSetVelocity(TrainPhysics* physics, const U32 velocity);
 
 /**
  * Reports empirical measurements
@@ -117,6 +139,13 @@ S32 trainPhysicsGetVelocity(TrainPhysics* physics);
  */
 U32 trainPhysicsGetTime(TrainPhysics* physics, const S32 dx);
 
+/**
+ * Returns the distance needed to stop the train
+ *
+ * @param   physics   The physics model for the train
+ *
+ * @return  The stopping distance in mm
+ */
 S32 trainPhysicsStopDist(TrainPhysics* physics);
 
 /**
