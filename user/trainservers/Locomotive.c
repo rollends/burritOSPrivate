@@ -17,7 +17,7 @@ void Locomotive(void)
 {
 //    const char * strPredictOldTrain = "\033[s\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dkt\033[u\033[m\033[u";
 //    const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
-   const char * strPredictTrain = "Next Prediction:\tTrain %2d | Location %c%2d | Time %dkt";
+   const char * strPredictTrain = "[Train %2d] Predict | %c%2d | T %dkt | D %dmm";
  //   const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dkt | \033[1mDeltaT %dkt\033[m | Correction: %dkt\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
     
     assert(sysPriority() < 31);
@@ -115,6 +115,10 @@ void Locomotive(void)
                 
             if (state.isLaunching)
             {
+                char buffer[512];
+                sprintf(buffer, "[Train %d] Found myself!", state.train);
+                logMessage(buffer);
+
                 state.isLaunching = 0;
                 locomotiveThrottle(&state, 0);
 
@@ -126,12 +130,12 @@ void Locomotive(void)
             }
 
             locomotiveSensorUpdate(&state, sensorHit - 1, tickTimer.delta, errorTimer.delta);
-            logMessage(strPredictTrain,
-                    strPredictTrain, 
+            logMessage(strPredictTrain, 
                     state.train, 
                     'A' + state.predictSensor[0] / 16,
-                    state.predictSensor[0] % 16, 
-                    state.predictTime[0]);
+                    state.predictSensor[0] % 16 + 1, 
+                    state.predictTime[0],
+                    state.predictDistance[0]);
 
             //printf(strFoundTrain, train, sensorGroup, sensorId,
              //      errorTimer.delta/1000, deltaT,
@@ -228,7 +232,6 @@ static void LocomotiveRadio(void)
     sysReply(loco.value, &env);
 
     U8 train = env.message.MessageU8.body;
-    printf("\033[s\033[43;1HTrain %d\033[u", train);
     for(;;)
     {
         env.message.MessageU8.body = train;

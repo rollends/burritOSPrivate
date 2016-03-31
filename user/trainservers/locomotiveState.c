@@ -2,7 +2,7 @@
 #include "kernel/kernel.h"
 #include "hardware/hardware.h"
 #include "trains/trains.h"
-
+#include "user/display/LogDisplay.h"
 #include "user/messageTypes.h"
 #include "user/services/services.h"
 #include "user/trainservers/trainservices.h"
@@ -19,7 +19,7 @@ void locomotiveStateInit (LocomotiveState* state, U8 train)
 {
     memset(state, 0, sizeof(LocomotiveState));
 
-    init_trackb(state->graph);
+    init_tracka(state->graph);
     state->sTrainServer = nsWhoIs(Train);
     state->train = train;
     state->sSwitchServer = nsWhoIs(TrainSwitchOffice);
@@ -76,7 +76,7 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
         // Try a reallocation.
         // we already stopped, wait a random amount (doesn't matter if physics tick is delayed. calculations are 
         // not being done for the 0 speed)
-        clockDelayBy(nsWhoIs(Clock), (nextRandU32(&state->random) % 10 + 1));
+        clockDelayBy(nsWhoIs(Clock), 100 + 20 * (nextRandU32(&state->random) % 10 + 1));
         state->hasConflict = 2;
     }
     else if (state->gotoSensor < 0xFF)
@@ -214,10 +214,11 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
             if (state->speed == 0)
             {
                 state->isReversing = ~state->isReversing;
-                state->sensor = (state->graph + state->predictSensor[0])->reverse;
-                if(state->physics.distance <= state->predictDistance[0])
-                    state->physics.distance = state->predictDistance[0] - state->physics.distance;
-                else
+                state->sensor = state->sensor->reverse;
+                //state->sensor = (state->graph + state->predictSensor[0])->reverse;
+                //if(state->physics.distance <= state->predictDistance[0])
+                //    state->physics.distance = state->predictDistance[0] - state->physics.distance;
+                //else
                     state->physics.distance = 0;
                 
                 pathFind(state->graph, state->sensor->num, state->gotoSensor, &state->destinationPath);
@@ -225,6 +226,10 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
             }
             else
             {
+                char buffer[512];
+                sprintf(buffer, "[Train %d] Yielding!", state->train);
+                logMessage(buffer);
+                
                 state->isStopping = 1;
                 locomotiveThrottle(state, 0);
             }
@@ -242,7 +247,18 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
                     env.type = MESSAGE_TRAIN_REVERSE;
                     env.message.MessageU16.body = (state->train << 8) | 0x0F;
                     sysSend(state->sTrainServer.value, &env, &env);
+
+                    char buffer[512];
+                    sprintf(buffer, "[Train %d] Reversing.", state->train);
+                    logMessage(buffer);
+
                     clockDelayBy(clock, 25);
+                }
+                else
+                {
+                    char buffer[512];
+                    sprintf(buffer, "[Train %d] Continuing.", state->train);
+                    logMessage(buffer);
                 }
                 state->isReversing = 0;
                 locomotiveThrottle(state, 11);   
@@ -343,6 +359,7 @@ void locomotiveMakePrediction (LocomotiveState* state)
 
     for(i = 0; i < 4; ++i)
     {
+        state->predictDistance[i] += state->sensor->edge[DIR_AHEAD].dist;
         state->predictTime[i] = trainPhysicsGetTime(&state->physics, state->predictDistance[i]) / 1000 - state->predictTime[i];
     }
 }
@@ -370,7 +387,7 @@ void locomotiveSensorUpdate (LocomotiveState* state, U32 sensorIndex, U32 deltaT
                     nextRandU32(&state->random);
                     state->gotoSensor = state->random % 80;
                 } while (state->gotoSensor == 0x01 || state->gotoSensor == 0x05 || state->gotoSensor == 0x06 ||
-                         state->gotoSensor == 0x08 || state->gotoSensor == 0x0B || state->gotoSensor == 0x0D ||
+                         state->gotoSensor == 0x08 || state->gotoSensor == 0x0C || state->gotoSensor == 0x0D ||
                          state->gotoSensor == 0x0E || state->gotoSensor == 0x17 || state->gotoSensor == 0x1B ||
                          state->gotoSensor == 0x19 || state->gotoSensor == 0x22 || state->gotoSensor == 0x27);
             } while( pathFind(state->graph, state->sensor->num, state->gotoSensor, &state->destinationPath) < 0 );
@@ -397,7 +414,7 @@ void locomotiveSensorUpdate (LocomotiveState* state, U32 sensorIndex, U32 deltaT
 
         if (accelReport != 1)
         {
-            S32 trueDelta = deltaT + time;
+            S32 trueDelta = deltaT;
 
             if (((deltaT < 120 && deltaT > 10) || (deltaT > -120 && deltaT < -10)))
             {
