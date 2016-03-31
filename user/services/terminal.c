@@ -111,6 +111,16 @@ static int _printStringNoFormat(String* output, char const * str, S32 len)
 }
 
 S32 sprintf(String buffer, ConstString format, ...)
+{
+    va_list va;
+    va_start(va, format);
+    vsprintf(buffer, format, va);
+    va_end(va);
+
+    return 0;
+}
+
+S32 vsprintf(String buffer, ConstString format, va_list va)
 {    
     enum { PLAIN, FORMAT, ESCAPE } state = PLAIN;
 	U32 widthFlag = 0;
@@ -121,8 +131,6 @@ S32 sprintf(String buffer, ConstString format, ...)
 
     assert( strlen(format) <= 512 );
 
-    va_list va;
-    va_start(va, format);
     while ((ch = *(format++)))
     {
         switch( state )
@@ -196,8 +204,6 @@ S32 sprintf(String buffer, ConstString format, ...)
 
     assert( (OutputBufferI - OutputBuffer) <= 512 );
     
-    va_end(va);
-
     assert( state == PLAIN );
     return 0;
 }
@@ -212,7 +218,6 @@ S32 tprintf(TaskID server, ConstString format, ...)
     String OutputBufferI = OutputBuffer;
 
     assert( strlen(format) <= 512 );
-
     va_list va;
     va_start(va, format);
     while ((ch = *(format++)))
@@ -284,7 +289,7 @@ S32 tprintf(TaskID server, ConstString format, ...)
         }
         }
     }
-    *OutputBufferI = '\0';
+    *OutputBufferI = '\0';;
 
     assert( (OutputBufferI - OutputBuffer) <= 512 );
     

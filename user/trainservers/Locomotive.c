@@ -126,14 +126,12 @@ void Locomotive(void)
             }
 
             locomotiveSensorUpdate(&state, sensorHit - 1, tickTimer.delta, errorTimer.delta);
-            char buffer[512];
-            sprintf(buffer,
+            logMessage(strPredictTrain,
                     strPredictTrain, 
                     state.train, 
                     'A' + state.predictSensor[0] / 16,
                     state.predictSensor[0] % 16, 
                     state.predictTime[0]);
-            logMessage(buffer);
 
             //printf(strFoundTrain, train, sensorGroup, sensorId,
              //      errorTimer.delta/1000, deltaT,

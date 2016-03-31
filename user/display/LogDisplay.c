@@ -6,10 +6,55 @@ static char rollingBuffer[LOG_LIST_COUNT][256];
 static U8 head;
 static U8 previousHead;
 
-void logMessage(char* str)
+extern U16 millis;
+extern U16 seconds;
+extern U16 minutes;
+
+void logMessage(ConstString format, ...)
 {
     MessageEnvelope env;
-    env.message.MessageArbitrary.body = (U32*)str;
+    char buffer[512];
+    char final[512];
+
+    va_list va;
+    va_start(va, format);
+    vsprintf(buffer, format, va);
+    sprintf(final, "[%2d:%2d:%d] %80s", minutes, seconds, millis, buffer);
+    va_end(va);
+
+    env.message.MessageArbitrary.body = (U32*)final;
+    sysSend(nsWhoIs(Logger).value, &env, &env);
+}
+
+void logError(ConstString format, ...)
+{
+    MessageEnvelope env;
+    char buffer[512];
+    char final[512];
+
+    va_list va;
+    va_start(va, format);
+    vsprintf(buffer, format, va);
+    sprintf(final, "[%2d:%2d:%d] \033[31m%80s\033[m", minutes, seconds, millis, buffer);
+    va_end(va);
+
+    env.message.MessageArbitrary.body = (U32*)final;
+    sysSend(nsWhoIs(Logger).value, &env, &env);
+}
+
+void logWarn(ConstString format, ...)
+{
+    MessageEnvelope env;
+    char buffer[512];
+    char final[512];
+
+    va_list va;
+    va_start(va, format);
+    vsprintf(buffer, format, va);
+    sprintf(final, "[%2d:%2d:%d] \033[33m%80s\033[m", minutes, seconds, millis, buffer);
+    va_end(va);
+
+    env.message.MessageArbitrary.body = (U32*)final;
     sysSend(nsWhoIs(Logger).value, &env, &env);
 }
 
@@ -42,8 +87,8 @@ void LogServer(void)
 
 void updateLogUi(U8 index)
 {
-    printf("\033[s\033[%d;4H%80s\033[u", index + 1 + previousHead, rollingBuffer[previousHead]);
-    printf("\033[s\033[%d;4H\033[2K\033[1m%80s\033[m\r\n\033[2K\033[u", index + 1 + head, rollingBuffer[head]);
+    printf("\033[s\033[%d;2H%100s\033[u", index + 1 + previousHead, rollingBuffer[previousHead]);
+    printf("\033[s\033[%d;2H\033[2K\033[1m%100s\033[m\r\n\033[2K\033[u", index + 1 + head, rollingBuffer[head]);
     
     previousHead = head;
     head = (head + 1) % LOG_LIST_COUNT;

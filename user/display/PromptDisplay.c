@@ -66,13 +66,14 @@ void PromptDisplay(void)
     slots[0] = 2;
     slots[1] = 0;
 
+    MessageEnvelope env;
+    TaskID sender;
+    sysReceive(&sender.value, &env);
+
     printf("\033[s\033[3;1H---------------------------------------------------------------------------------------------\033[u");
     printf("\033[s\033[26;1H---------------------------------------------------------------------------------------------\033[u");
     printf("\033[s\033[49;1H---------------------------------------------------------------------------------------------\033[u");
 
-    MessageEnvelope env;
-    TaskID sender;
-    sysReceive(&sender.value, &env);
 
     updateSlot(0);
     updateSlot(1);

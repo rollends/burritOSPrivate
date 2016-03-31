@@ -13,6 +13,7 @@
 S32 tprintf(TaskID server, ConstString str, ...);
 
 S32 sprintf(String buffer, ConstString format, ...);
+S32 vsprintf(String buffer, ConstString format, va_list va);
 
 #define printf(a, ...) tprintf(nsWhoIs(Terminal), a,## __VA_ARGS__)
 
