@@ -51,7 +51,7 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
     {
         if(state->physics.speed != 0)
         {
-            // Still stopping. DONT DO ANYTHING ELSE.
+            // Still stopping. if we hit a sensor that we own, maybe we should allocate it?
             return;
         }
         else
@@ -68,7 +68,7 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
     {
         state->stopDistance = trainPhysicsStopDist(&state->physics);
     }
-    U32 clearance = (3 * state->stopDistance) / 2 + 230;
+    U32 clearance = state->stopDistance + 150;
     state->distanceRequired += clearance;
 
     if (state->hasConflict == 1)
@@ -76,7 +76,7 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
         // Try a reallocation.
         // we already stopped, wait a random amount (doesn't matter if physics tick is delayed. calculations are 
         // not being done for the 0 speed)
-        clockDelayBy(nsWhoIs(Clock), 100 + 20 * (nextRandU32(&state->random) % 10 + 1));
+        clockDelayBy(nsWhoIs(Clock), 100 + 10 * (nextRandU32(&state->random) % 10 + 1));
         state->hasConflict = 2;
     }
     else if (state->gotoSensor < 0xFF)
@@ -192,8 +192,12 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
         if(state->shouldStop && state->stopDistance >= distToStop)
         {
             state->isStopping = 1;
-            state->gotoSensor = 0xFF;
             locomotiveThrottle(state, 0);
+            logMessage( "[Train %d] Stopping at %c%2d.", 
+                        state->train, 
+                        'A' + state->gotoSensor/16,
+                        state->gotoSensor % 16 + 1);
+            state->gotoSensor = 0xFF;
         }
         else if(state->distanceRequired > 0 && ip->type == eNodeExit)
         {
@@ -203,11 +207,6 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
         }
         else if(failedNode < 0)
         {
-            //printf("\033[s\033[%d;1H[Train %d] Failed Allocation at %d.\033[u", 
-             //   (train == 64 ? 51 : 52), 
-             //   train, 
-             //   2*(U32)(-failedNode));
-            
             state->hasConflict = 1;
             
             // Failed allocation
@@ -215,20 +214,14 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
             {
                 state->isReversing = ~state->isReversing;
                 state->sensor = state->sensor->reverse;
-                //state->sensor = (state->graph + state->predictSensor[0])->reverse;
-                //if(state->physics.distance <= state->predictDistance[0])
-                //    state->physics.distance = state->predictDistance[0] - state->physics.distance;
-                //else
-                    state->physics.distance = 0;
+                state->physics.distance = 0;
                 
                 pathFind(state->graph, state->sensor->num, state->gotoSensor, &state->destinationPath);
                 locomotiveMakePrediction(state);
             }
             else
             {
-                char buffer[512];
-                sprintf(buffer, "[Train %d] Yielding!", state->train);
-                logMessage(buffer);
+                logMessage("[Train %d] Yielding (stopping for failed allocation).", state->train);
                 
                 state->isStopping = 1;
                 locomotiveThrottle(state, 0);
@@ -247,18 +240,12 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
                     env.type = MESSAGE_TRAIN_REVERSE;
                     env.message.MessageU16.body = (state->train << 8) | 0x0F;
                     sysSend(state->sTrainServer.value, &env, &env);
-
-                    char buffer[512];
-                    sprintf(buffer, "[Train %d] Reversing.", state->train);
-                    logMessage(buffer);
-
+                    logMessage("[Train %d] Reversing and continuing.", state->train);
                     clockDelayBy(clock, 25);
                 }
                 else
                 {
-                    char buffer[512];
-                    sprintf(buffer, "[Train %d] Continuing.", state->train);
-                    logMessage(buffer);
+                    logMessage("[Train %d] Continuing.", state->train);
                 }
                 state->isReversing = 0;
                 locomotiveThrottle(state, 11);   
@@ -298,13 +285,17 @@ void locomotiveMakePrediction (LocomotiveState* state)
     memset(state->predictTime, 0, sizeof(U32)*4);
     memset(state->predictSensor, 0xFF, sizeof(U32)*4);
 
-    while(ip && ip->type != eNodeExit)
+    while(ip)
     {
-        if(ip->type == eNodeSensor)
+        if(ip->type == eNodeExit || ip->type == eNodeSensor)
         {
-            state->predictSensor[i++] = ip->num; 
-
-            if( i >= 4 ) 
+            if(ip->type == eNodeSensor)
+            {
+                state->predictSensor[i] = ip->num; 
+            }
+            i++;
+            
+            if( i >= 4 )
             {
                 break;
             }
@@ -378,7 +369,7 @@ void locomotiveSensorUpdate (LocomotiveState* state, U32 sensorIndex, U32 deltaT
     {
         if(!state->shouldStop)
         {
-            locomotiveThrottle(state, 11);
+            locomotiveThrottle(state, state->speed);
 
             do
             {

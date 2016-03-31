@@ -6,6 +6,7 @@
 #include "trains/train64.h"
 #include "trains/train68.h"
 #include "trains/train69.h"
+#include "trains/train70.h"
 
 static inline void trainInit(TrainPhysics* physics, const U32 id)
 {
@@ -29,6 +30,11 @@ static inline void trainInit(TrainPhysics* physics, const U32 id)
 
         case 69:
             trainInit69(physics);
+            break;
+
+        case 70:
+            trainInit70(physics);
+            break;
 
         default:
             break;

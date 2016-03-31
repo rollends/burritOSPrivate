@@ -25,6 +25,8 @@ static U8 ownerColor(U8 owner)
             return 33;
         case 69:
             return 35;
+        case 70:
+            return 36;
         default:
             return 37;
     }

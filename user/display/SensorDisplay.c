@@ -25,6 +25,8 @@ static U8 sensorColor(U8 owner)
             return 33;
         case 69:
             return 35;
+        case 70:
+            return 36;
         default:
             return 37;
     }
@@ -85,7 +87,7 @@ static void updateSensorUi( U8* recentList, U8* ownerList, U8 recentHead, U8 ind
         recentHead = decmod(recentHead, SENSOR_LIST_COUNT);
     }
 
-    for (i = 50; i < 70; i++)
+    for (i = 50; i <= 75; i++)
     {
         if (lastSensorMapping[i][0] != 0xFF)
         {

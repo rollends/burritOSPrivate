@@ -115,9 +115,7 @@ void Locomotive(void)
                 
             if (state.isLaunching)
             {
-                char buffer[512];
-                sprintf(buffer, "[Train %d] Found myself!", state.train);
-                logMessage(buffer);
+                logMessage("[Train %d] Found myself!", state.train);
 
                 state.isLaunching = 0;
                 locomotiveThrottle(&state, 0);
