@@ -1,7 +1,7 @@
 #include "kernel/kernel.h"
 #include "user/messageTypes.h"
 #include "user/services/services.h"
-#include "user/Locomotive.h"
+#include "user/trainservers/Locomotive.h"
 #include "user/trainservers/TrainYard.h"
 #include "user/trainservers/trainservices.h"
 
@@ -37,7 +37,7 @@ void TrainYardServer(void)
 
         case MESSAGE_TRAIN_GO:
         {
-            sysSend(sysCreate(6, &Locomotive), &env, &env);
+            sysSend(sysCreate(7, &Locomotive), &env, &env);
             sysReply(from.value, &env);
             break;
         }

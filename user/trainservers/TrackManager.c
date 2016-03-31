@@ -77,23 +77,36 @@ void TrackManagerServer(void)
         case 1:
         {
             TrackRequest* ir = (TrackRequest*)env.message.MessageArbitrary.body;
+            TrackRequest* ir2 = ir;
             
+            // Pass 1 : Check if any conflicts. If any , don't allocate! 
+            do
+            {
+                if((ownershipGraph[ir2->indNode] != ir2->trainId) && (ownershipGraph[ir2->indNode] != 0x00))
+                {
+                    // CONFLICT
+                    env.type = MESSAGE_FAILURE;
+                    env.message.MessageArbitrary.body = (U32*)ir2; // Failed on this track request :'(
+                    sysReply(from.value, &env);
+                    break;
+                }
+
+                ir2 = ir2->pForwardRequest;
+            } while( ir2 );
+            
+            if( ir2 != 0 )
+            {
+                break;
+            }
+
             // Revoke any other requests.
             for(i = 0; i < (TRACK_MAX/2); ++i)
                 if( ownershipGraph[i] == ir->trainId )
                     ownershipGraph[i] = 0x00;
             
-            // Allocate the request.
+            // Pass 2 : Allocate Track
             do
             {
-                if((ownershipGraph[ir->indNode] != ir->trainId) && (ownershipGraph[ir->indNode] != 0x00))
-                {
-                    // CONFLICT
-                    env.type = MESSAGE_FAILURE;
-                    env.message.MessageArbitrary.body = (U32*)ir; // Failed on this track request :'(
-                    break;
-                }
-
                 ownershipGraph[ir->indNode] = ir->trainId;
                 ir = ir->pForwardRequest;
             } while( ir );

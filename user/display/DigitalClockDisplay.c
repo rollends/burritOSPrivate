@@ -1,4 +1,5 @@
 #include "user/display/DigitalClockDisplay.h"
+#include "user/display/LogDisplay.h"
 #include "user/services/services.h"
 
 void DigitalClockDisplay(void)

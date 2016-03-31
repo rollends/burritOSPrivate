@@ -35,14 +35,15 @@ static void SwitchWorker(void)
     SwitchRequest request = *(SwitchRequest*)(env.message.MessageArbitrary.body);
     sysReply(task.value, &env);
 
+    U8 cid = indexForBranch(switchServerGraph, request.branchId);
+    switches[cid] = request.direction;
+    
     TaskID clock = nsWhoIs(Clock);
     TaskID sw = nsWhoIs(TrainSwitches);
+    
     clockDelayUntil(clock, request.startTime);
     
     trainSwitch(sw, request.branchId, request.direction);
-  
-    U8 cid = indexForBranch(switchServerGraph, request.branchId);
-    switches[cid] = request.direction;
 
     if((request.branchId == 156) && (request.direction == eCurved))
     {
@@ -197,9 +198,9 @@ void SwitchExecutive(void)
             cNode->next = newInterval;
             newInterval->next = next;
                     
-            sysReply(person.value, &env);
             env.message.MessageArbitrary.body = (U32*)(&newInterval->request);
             sysSend(sysCreate(priority - 1, &SwitchWorker), &env, &env);
+            sysReply(person.value, &env);
             break;
         }
         }

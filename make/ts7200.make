@@ -4,7 +4,7 @@ LD      = /u/rs2dsouza/arm-none-eabi-gcc/bin/arm-none-eabi-ld
 CP	    = 
 DM 	    = /u/rs2dsouza/arm-none-eabi-gcc/bin/arm-none-eabi-objdump
 
-OUT		= t2.elf
+OUT		= p1.elf
 HRDWR	= ts7200
 
 CFLAGS  = -fPIC -O3 -Wall -Werror -nostdlib -nostartfiles -ffreestanding  -I. -mcpu=arm920t -msoft-float -DTARGET_TS7200

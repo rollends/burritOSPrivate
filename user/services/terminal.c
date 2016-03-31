@@ -110,6 +110,98 @@ static int _printStringNoFormat(String* output, char const * str, S32 len)
     return 0;
 }
 
+S32 sprintf(String buffer, ConstString format, ...)
+{    
+    enum { PLAIN, FORMAT, ESCAPE } state = PLAIN;
+	U32 widthFlag = 0;
+    char ch;
+    
+    char* OutputBuffer = buffer;
+    String OutputBufferI = OutputBuffer;
+
+    assert( strlen(format) <= 512 );
+
+    va_list va;
+    va_start(va, format);
+    while ((ch = *(format++)))
+    {
+        switch( state )
+        {
+        case ESCAPE:
+        {
+            *(OutputBufferI++) = ch;
+            break;
+        }
+
+        case PLAIN:
+        {
+            if (ch == '%')
+            {
+                state = FORMAT;
+                widthFlag = 0;
+            }
+            else
+                *(OutputBufferI++) = ch;
+            break;
+        }
+        case FORMAT:
+        {
+            if( ch >= '0' && ch <= '9' )
+                widthFlag = widthFlag * 10 + (ch - '0');
+            else
+            {
+                switch( ch )
+                {
+                case 'd':
+                    _printDecimal(&OutputBufferI,va_arg(va, S32), widthFlag, '0', 0);
+                    break;
+
+                case 'n':
+                    _printDecimal(&OutputBufferI,va_arg(va, S32), widthFlag, ' ', 1);
+                    break;
+
+                case 's':
+                    _printStringNoFormat(&OutputBufferI, va_arg(va, ConstString), widthFlag);
+                    break;
+
+                case 'c':
+                    *(OutputBufferI++) = va_arg(va, S32);
+                    break;
+
+                case 'x':
+                    _printHex(&OutputBufferI,va_arg(va, U32));
+                    break;
+
+                case 'b':
+                    _printHexByte(&OutputBufferI,va_arg(va, U8));
+                    break;
+
+                case '%':
+                    *(OutputBufferI++) = '%';
+                    break;
+
+                default:
+                    *(OutputBufferI++) = '%';
+                    _printDecimal(&OutputBufferI,widthFlag, 0, '0', 0);
+                    *(OutputBufferI++) = ch;
+                    break;
+                }
+                state = PLAIN;
+            }
+            break;
+        }
+        }
+    }
+    *OutputBufferI = '\0';
+
+    assert( (OutputBufferI - OutputBuffer) <= 512 );
+    
+    va_end(va);
+
+    assert( state == PLAIN );
+    return 0;
+}
+
 S32 tprintf(TaskID server, ConstString format, ...)
 {    
     enum { PLAIN, FORMAT, ESCAPE } state = PLAIN;

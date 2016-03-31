@@ -3,6 +3,7 @@
 
 #include "user/display/DigitalClockDisplay.h"
 #include "user/display/IdlePerformanceDisplay.h"
+#include "user/display/LogDisplay.h"
 #include "user/display/OwnerDisplay.h"
 #include "user/display/PerformanceDisplay.h"
 #include "user/display/PromptDisplay.h"
@@ -12,7 +13,7 @@
 #include "user/services/services.h"
 #include "user/trainservers/trainservices.h"
 
-static TaskID displayTasks[5];
+static TaskID displayTasks[6];
 static U8 index[2];
 static S8 slots[2];
 
@@ -48,15 +49,16 @@ void clearSlot(U8 slot)
 
 void PromptDisplay(void)
 {
-    TaskID stdio = nsWhoIs(Terminal);
-
     sysCreate(2, &IdlePerformanceDisplay);
     sysCreate(4, &DigitalClockDisplay);
     displayTasks[0].value = sysCreate(10, &SensorDisplay);
     displayTasks[1].value = sysCreate(10, &SwitchDisplay);
     displayTasks[2].value = sysCreate(10, &OwnerDisplay);
     displayTasks[3].value = sysCreate(4, &PerformanceDisplay);
-    displayTasks[4].value = sysCreate(20, &TacoDisplay);
+    displayTasks[4].value = sysCreate(10, &LogDisplay);
+    displayTasks[5].value = sysCreate(20, &TacoDisplay);
+    
+    TaskID stdio = nsWhoIs(Terminal);
 
     index[0] = 3;
     index[1] = 26;
@@ -127,7 +129,7 @@ void PromptDisplay(void)
             strskipws(&str);
             U8 display = stratoui(&str);
 
-            if (display > 4)
+            if (display > 5)
             {
                 printf("\033[2;19H\033[2KInvalid display specified....");
             }

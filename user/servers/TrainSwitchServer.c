@@ -9,8 +9,8 @@ void TrainSwitchCourier(void)
     env.type = MESSAGE_COURIER;
 
     TaskID  parent  = { sysPid() },
-            train   = nsWhoIs(Train),
-            clock   = nsWhoIs(Clock);
+            train   = nsWhoIs(Train);
+            //clock   = nsWhoIs(Clock);
     for(;;)
     {
         env.type = MESSAGE_COURIER;
@@ -20,7 +20,7 @@ void TrainSwitchCourier(void)
         U8 type = env.type;
 
         sysSend(train.value, &env, &env);
-        clockDelayBy(clock, 16);
+        //clockDelayBy(clock, 10);
 
         if (type == MESSAGE_TRAIN_SWITCH_STRAIGHT
             || type == MESSAGE_TRAIN_SWITCH_CURVED)
