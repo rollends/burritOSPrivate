@@ -118,9 +118,9 @@ void TrainDriver(void)
             } 
             else
             {
-                queueU16Push(&blockedTaskCommands, fullCmd);
-                queueU16Push(&blockedTasks, rcvID.value);
-                queueU8Push(&blockedTaskOriginalType, oldType);
+                assertOk(queueU16Push(&blockedTaskCommands, fullCmd));
+                assertOk(queueU16Push(&blockedTasks, rcvID.value));
+                assertOk(queueU8Push(&blockedTaskOriginalType, oldType));
             }
             break;
         } 

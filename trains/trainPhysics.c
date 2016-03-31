@@ -1,6 +1,15 @@
 #include "trains/trainMath.h"
 #include "trains/trainPhysics.h"
 
+static inline void _trainPhysicsSetSpeedInternal(TrainPhysics* physics, const U8 speed)
+{
+    physics->targetVelocity = physics->speedMap[speed];
+    physics->targetSpeed = speed;
+    physics->acceleration = physics->accelMap[physics->speed][speed];
+    physics->initialVelocity = physics->velocity;
+    physics->initialSpeed = physics->speed;
+}
+
 void trainPhysicsInit(TrainPhysics* physics)
 {
     physics->velocity = 0;
@@ -85,12 +94,12 @@ U8 trainPhysicsStep(TrainPhysics* physics, const U32 delta)
             physics->oscillateTick = 10;
             if (physics->velocity > physics->oscillateVelocity)
             {
-                trainPhysicsSetSpeed(physics, physics->oscillateLow);
+                _trainPhysicsSetSpeedInternal(physics, physics->oscillateLow);
                 ret = physics->oscillateLow;
             }
             else
             {
-                trainPhysicsSetSpeed(physics, physics->oscillateHigh);
+                _trainPhysicsSetSpeedInternal(physics, physics->oscillateHigh);
                 ret = physics->oscillateHigh;
             }
         }
@@ -126,11 +135,8 @@ void trainPhysicsSetSpeed(TrainPhysics* physics, const U8 speed)
 {
     if (speed != physics->speed)
     {
-        physics->targetVelocity = physics->speedMap[speed];
-        physics->targetSpeed = speed;
-        physics->acceleration = physics->accelMap[physics->speed][speed];
-        physics->initialVelocity = physics->velocity;
-        physics->initialSpeed = physics->speed;
+        _trainPhysicsSetSpeedInternal(physics, speed);
+
         physics->oscillateLow = 0;
         physics->oscillateHigh = 0;
         physics->oscillateVelocity = 0;
@@ -154,6 +160,7 @@ U8 trainPhysicsSetVelocity(TrainPhysics* physics, const U32 velocity)
             physics->oscillateVelocity = velocity;
             physics->oscillateTick = 10;
 
+            _trainPhysicsSetSpeedInternal(physics, i - 1);
             return i - 1;
         }
     }
