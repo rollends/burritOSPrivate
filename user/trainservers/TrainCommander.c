@@ -45,6 +45,10 @@ static U8 parseTrainCommand(String string, U8* type, U32* info)
         
         *type = MESSAGE_TRAIN_SET_SPEED;
         *info = speed;
+
+        if(*info >= 14)
+            return 0xFF;
+
         return train;
     }
     else if( cstring[0] == 't' && cstring[1] == 'v' )
@@ -78,6 +82,10 @@ static U8 parseTrainCommand(String string, U8* type, U32* info)
         U16 id = stratoui(&cstring);
         *type = MESSAGE_TRAIN_GOTO;
         *info = group * 16 + (id-1);
+        
+        if(*info >= 80)
+            return 0xFF;
+
         return train;
     }
     else if( cstring[0] == 's' && cstring[1] == 'a' )
@@ -90,6 +98,10 @@ static U8 parseTrainCommand(String string, U8* type, U32* info)
         U16 id = stratoui(&cstring);
         *type = MESSAGE_TRAIN_STOP;
         *info = group * 16 + (id-1);
+
+        if(*info >= 80)
+            return 0xFF;
+
         return train;
     }
     else if( cstring[0] == 'd' && cstring[1] == 'a' )
@@ -102,6 +114,10 @@ static U8 parseTrainCommand(String string, U8* type, U32* info)
         
         *type = MESSAGE_TRAIN_DUMP_ACCEL;
         *info = speed;
+
+        if(*info >= 14)
+            return 0xFF;
+
         return train;
     }
     else if (cstring[0] == 'd' && cstring[1] == 'v' )

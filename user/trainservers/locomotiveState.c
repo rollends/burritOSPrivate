@@ -47,15 +47,6 @@ S32 locomotiveAllocateTrack (LocomotiveState* state, S32 distanceRequired, Queue
 {
     assert(state->sensor);
 
-    if (state->allocatedTrack.head)
-    {
-        if(((state->sensor->num / 2) == (state->allocatedTrack.head->data & 0xFF))
-        && (state->allocatedDistance >= distanceRequired) )
-        {
-//            return 0;
-        }
-    }
-
     state->distToStop = 0;
 
     TrackNode* ip = state->sensor;   

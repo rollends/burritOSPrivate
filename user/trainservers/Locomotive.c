@@ -144,7 +144,9 @@ void Locomotive(void)
                 state.gotoSensor = env.message.MessageU32.body;
                 state.shouldStop = 0;
                 assert( pathFind(state.graph, state.sensor->num, state.gotoSensor, &state.destinationPath) >= 0 );
-                locomotiveThrottle(&state, 11);
+                
+                if(!state.speed)
+                    locomotiveThrottle(&state, 11);
                 break;
             }
 
@@ -154,7 +156,9 @@ void Locomotive(void)
                 state.gotoSensor = env.message.MessageU32.body;
                 state.shouldStop = 1;
                 assert( pathFind(state.graph, state.sensor->num, state.gotoSensor, &state.destinationPath) >= 0 );
-                locomotiveThrottle(&state, 11);
+
+                if(!state.speed)
+                    locomotiveThrottle(&state, 11);
                 break;
             }
 
@@ -162,23 +166,13 @@ void Locomotive(void)
             {
                 sysReply(from.value, &env);
                 U8 throttle = env.message.MessageU8.body;
-                if (state.physics.velocity == 0)
+                if (!state.speed)
                 {
                     locomotiveThrottle(&state, throttle);   
                 }
                 else
                 {
                     state.gotoSpeed = throttle;
-                }
-
-                if (throttle != 0)
-                {
-                    if (state.isStopping == 1)
-                    {
-                        state.sensor = 0;
-                    }
-                    //stopping = 0;
-                    //stopDistance = 0;
                 }
                 break;
             }
@@ -204,6 +198,10 @@ void Locomotive(void)
                 }
                 break;
             }
+
+            default:
+                sysReply(from.value, &env);
+                break;
             }
         }
     }
