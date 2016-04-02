@@ -6,7 +6,7 @@
 #include "user/services/services.h"
 #include "user/messageTypes.h"
 
-S32 trainAllocateTrack(U8 trainId, TrackRequest* entryNode)
+S32 trainAllocateTrack(U8 trainId, ListU32Node* entryNode)
 {
     MessageEnvelope env;
     env.type = 1;
@@ -15,8 +15,8 @@ S32 trainAllocateTrack(U8 trainId, TrackRequest* entryNode)
 
     if( env.type == MESSAGE_FAILURE )
     {
-        TrackRequest* nFail = (TrackRequest*)env.message.MessageArbitrary.body;
-        return -((S32)nFail->indNode);
+        ListU32Node* nFail = (ListU32Node*)env.message.MessageArbitrary.body;
+        return -((S32)(nFail->data & 0xFF));
     }
     return 0;
 }
@@ -50,8 +50,6 @@ void NodeAttributionServer(void)
 
 void TrackManagerServer(void)
 {
-    //TrackNode graph[TRACK_MAX];
-    //init_trackb(graph);
     U8 i = 0;
     memset(ownershipGraph, 0x00, sizeof(U8) * TRACK_MAX / 2);
 
@@ -76,13 +74,15 @@ void TrackManagerServer(void)
 
         case 1:
         {
-            TrackRequest* ir = (TrackRequest*)env.message.MessageArbitrary.body;
-            TrackRequest* ir2 = ir;
+            ListU32Node* ir = (ListU32Node*)env.message.MessageArbitrary.body;
+            ListU32Node* ir2 = ir;
             
+            U8 trainId = ir2->data >> 8;
             // Pass 1 : Check if any conflicts. If any , don't allocate! 
             do
             {
-                if((ownershipGraph[ir2->indNode] != ir2->trainId) && (ownershipGraph[ir2->indNode] != 0x00))
+                U8 indNode = ir2->data & 0xFF;
+                if((ownershipGraph[indNode] != trainId) && (ownershipGraph[indNode] != 0x00))
                 {
                     // CONFLICT
                     env.type = MESSAGE_FAILURE;
@@ -91,7 +91,7 @@ void TrackManagerServer(void)
                     break;
                 }
 
-                ir2 = ir2->pForwardRequest;
+                ir2 = ir2->next;
             } while( ir2 );
             
             if( ir2 != 0 )
@@ -101,14 +101,15 @@ void TrackManagerServer(void)
 
             // Revoke any other requests.
             for(i = 0; i < (TRACK_MAX/2); ++i)
-                if( ownershipGraph[i] == ir->trainId )
+                if( ownershipGraph[i] == trainId )
                     ownershipGraph[i] = 0x00;
             
             // Pass 2 : Allocate Track
             do
             {
-                ownershipGraph[ir->indNode] = ir->trainId;
-                ir = ir->pForwardRequest;
+                U8 indNode = ir->data & 0xFF;
+                ownershipGraph[indNode] = trainId;
+                ir = ir->next;
             } while( ir );
             
             // Reply

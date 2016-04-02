@@ -25,14 +25,14 @@ S32 listU32PushBack(ListU32* list, const U32 value)
     node->data = value;
     node->next = 0;
 
-    if(!list->head)
+    if(list->head == 0)
     {
         list->head = node;
         return 0;
     }
     
     ListU32Node* tail = list->head;
-    while(!tail->next)
+    while(tail->next != 0)
     {
         tail = tail->next;
     }

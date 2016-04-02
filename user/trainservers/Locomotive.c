@@ -17,7 +17,6 @@ void Locomotive(void)
 {
 //    const char * strPredictOldTrain = "\033[s\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dkt\033[u\033[m\033[u";
 //    const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
-   const char * strPredictTrain = "[Train %2d] Predict | %c%2d | T %dkt | D %dmm";
  //   const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dkt | \033[1mDeltaT %dkt\033[m | Correction: %dkt\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
     
     assert(sysPriority() < 31);
@@ -39,7 +38,7 @@ void Locomotive(void)
  
     // Train Subtasks.
     TaskID tPhysicsTick = VAL_TO_ID(0);
-    TaskID tSensor = VAL_TO_ID(sysCreate(sysPriority() + 1, LocomotiveSensor));
+    TaskID tSensor = VAL_TO_ID(sysCreate(sysPriority() - 1, LocomotiveSensor));
 
     // Timing steps 
     TimerState tickTimer;
@@ -65,6 +64,7 @@ void Locomotive(void)
             U32 sensors[5];
             memcpy(sensors, env.message.MessageArbitrary.body, 5);
             sysReply(tSensor.value, &env);
+
             U8 sensorHit = 0xFF;
             U8 i = 0;
 
@@ -120,7 +120,7 @@ void Locomotive(void)
                 state.isLaunching = 0;
                 locomotiveThrottle(&state, 0);
 
-                TaskID tRadio = VAL_TO_ID(sysCreate(sysPriority()+1, &LocomotiveRadio));
+                TaskID tRadio = VAL_TO_ID(sysCreate(sysPriority() + 1, &LocomotiveRadio));
                 env.message.MessageU8.body = train;
                 sysSend(tRadio.value, &env, &env);
                 
@@ -128,13 +128,6 @@ void Locomotive(void)
             }
 
             locomotiveSensorUpdate(&state, sensorHit - 1, tickTimer.delta, errorTimer.delta);
-            logMessage(strPredictTrain, 
-                    state.train, 
-                    'A' + state.predictSensor[0] / 16,
-                    state.predictSensor[0] % 16 + 1, 
-                    state.predictTime[0],
-                    state.predictDistance[0]);
-
             //printf(strFoundTrain, train, sensorGroup, sensorId,
              //      errorTimer.delta/1000, deltaT,
              //      previousUpdate.time[update.sensorSkip],

@@ -11,6 +11,7 @@ typedef struct
     TaskID sSwitchServer;
 
     U8 train;
+    U8 direction;
     U32 random;
 
     // Conditions
@@ -29,7 +30,13 @@ typedef struct
     U32 shouldStop;
     S32 distanceRequired;
     U32 stopDistance;
+    U32 distToStop;
     GraphPath destinationPath;
+
+    // Allocation Features
+    ListU32Node aAllocatedTrack[25];
+    ListU32 allocatedTrack;
+    S32 allocatedDistance;
 
     // Prediction
     U32 predictSensor[4];
