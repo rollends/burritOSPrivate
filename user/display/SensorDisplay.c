@@ -1,5 +1,6 @@
 #include "user/display/SensorDisplay.h"
 #include "user/services/services.h"
+#include "user/messageTypes.h"
 
 #define SENSOR_LIST_COUNT 14
 
@@ -544,10 +545,13 @@ void SensorDisplay(void)
         }
         else
         {
-            index = env.message.MessageU8.body;
-            if (index != 0)
+            if (env.type == MESSAGE_NOTIFY)
             {
-                initSensorUi(index);
+                index = env.message.MessageU8.body;
+                if (index != 0)
+                {
+                    initSensorUi(index);
+                }
             }
         }
 

@@ -2,6 +2,7 @@
 
 #include "user/display/PerformanceDisplay.h"
 #include "user/services/services.h"
+#include "user/messageTypes.h"
 
 void PerformanceDisplayPoll()
 {
@@ -80,12 +81,15 @@ void PerformanceDisplay()
         }
         else
         {
-            index = env.message.MessageU8.body;
-            if (index != 0)
+            if (env.type == MESSAGE_NOTIFY)
             {
-                printf("\033[s\033[%d;80H\033[1mPERFORMANCE\033[m\033[u", index);
-                printf("\033[s\033[%d;2H\033[7mName\t\t\tTsk %%\tKrnl %%\tTtl %%\tTsk us\t\tKrnl us\t\tTtl us\033[m\033[u", index + 2);
+                index = env.message.MessageU8.body;
+                if (index != 0)
+                {
+                    printf("\033[s\033[%d;80H\033[1mPERFORMANCE\033[m\033[u", index);
+                    printf("\033[s\033[%d;2H\033[7mName\t\t\tTsk %%\tKrnl %%\tTtl %%\tTsk us\t\tKrnl us\t\tTtl us\033[m\033[u", index + 2);
 
+                }
             }
         }
 

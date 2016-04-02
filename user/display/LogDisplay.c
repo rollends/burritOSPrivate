@@ -1,5 +1,6 @@
 #include "user/display/SensorDisplay.h"
 #include "user/services/services.h"
+#include "user/messageTypes.h"
 
 #define LOG_LIST_COUNT 20
 static char rollingBuffer[LOG_LIST_COUNT][256];
@@ -116,10 +117,13 @@ void LogDisplay(void)
         }
         else
         {
-            index = env.message.MessageU8.body;
-            if (index != 0)
+            if (env.type == MESSAGE_NOTIFY)
             {
-                printf("\033[s\033[%d;80H\033[1mLOG\033[m\033[u", index);
+                index = env.message.MessageU8.body;
+                if (index != 0)
+                {
+                    printf("\033[s\033[%d;80H\033[1mLOG\033[m\033[u", index);
+                }
             }
         }
 

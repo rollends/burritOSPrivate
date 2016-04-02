@@ -13,6 +13,7 @@
 #include "user/display/TacoDisplay.h"
 #include "user/services/services.h"
 #include "user/trainservers/trainservices.h"
+#include "user/messageTypes.h"
 
 #define DISPLAY_TASK_COUNT 8
 
@@ -27,8 +28,21 @@ void updateSlot(U8 slot)
     if (slots[slot] >= 0)
     {
         env.message.MessageU8.body = index[slot] + 1;
+        env.type = MESSAGE_NOTIFY;
         sysSend(displayTasks[slots[slot]].value, &env, &env);
     }
+}
+
+void commandSlot(U8 slot, U8 command)
+{
+    MessageEnvelope env;
+
+    if (slots[slot] >= 0)
+    {
+        env.message.MessageU8.body = command;
+        env.type = MESSAGE_RANDOM_BYTE;
+        sysSend(displayTasks[slots[slot]].value, &env, &env);
+    }   
 }
 
 void clearSlot(U8 slot)
@@ -38,6 +52,7 @@ void clearSlot(U8 slot)
 
     MessageEnvelope env;
     env.message.MessageU8.body = 0;
+    env.type = MESSAGE_NOTIFY;
 
     if (slots[slot] >= 0)
     {
@@ -68,8 +83,10 @@ void PromptDisplay(void)
     index[0] = 3;
     index[1] = 26;
 
-    slots[0] = 2;
+    slots[0] = 4;
     slots[1] = 0;
+
+    U8 focus = 0;
 
     MessageEnvelope env;
     TaskID sender;
@@ -79,13 +96,13 @@ void PromptDisplay(void)
     printf("\033[s\033[26;1H---------------------------------------------------------------------------------------------\033[u");
     printf("\033[s\033[49;1H---------------------------------------------------------------------------------------------\033[u");
 
-
     updateSlot(0);
     updateSlot(1);
     for(;;)
     {
         char buffer[256];
         String ibuffer = buffer;
+        U8 sequence = 0;
         
         printf("\033[1;18H\033[K> ");
 
@@ -100,11 +117,35 @@ void PromptDisplay(void)
             }
             else
             {
-                printf("%c", *ibuffer);
+                if (*ibuffer == 0x5b)
+                {
+                    sequence = 1;
+                }
+                else if (*ibuffer == 0x41 && sequence == 1)
+                {
+                    sequence = 10;
+                    break;
+                }
+                else if (*ibuffer == 0x42 && sequence == 1)
+                {
+                    sequence = 11;
+                    break;
+                }
+                else if (*ibuffer != 0x1b)
+                {
+                    printf("%c", *ibuffer);
+                }
+
                 ++ibuffer;
             }
         }
-        
+
+        if (sequence > 1)
+        {
+            commandSlot(focus, sequence);
+            continue;
+        }
+
         *ibuffer = '\0';
         printf("\r\n");
 
@@ -125,6 +166,22 @@ void PromptDisplay(void)
             strskipws(&str);
             U8 train = stratoui(&str);
             trainLaunch(train);
+        }
+        else if (buffer[0] == 'f' && buffer[1] == 'u')
+        {
+            const char* str = buffer;
+            str += 2;
+            strskipws(&str);
+            U8 slot = stratoui(&str);
+
+            if (slot <= 1)
+            {
+                focus = slot;
+            }
+            else
+            {
+                printf("\033[2;19H\033[2KInvalid slot specified....");
+            }
         }
         else if (buffer[0] == 's' && buffer[1] == 'u')
         {

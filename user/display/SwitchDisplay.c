@@ -1,6 +1,7 @@
 #include "user/messageTypes.h"
 #include "user/display/SwitchDisplay.h"
 #include "user/services/services.h"
+#include "user/messageTypes.h"
 
 typedef struct
 {
@@ -261,10 +262,13 @@ void SwitchDisplay(void)
         }
         else
         {
-            index = env.message.MessageU8.body;
-            if (index != 0)
+            if (env.type == MESSAGE_NOTIFY)
             {
-                initSwitchUi(index);
+                index = env.message.MessageU8.body;
+                if (index != 0)
+                {
+                    initSwitchUi(index);
+                }
             }
         }
 

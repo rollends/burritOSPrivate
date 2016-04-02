@@ -2,6 +2,7 @@
 
 #include "user/display/ProcessDisplay.h"
 #include "user/services/services.h"
+#include "user/messageTypes.h"
 
 void ProcessDisplayPoll()
 {
@@ -57,7 +58,6 @@ void ProcessDisplay()
         {
             if (index != 0)
             {
-                U32 taskCount = sysPerfCount();
                 U32 i;
                 for (i = 0; i < 18; i++)
                 {
@@ -71,22 +71,33 @@ void ProcessDisplay()
                              sysPerfQueryLR(i + roll),
                              sysPerfQuerySP(i + roll));
                 }
-                //roll += 13;
-                if (roll >= taskCount)
-                {
-                    roll = 0;
-                }
-
             }
         }
         else
         {
-            index = env.message.MessageU8.body;
-            if (index != 0)
+            if (env.type == MESSAGE_NOTIFY)
             {
-                printf("\033[s\033[%d;80H\033[1mPROCESS STATE\033[m\033[u", index);
-                printf("\033[s\033[%d;2H\033[7mName\t\t\tTaskID\tState\tQueue\t\tPC\t\tLR\t\tSP\033[m\033[u", index + 2);
-
+                index = env.message.MessageU8.body;
+                roll = 0;
+                if (index != 0)
+                {
+                    printf("\033[s\033[%d;80H\033[1mPROCESS STATE\033[m\033[u", index);
+                    printf("\033[s\033[%d;2H\033[7mName\t\t\tTaskID\tState\tQueue\t\tPC\t\tLR\t\tSP\033[m\033[u", index + 2);
+                }
+            }
+            else if (env.type == MESSAGE_RANDOM_BYTE)
+            {
+                U8 command = env.message.MessageU8.body;
+                if (command == 10)
+                {
+                    if (roll > 0)
+                        roll--;
+                }
+                else if (command == 11)
+                {
+                    if (roll < 46)
+                        roll++;
+                }
             }
         }
 
