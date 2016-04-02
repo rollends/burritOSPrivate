@@ -2,6 +2,7 @@
 #include "kernel/kernel.h"
 
 #include "user/display/DigitalClockDisplay.h"
+#include "user/display/HydroDisplay.h"
 #include "user/display/IdlePerformanceDisplay.h"
 #include "user/display/LogDisplay.h"
 #include "user/display/OwnerDisplay.h"
@@ -16,7 +17,7 @@
 #include "user/trainservers/trainservices.h"
 #include "user/messageTypes.h"
 
-#define DISPLAY_TASK_COUNT 8
+#define DISPLAY_TASK_COUNT 9
 
 static TaskID displayTasks[DISPLAY_TASK_COUNT];
 static U8 index[2];
@@ -78,6 +79,7 @@ void PromptDisplay(void)
     displayTasks[5].value = sysCreate(10, &LogDisplay);
     displayTasks[6].value = sysCreate(10, &StackDisplay);
     displayTasks[7].value = sysCreate(20, &TacoDisplay);
+    displayTasks[8].value = sysCreate(20, &HydroDisplay);
     
     TaskID stdio = nsWhoIs(Terminal);
 
