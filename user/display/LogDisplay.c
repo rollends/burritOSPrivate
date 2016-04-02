@@ -77,11 +77,8 @@ void LogServer(void)
     for(;;)
     {
         sysReceive(&from.value, &env);
-         
         strcpy(rollingBuffer[head], (ConstString)env.message.MessageArbitrary.body);
-        
         sysReply(from.value, &env);
-
         sysSend(parent.value, &env, &env);
     }
 }

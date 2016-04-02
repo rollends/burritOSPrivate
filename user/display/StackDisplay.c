@@ -36,7 +36,7 @@ void StackDisplay()
             if (index != 0)
             {
                 U32 i;
-                for (i = 0; i < 18; i++)
+                for (i = 0; i < 15; i++)
                 {
                     U32 sp = sysPerfQuerySP(i + roll);
                     U32 sb = sysPerfQuerySB(i + roll);
@@ -51,6 +51,10 @@ void StackDisplay()
                              sysPerfQuerySI(i + roll),
                              usage);
                 }
+
+                printf("\033[s\033[%d;2H\033[2K\tFree Block Count: %d\033[u",
+                       index + 19,
+                       sysPerfStackCount());
             }
         }
         else

@@ -259,6 +259,11 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             return taskTableCount(&kernel.tasks);
         }
 
+        case SYS_CALL_PERF_STACK_ID:
+        {
+            return kernel.tasks.memoryAllocator.blockQueue.count;
+        }
+
         case SYS_CALL_PERF_SEND_ID:
         {
             TaskDescriptor* task =
