@@ -151,8 +151,15 @@ S32 locomotiveAllocateTrack (LocomotiveState* state, S32 distanceRequired, Queue
 
         ip = edge->dest;
     } while((state->shouldStop && onPath) || (distanceRequired > 0) || (sensorCount < 3) );
-    
-    state->distToStop -= state->physics.distance;
+   
+    if(onPath)
+    {
+        state->distToStop -= state->physics.distance;
+    }
+    else
+    {
+        state->distToStop = 0xFFFFF;
+    }
 
     assert(requests.head);
     S32 result = trainAllocateTrack(state->train, requests.head);
