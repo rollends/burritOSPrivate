@@ -229,7 +229,7 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             if (task->state == eZombie)
                 return 0;
 
-            return task->stack;
+            return (U32)(task->stack);
         }
 
         case SYS_CALL_PERF_COUNT_ID:
