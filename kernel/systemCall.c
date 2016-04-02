@@ -232,6 +232,28 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             return (U32)(task->stack);
         }
 
+        case SYS_CALL_PERF_QUERYSB_ID:
+        {
+            TaskDescriptor* task =
+                taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
+
+            if (task->state == eZombie)
+                return 0;
+
+            return (U32)(task->stackBase);
+        }
+
+        case SYS_CALL_PERF_QUERYSI_ID:
+        {
+            TaskDescriptor* task =
+                taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
+
+            if (task->state == eZombie)
+                return -1;
+
+            return task->stackBlock;
+        }
+
         case SYS_CALL_PERF_COUNT_ID:
         {
             return taskTableCount(&kernel.tasks);

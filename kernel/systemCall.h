@@ -28,16 +28,19 @@
       #define SYS_CALL_PERF_QUERYPC_ID    17
       #define SYS_CALL_PERF_QUERYLR_ID    18
       #define SYS_CALL_PERF_QUERYSP_ID    19
-      #define SYS_CALL_PERF_COUNT_ID      20
-      #define SYS_CALL_PERF_SEND_ID       21
+      #define SYS_CALL_PERF_QUERYSB_ID    20
+      #define SYS_CALL_PERF_QUERYSI_ID    21
+      #define SYS_CALL_PERF_COUNT_ID      22
+      #define SYS_CALL_PERF_STACK_ID      23
+      #define SYS_CALL_PERF_SEND_ID       24
 #endif
 
-#define SYS_CALL_AWAIT_ID           22
-#define SYS_CALL_READ_ID            23
-#define SYS_CALL_WRITE_ID           24
+#define SYS_CALL_AWAIT_ID           25
+#define SYS_CALL_READ_ID            26
+#define SYS_CALL_WRITE_ID           27
 
-#define SYS_CALL_ALLOC_ID           25
-#define SYS_CALL_FREE_ID            26
+#define SYS_CALL_ALLOC_ID           28
+#define SYS_CALL_FREE_ID            29
 
 #define sysExit() \
             __sysCall0((U32)SYS_CALL_EXIT_ID)
@@ -83,8 +86,14 @@
                   __sysCall1((U32)SYS_CALL_PERF_QUERYLR_ID, (U32)tid)
       #define sysPerfQuerySP(tid) \
                   __sysCall1((U32)SYS_CALL_PERF_QUERYSP_ID, (U32)tid)
+      #define sysPerfQuerySB(tid) \
+                  __sysCall1((U32)SYS_CALL_PERF_QUERYSB_ID, (U32)tid)
+      #define sysPerfQuerySI(tid) \
+                  __sysCall1((U32)SYS_CALL_PERF_QUERYSI_ID, (U32)tid)
       #define sysPerfCount() \
                   __sysCall0((U32)SYS_CALL_PERF_COUNT_ID)
+      #define sysPerfStackCount() \
+                  __sysCall0((U32)SYS_CALL_PERF_STACK_ID)
       #define sysPerfSendCount(tid) \
                   __sysCall1((U32)SYS_CALL_PERF_SEND_ID, (U32)tid)
 #endif

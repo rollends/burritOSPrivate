@@ -9,6 +9,7 @@
 #include "user/display/ProcessDisplay.h"
 #include "user/display/PromptDisplay.h"
 #include "user/display/SensorDisplay.h"
+#include "user/display/StackDisplay.h"
 #include "user/display/SwitchDisplay.h"
 #include "user/display/TacoDisplay.h"
 #include "user/services/services.h"
@@ -75,7 +76,7 @@ void PromptDisplay(void)
     displayTasks[3].value = sysCreate(5,  &PerformanceDisplay);
     displayTasks[4].value = sysCreate(0,  &ProcessDisplay);
     displayTasks[5].value = sysCreate(10, &LogDisplay);
-
+    displayTasks[6].value = sysCreate(10, &StackDisplay);
     displayTasks[7].value = sysCreate(20, &TacoDisplay);
     
     TaskID stdio = nsWhoIs(Terminal);
