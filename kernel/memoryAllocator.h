@@ -33,7 +33,6 @@ S32 memoryAllocatorInit(MemoryAllocator* alloc, U32* base);
  * Allocates a stack of a given size
  *
  * @param   alloc   The stack allocator pointer
- * @param   size    The stack size
  *
  * @return  0 (null pointer) on failure, else a memory address
  */

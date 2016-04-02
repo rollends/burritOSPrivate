@@ -20,7 +20,7 @@ void PerformanceDisplayPoll()
 void PerformanceDisplay()
 {
 #ifdef KERNEL_PERF
-    TaskID id = VAL_TO_ID(sysCreate(sysPriority()-1, &PerformanceDisplayPoll));
+    TaskID id = VAL_TO_ID(sysCreate(sysPriority(sysTid())-1, &PerformanceDisplayPoll));
 
     U8 index = 0;
     U8 roll = 0;
@@ -46,12 +46,10 @@ void PerformanceDisplay()
                     U32 uu = sysPerfQueryT(i + roll, ePerfTask);
                     U32 ku = sysPerfQueryT(i + roll, ePerfKernel);
                     U32 tu = sysPerfQueryT(i + roll, ePerfBoth);
-
-                    U32 pos = sysPerfQueryPC(i + roll);
              
                     ConstString str = (ConstString)sysName(i + roll);
 
-                    printf("\033[s\033[%d;2H%18s\t%2d.%2d\t%2d.%2d\t%2d.%2d\t%9n\t%9n\t%9n\t%x\033[u",
+                    printf("\033[s\033[%d;2H%18s\t%2d.%2d\t%2d.%2d\t%2d.%2d\t%9n\t%9n\t%9n\033[u",
                                                                        index + 3 + i,
                                                                        str,
                                                                        up / 100, up % 100,
@@ -59,8 +57,7 @@ void PerformanceDisplay()
                                                                        tp / 100, tp % 100,
                                                                        uu,
                                                                        ku,
-                                                                       tu,
-                                                                       pos);
+                                                                       tu);
                 }
 
                 U32 total = sysPerfQueryT(0, ePerfTotal);
@@ -87,7 +84,7 @@ void PerformanceDisplay()
             if (index != 0)
             {
                 printf("\033[s\033[%d;80H\033[1mPERFORMANCE\033[m\033[u", index);
-                printf("\033[s\033[%d;2H\033[7mTaskId\t\t\tTsk %%\tKrnl %%\tTtl %%\tTsk us\t\tKrnl us\t\tTtl us\t\tPC\033[m\033[u", index + 2);
+                printf("\033[s\033[%d;2H\033[7mName\t\t\tTsk %%\tKrnl %%\tTtl %%\tTsk us\t\tKrnl us\t\tTtl us\033[m\033[u", index + 2);
 
             }
         }

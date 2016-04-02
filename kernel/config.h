@@ -14,7 +14,7 @@
 #define SEND_QUEUE_LENGTH   8
 
 
-/// The memory block size in words (16,384 bytes = 16kb)
+/// The memory block size in words (16,384*4 bytes = 64kb)
 #define MEMORY_BLOCK_SIZE    16384
 
 /// The memoryblock count

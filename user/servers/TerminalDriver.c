@@ -9,9 +9,9 @@ static void TermInNotif(void);
 void TerminalDriver(void)
 {
     nsRegister(Terminal);
-    assert(sysPriority() >= 1);
-    TaskID      inputId      = { sysCreate(sysPriority() - 1, &TermInNotif) },
-                outputId     = { sysCreate(sysPriority() - 1, &TermOutNotif) };
+    assert(sysPriority(sysTid()) >= 1);
+    TaskID      inputId      = { sysCreate(sysPriority(sysTid()) - 1, &TermInNotif) },
+                outputId     = { sysCreate(sysPriority(sysTid()) - 1, &TermOutNotif) };
 
     U16 const   inputBufferLength           = 32,
                 outputBufferLength          = 4096;

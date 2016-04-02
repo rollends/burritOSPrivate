@@ -352,7 +352,7 @@ void OwnerDisplayPoll(void)
 
 void OwnerDisplay(void)
 {
-    TaskID id = VAL_TO_ID(sysCreate(sysPriority()-1, &OwnerDisplayPoll));
+    TaskID id = VAL_TO_ID(sysCreate(sysPriority(sysTid())-1, &OwnerDisplayPoll));
 
     U8 index = 0;
     initOwnerMapping();

@@ -76,7 +76,16 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
 
         case SYS_CALL_PRIORITY_ID:
         {
-            return desc->priority;
+            TaskDescriptor* task =
+                taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
+            return task->priority;
+        }
+
+        case SYS_CALL_STATE_ID:
+        {
+            TaskDescriptor* task =
+                taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
+            return task->state;
         }
 
         case SYS_CALL_SEND_ID:
@@ -198,12 +207,45 @@ U32 systemCallHandler(U32 id, U32 arg0, U32 arg1, U32 arg2)
             if (task->state == eZombie)
                 return 0;
 
+            return *(task->stack + 15);
+        }
+
+        case SYS_CALL_PERF_QUERYLR_ID:
+        {
+            TaskDescriptor* task =
+                taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
+
+            if (task->state == eZombie)
+                return 0;
+
             return *(task->stack + 1);
+        }
+
+        case SYS_CALL_PERF_QUERYSP_ID:
+        {
+            TaskDescriptor* task =
+                taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
+
+            if (task->state == eZombie)
+                return 0;
+
+            return task->stack;
         }
 
         case SYS_CALL_PERF_COUNT_ID:
         {
             return taskTableCount(&kernel.tasks);
+        }
+
+        case SYS_CALL_PERF_SEND_ID:
+        {
+            TaskDescriptor* task =
+                taskGetDescriptor(&kernel.tasks, VAL_TO_ID(arg0));
+            
+            if (task->state == eZombie)
+                return 0;
+
+            return task->sendQueue.count;
         }
 #endif
         

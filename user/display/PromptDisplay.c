@@ -6,6 +6,7 @@
 #include "user/display/LogDisplay.h"
 #include "user/display/OwnerDisplay.h"
 #include "user/display/PerformanceDisplay.h"
+#include "user/display/ProcessDisplay.h"
 #include "user/display/PromptDisplay.h"
 #include "user/display/SensorDisplay.h"
 #include "user/display/SwitchDisplay.h"
@@ -13,7 +14,9 @@
 #include "user/services/services.h"
 #include "user/trainservers/trainservices.h"
 
-static TaskID displayTasks[6];
+#define DISPLAY_TASK_COUNT 8
+
+static TaskID displayTasks[DISPLAY_TASK_COUNT];
 static U8 index[2];
 static S8 slots[2];
 
@@ -54,9 +57,11 @@ void PromptDisplay(void)
     displayTasks[0].value = sysCreate(10, &SensorDisplay);
     displayTasks[1].value = sysCreate(10, &SwitchDisplay);
     displayTasks[2].value = sysCreate(10, &OwnerDisplay);
-    displayTasks[3].value = sysCreate(4, &PerformanceDisplay);
-    displayTasks[4].value = sysCreate(10, &LogDisplay);
-    displayTasks[5].value = sysCreate(20, &TacoDisplay);
+    displayTasks[3].value = sysCreate(5,  &PerformanceDisplay);
+    displayTasks[4].value = sysCreate(0,  &ProcessDisplay);
+    displayTasks[5].value = sysCreate(10, &LogDisplay);
+
+    displayTasks[7].value = sysCreate(20, &TacoDisplay);
     
     TaskID stdio = nsWhoIs(Terminal);
 
@@ -130,14 +135,16 @@ void PromptDisplay(void)
             strskipws(&str);
             U8 display = stratoui(&str);
 
-            if (display > 5)
+            if (display >= DISPLAY_TASK_COUNT)
             {
                 printf("\033[2;19H\033[2KInvalid display specified....");
+                continue;
             }
 
             if (slot > 1)
             {
                 printf("\033[2;19H\033[2KInvalid slot specified....");
+                continue;
             }
 
             clearSlot(slot);
@@ -161,7 +168,9 @@ void PromptDisplay(void)
                 printf("\033[2;19H\033[2KThe command you sent could not be completed! Try again later...");
             }
             else
+            {
                 printf("\033[2;19H\033[2K");
+            }
         }
     }
 }

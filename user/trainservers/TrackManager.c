@@ -54,7 +54,7 @@ void TrackManagerServer(void)
     memset(ownershipGraph, 0x00, sizeof(U8) * TRACK_MAX / 2);
 
     nsRegister(TrackManager);
-    sysCreate(sysPriority() + 1, &NodeAttributionServer);
+    sysCreate(sysPriority(sysTid()) + 1, &NodeAttributionServer);
 
     for(;;)
     {

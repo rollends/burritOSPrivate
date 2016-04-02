@@ -240,7 +240,7 @@ void SwitchDisplayPoll(void)
 
 void SwitchDisplay(void)
 {
-    TaskID id = VAL_TO_ID(sysCreate(sysPriority()-1, &SwitchDisplayPoll));
+    TaskID id = VAL_TO_ID(sysCreate(sysPriority(sysTid())-1, &SwitchDisplayPoll));
 
     U8 index = 0;
     MessageEnvelope env;

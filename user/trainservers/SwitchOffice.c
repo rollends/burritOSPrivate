@@ -64,7 +64,7 @@ static void SwitchWorker(void)
 
 void SwitchExecutive(void)
 {
-    U16 priority = sysPriority();
+    U16 priority = sysPriority(sysTid());
      
     assert(priority >= 1);
 

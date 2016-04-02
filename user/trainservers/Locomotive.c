@@ -19,7 +19,7 @@ void Locomotive(void)
 //    const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
  //   const char * strFoundTrain =   "\033[s\033[45;1H\033[2KRecorded Data:\t\tTrain %2d | Location %c%2d | Time %dkt | \033[1mDeltaT %dkt\033[m | Correction: %dkt\r\n\t\t\tReal Distance: %dmm | Physics Distance: %dmm | DeltaX: %dmm                \033[u";
     
-    assert(sysPriority() < 31);
+    assert(sysPriority(sysTid()) < 31);
 
     TaskID from;
     MessageEnvelope env;
@@ -38,7 +38,7 @@ void Locomotive(void)
  
     // Train Subtasks.
     TaskID tPhysicsTick = VAL_TO_ID(0);
-    TaskID tSensor = VAL_TO_ID(sysCreate(sysPriority() - 1, LocomotiveSensor));
+    TaskID tSensor = VAL_TO_ID(sysCreate(sysPriority(sysTid()) - 1, LocomotiveSensor));
 
     // Timing steps 
     TimerState tickTimer;
@@ -120,19 +120,14 @@ void Locomotive(void)
                 state.isLaunching = 0;
                 locomotiveThrottle(&state, 0);
 
-                TaskID tRadio = VAL_TO_ID(sysCreate(sysPriority() + 1, &LocomotiveRadio));
+                TaskID tRadio = VAL_TO_ID(sysCreate(sysPriority(sysTid()) + 1, &LocomotiveRadio));
                 env.message.MessageU8.body = train;
                 sysSend(tRadio.value, &env, &env);
                 
-                tPhysicsTick = VAL_TO_ID(sysCreate(sysPriority() - 1, &PhysicsTick));
+                tPhysicsTick = VAL_TO_ID(sysCreate(sysPriority(sysTid()) - 1, &PhysicsTick));
             }
 
             locomotiveSensorUpdate(&state, sensorHit - 1, tickTimer.delta, errorTimer.delta);
-            //printf(strFoundTrain, train, sensorGroup, sensorId,
-             //      errorTimer.delta/1000, deltaT,
-             //      previousUpdate.time[update.sensorSkip],
-             //      distance, traveledDistance, deltaX,
-             //      physics.velocity);
         }
         else
         {

@@ -34,6 +34,8 @@ U32* memoryAllocatorAlloc(MemoryAllocator* alloc)
 
 S32 memoryAllocatorFree(MemoryAllocator* alloc, U32* stack)
 {
+    assert(stack != 0);
+    
     U32 id = *(++stack);
     assertOk(queueU16Push(&alloc->blockQueue, id));
     return 0;

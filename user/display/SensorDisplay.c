@@ -523,7 +523,7 @@ void SensorDisplayPoll(void)
 
 void SensorDisplay(void)
 {
-    TaskID id = VAL_TO_ID(sysCreate(sysPriority()-1, &SensorDisplayPoll));
+    TaskID id = VAL_TO_ID(sysCreate(sysPriority(sysTid())-1, &SensorDisplayPoll));
 
     U8 index = 0;
     initSensorMapping();

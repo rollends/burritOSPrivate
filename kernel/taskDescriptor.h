@@ -3,6 +3,7 @@
 
 #include "common/common.h"
 #include "kernel/config.h"
+#include "kernel/memoryAllocator.h"
 
 #define VAL_TO_ID(val)      (TaskID)((U16)(val))
 #define TASK_RETURN(desc)   desc->stack[2]
@@ -85,6 +86,12 @@ typedef struct
 {
     /// A pointer to the last element in the task's stack
     U32* stack;
+
+    /// The base stack pointer
+    U32* stackBase;
+
+    /// The stack block id
+    U16  stackBlock;
 
     /// The current state of the task
     TaskState state;

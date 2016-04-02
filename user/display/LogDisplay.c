@@ -96,7 +96,7 @@ void updateLogUi(U8 index)
 
 void LogDisplay(void)
 {
-    TaskID id = VAL_TO_ID(sysCreate(sysPriority()-1, &LogServer));
+    TaskID id = VAL_TO_ID(sysCreate(sysPriority(sysTid())-1, &LogServer));
 
     U8 index = 0;
 

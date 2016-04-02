@@ -46,6 +46,9 @@ U32* scheduler(U32* sp)
     kernel.activeTask = taskGetDescriptor(&kernel.tasks, tid);
     sp = kernel.activeTask->stack;
 
+    assert(kernel.activeTask->stackBlock ==
+           *(kernel.activeTask->stackBase + 1));
+
 ExitScheduler:
     #ifdef KERNEL_PERF
         assertOk(timerSample(TIMER_4, &kernel.perfState));

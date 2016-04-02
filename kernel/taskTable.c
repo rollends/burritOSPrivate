@@ -41,6 +41,9 @@ S32 taskTableAlloc(TaskTable* table,
     TaskDescriptor* desc = &(table->descriptors[index]);
     U32* stack = memoryAllocatorAlloc(&table->memoryAllocator);
     assert(stack != 0);
+    desc->stackBase = stack;
+    desc->stackBlock = *(stack + 1);
+
     *(stack) = entryAddr;
     *(stack-14) = exitAddr;
     *(stack-15) = 0x10;
@@ -73,12 +76,15 @@ S32 taskTableFree(TaskTable* table, const TaskID tid)
 
     queueU8Push(&(table->allocationQueue), index);
 
+    desc->stackBlock = 0;
     desc->tid.fields.generation++;
     desc->pid.value = 0;
     desc->state = eZombie;
     desc->name = "<unused>";
 
-    assertOk(memoryAllocatorFree(&table->memoryAllocator, desc->stack + 15));
+    assertOk(memoryAllocatorFree(&table->memoryAllocator, desc->stackBase));
+
+    desc->stack = desc->stackBase = 0;
 
     return 0;
 }

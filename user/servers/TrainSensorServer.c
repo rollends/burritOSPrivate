@@ -32,8 +32,8 @@ void TrainSensorServer(void)
 {
     nsRegister(TrainSensors);
 
-    assert(sysPriority() >= 1);
-    sysCreate(sysPriority()-1, &TrainSensorCourier);
+    assert(sysPriority(sysTid()) >= 1);
+    sysCreate(sysPriority(sysTid())-1, &TrainSensorCourier);
     TaskID          rcvId;
     MessageEnvelope rcvEnv;
     U32             sensorBuffer[5];
@@ -61,7 +61,7 @@ void TrainSensorServer(void)
     memset(sensorBuffer, 0, sizeof(U32)*5);
 
     U8 startupStage = 1;
-    sysCreate(sysPriority() - 1, &TrainSensorStartupDelay);
+    sysCreate(sysPriority(sysTid()) - 1, &TrainSensorStartupDelay);
    
     for(;;)
     {
