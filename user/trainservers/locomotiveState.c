@@ -135,21 +135,21 @@ S32 locomotiveAllocateTrack (LocomotiveState* state, S32 distanceRequired, Queue
         if (state->shouldStop && ip->num == state->gotoSensor)
             break;
 
-        state->distToStop += (edge->dist);
+        state->distToStop += (edge->dist - edge->dx);
 
         if (ip->type == eNodeExit) 
             break;
 
         ip = edge->dest;
-    } while((state->shouldStop && onPath) || (distanceRequired > 0) || (sensorCount < 3) );
+    } while((state->shouldStop && onPath) || (distanceRequired > 0) || (sensorCount < 3));
    
-    if(onPath)
+    if(onPath && state->shouldStop)
     {
         state->distToStop -= state->physics.distance;
     }
     else
     {
-        state->distToStop = 0xFFFFF;
+        state->distToStop = 50000; // 50m lol.
     }
 
     assert(requests.head);
@@ -231,7 +231,7 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
                         state->gotoSensor % 16 + 1);
             state->gotoSensor = 0xFF;
         }
-        else if(failedNode >= 0 && state->distanceRequired > state->allocatedDistance)
+        else if(failedNode >= 0 && state->distanceRequired > state->allocatedDistance && state->distToStop < 50000)
         {
             // STOP!
             logMessage( "[Train %d] Somehow we allocated track but not enough? Stop NOW!", 
