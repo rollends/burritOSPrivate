@@ -14,6 +14,20 @@ static void displaySpeed(U8 speed, U8 index)
         index + PROJECT_SENSOR_COUNT + 4, speed);
 }
 
+static void displaySwitch(U8 index, U8 direction)
+{
+    if (direction == 0)
+    {
+        printf("\033[s\033[%d;20H\033[2KSwitch Straight\033[u\n",
+            index + PROJECT_SENSOR_COUNT + 5);
+    }
+    else
+    {
+        printf("\033[s\033[%d;20H\033[2KSwitch Curved\033[u\n",
+            index + PROJECT_SENSOR_COUNT + 5);   
+    }
+}
+
 static U8 sensorNodes[PROJECT_SENSOR_COUNT];
 
 static void ProjectDisplayPoll(void)
@@ -60,7 +74,6 @@ static void ProjectDisplayPoll(void)
         }
     }
 }
-
 
 void ProjectDisplay()
 {
@@ -116,7 +129,7 @@ void ProjectDisplay()
             U8 command = env.message.MessageU8.body;
             MessageEnvelope env;
             env.type = MESSAGE_TRAIN_SET_SPEED;
-            
+
             if (command == 11)
             {
                 if (speed > 5)
@@ -144,10 +157,18 @@ void ProjectDisplay()
                 }
             }
 
-            env.message.MessageU8.body = speed;
-            sysSend(trainId.value, &env, &env);
-
-            displaySpeed(speed, index);
+            if (command == 12 || command == 13)
+            {
+                displaySwitch(index, command == 12 ? 0 : 1);
+                // if == 12, send straight
+                // if == 13, send curved
+            }
+            else
+            {
+                env.message.MessageU8.body = speed;
+                sysSend(trainId.value, &env, &env);
+                displaySpeed(speed, index);
+            }
         }
 
         sysReply(sender.value, &env);

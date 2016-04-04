@@ -137,6 +137,16 @@ void PromptDisplay(void)
                     sequence = 11;
                     break;
                 }
+                else if (*ibuffer == 0x43 && sequence == 1)
+                {
+                    sequence = 12;
+                    break;
+                }
+                else if (*ibuffer == 0x44 && sequence == 1)
+                {
+                    sequence = 13;
+                    break;
+                }
                 else if (*ibuffer != 0x1b)
                 {
                     printf("%c", *ibuffer);
