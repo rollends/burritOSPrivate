@@ -132,9 +132,13 @@ void PlayerLocomotive(void)
             switch(env.type)
             {
             case MESSAGE_RPS:
-                env.message.MessageArbitrary.body = (U32*)state.graph;
+            {
                 sysReply(from.value, &env);
+                state.sensor = state.sensor->reverse;
+                state.physics.distance = 0;
+                locomotiveMakePrediction(&state);
                 break;
+            }
 
             case MESSAGE_TRAIN_SET_SPEED:
             {

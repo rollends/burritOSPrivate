@@ -129,6 +129,15 @@ static U8 parseTrainCommand(String string, U8* type, U32* info)
         *type = MESSAGE_TRAIN_DUMP_VEL;
         return train; 
     }
+    else if (cstring[0] == 'r' && cstring[1] == 'm')
+    {
+        cstring += 2;
+        strskipws(&cstring);
+        U8 train = stratoui(&cstring);
+     
+        *type = MESSAGE_RPS;
+        return train;
+    }
 
     return 0xFF;
 }
