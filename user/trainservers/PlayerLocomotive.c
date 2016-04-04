@@ -36,6 +36,7 @@ void PlayerLocomotive(void)
     // Train Subtasks.
     TaskID tPhysicsTick = VAL_TO_ID(0);
     TaskID tSensor = VAL_TO_ID(sysCreate(sysPriority(sysTid()) - 1, LocomotiveSensor));
+    TaskID clock = nsWhoIs(Clock);
 
     // Timing steps 
     TimerState tickTimer;
@@ -138,15 +139,7 @@ void PlayerLocomotive(void)
             case MESSAGE_TRAIN_SET_SPEED:
             {
                 sysReply(from.value, &env);
-                U8 throttle = env.message.MessageU8.body;
-                if (!state.speed)
-                {
-                    locomotiveThrottle(&state, throttle);   
-                }
-                else
-                {
-                    state.gotoSpeed = throttle;
-                }
+                locomotiveThrottle(&state, env.message.MessageU8.body);
                 break;
             }
 
@@ -166,22 +159,24 @@ void PlayerLocomotive(void)
 
             case MESSAGE_TRAIN_REVERSE:
             {
-                sysReply(from.value, &env);
                 if (state.speed)
                 {
-                    state.gotoSpeed = 0;
+                    S32 stopDist = trainPhysicsStopDist(&state.physics);
+                    U32 ticks = trainPhysicsGetTime(&state.physics, stopDist);
+
+                    locomotiveThrottle(&state, 0);
+                    clockDelayBy(clock, ticks/10000);
                     state.isReversing = 1;
                 }
-                else
-                {
-                    MessageEnvelope env;
-                    env.type = MESSAGE_TRAIN_REVERSE;
-                    env.message.MessageU16.body = (state.train << 8) | 0x0F;
-                    sysSend(state.sTrainServer.value, &env, &env);
-                    state.sensor = state.sensor->reverse;
-                    state.physics.distance = 0;
-                    locomotiveMakePrediction(&state);
-                }
+
+                MessageEnvelope env;
+                env.type = MESSAGE_TRAIN_REVERSE;
+                env.message.MessageU16.body = (state.train << 8) | 0x0F;
+                sysSend(state.sTrainServer.value, &env, &env);
+                state.sensor = state.sensor->reverse;
+                state.physics.distance = 0;
+                locomotiveMakePrediction(&state);
+                sysReply(from.value, &env);
                 break;
             }
 
