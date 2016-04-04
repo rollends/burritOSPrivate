@@ -8,6 +8,7 @@
 #include "user/display/OwnerDisplay.h"
 #include "user/display/PerformanceDisplay.h"
 #include "user/display/ProcessDisplay.h"
+#include "user/display/ProjectDisplay.h"
 #include "user/display/PromptDisplay.h"
 #include "user/display/SensorDisplay.h"
 #include "user/display/StackDisplay.h"
@@ -17,7 +18,7 @@
 #include "user/trainservers/trainservices.h"
 #include "user/messageTypes.h"
 
-#define DISPLAY_TASK_COUNT 9
+#define DISPLAY_TASK_COUNT 10
 
 static TaskID displayTasks[DISPLAY_TASK_COUNT];
 static U8 index[2];
@@ -71,6 +72,7 @@ void PromptDisplay(void)
 {
     sysCreate(2, &IdlePerformanceDisplay);
     sysCreate(4, &DigitalClockDisplay);
+    
     displayTasks[0].value = sysCreate(10, &SensorDisplay);
     displayTasks[1].value = sysCreate(10, &SwitchDisplay);
     displayTasks[2].value = sysCreate(10, &OwnerDisplay);
@@ -78,8 +80,9 @@ void PromptDisplay(void)
     displayTasks[4].value = sysCreate(0,  &ProcessDisplay);
     displayTasks[5].value = sysCreate(10, &LogDisplay);
     displayTasks[6].value = sysCreate(10, &StackDisplay);
-    displayTasks[7].value = sysCreate(20, &TacoDisplay);
-    displayTasks[8].value = sysCreate(20, &HydroDisplay);
+    displayTasks[7].value = sysCreate(10, &ProjectDisplay);
+    displayTasks[8].value = sysCreate(20, &TacoDisplay);
+    displayTasks[9].value = sysCreate(20, &HydroDisplay);
     
     TaskID stdio = nsWhoIs(Terminal);
 
