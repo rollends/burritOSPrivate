@@ -45,17 +45,17 @@ static void SwitchWorker(void)
     
     trainSwitch(sw, request.branchId, request.direction);
 
-    if((request.branchId == 156) && (request.direction == eCurved))
+    if(request.branchId == 156)
     {
         cid = indexForBranch(switchServerGraph, 155);
-        trainSwitch(sw, 155, eStraight);
-        switches[cid] = eStraight;
+        trainSwitch(sw, 155, (request.direction == eCurved ? eStraight : eCurved));
+        switches[cid] = (request.direction == eCurved ? eStraight : eCurved);
     }
-    else if((request.branchId == 154) && (request.direction == eCurved))
+    else if(request.branchId == 154)
     {
         cid = indexForBranch(switchServerGraph, 153);
-        trainSwitch(sw, 153, eStraight);
-        switches[cid] = eStraight;
+        trainSwitch(sw, 153, (request.direction == eCurved ? eStraight : eCurved));
+        switches[cid] = (request.direction == eCurved ? eStraight : eCurved);
     }
 
     sysSend(sysPid(), &env, &env);
