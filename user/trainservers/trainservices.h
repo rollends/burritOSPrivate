@@ -16,6 +16,7 @@ typedef struct
 } SwitchRequest;
 
 void trainLaunch(U8 trainId);
+void trainPlayerLaunch(U8 trainId);
 S32 isTrainAvailable(U8 trainId);
 S32 pushTrainCommand(String string);
 S32 pollTrainCommand(U8 trainId, MessageEnvelope* env);

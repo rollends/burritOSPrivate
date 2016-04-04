@@ -25,6 +25,7 @@ typedef struct
     TrackNode* sensor;
     
     // Autopilot Features
+    U8 isPlayer;
     U32 gotoSensor;
     U32 gotoSpeed;
     U32 shouldStop;
@@ -45,6 +46,10 @@ typedef struct
 
 } LocomotiveState;
 
+void LocomotiveRadio(void);
+void LocomotiveSensor(void);
+void PhysicsTick(void);
+
 void locomotiveStep (LocomotiveState* state, U32 deltaTime);
 void locomotiveStateInit (LocomotiveState* state, U8 train);
 void locomotiveThrottle (LocomotiveState* state, U8 speed);
@@ -52,5 +57,6 @@ void locomotiveSensorUpdate (LocomotiveState* state, U32 sensorIndex, U32 deltaT
 void locomotiveMakePrediction (LocomotiveState* state);
 
 void Locomotive(void);
+void PlayerLocomotive(void);
 
 #endif

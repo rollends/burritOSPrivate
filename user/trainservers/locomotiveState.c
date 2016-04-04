@@ -191,8 +191,23 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
         {
             state->isStopping = 0;
 
-            // Safety purposes..lets just make sure we stopped
-            clockDelayBy(nsWhoIs(Clock), 200);
+            if(state->isPlayer)
+            {
+                if(state->isReversing)
+                {
+                    state->isReversing = 0;
+                    
+                    MessageEnvelope env;
+                    env.type = MESSAGE_TRAIN_REVERSE;
+                    env.message.MessageU16.body = (state->train << 8) | 0x0F;
+                    sysSend(state->sTrainServer.value, &env, &env);
+                }
+            }
+            else
+            {
+                // Safety purposes..lets just make sure we stopped
+                clockDelayBy(nsWhoIs(Clock), 200);
+            }
         }
     }
 
@@ -209,10 +224,10 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
         // Try a reallocation.
         // we already stopped, wait a random amount (doesn't matter if physics tick is delayed. calculations are 
         // not being done for the 0 speed)
-        clockDelayBy(nsWhoIs(Clock), 100 * (nextRandU32(&state->random) % 10 + 1));
+        clockDelayBy(nsWhoIs(Clock), 50 * (nextRandU32(&state->random) % 10 + 1));
         state->hasConflict = 2;
     }
-    else if (state->gotoSensor < 0xFF)
+    else if (state->isPlayer || state->gotoSensor < 0xFF)
     {
         U8 aBranchAction[16], aBranchId[16];
         QueueU8 qBranchAction, qBranchId;
@@ -246,16 +261,19 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
             // Failed allocation
             if (state->speed == 0)
             {
-                if( pathFind(state->graph, state->sensor->reverse->num, state->gotoSensor, &state->destinationPath) >= 0 )
+                if (!state->isPlayer)
                 {
-                    state->isReversing = ~state->isReversing;
-                    state->sensor = state->sensor->reverse;
-                    state->physics.distance = 0;
-                    locomotiveMakePrediction(state);
-                }
-                else
-                {
-                    pathFind(state->graph, state->sensor->num, state->gotoSensor, &state->destinationPath);
+                    if( pathFind(state->graph, state->sensor->reverse->num, state->gotoSensor, &state->destinationPath) >= 0 )
+                    {
+                        state->isReversing = ~state->isReversing;
+                        state->sensor = state->sensor->reverse;
+                        state->physics.distance = 0;
+                        locomotiveMakePrediction(state);
+                    }
+                    else
+                    {
+                        pathFind(state->graph, state->sensor->num, state->gotoSensor, &state->destinationPath);
+                    }
                 }
             }
             else
@@ -273,25 +291,31 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
             if(state->hasConflict == 2)
             {
                 state->hasConflict = 0;
-                if(state->isReversing)
+                if(!state->isPlayer)
                 {
-                    MessageEnvelope env;
-                    env.type = MESSAGE_TRAIN_REVERSE;
-                    env.message.MessageU16.body = (state->train << 8) | 0x0F;
-                    sysSend(state->sTrainServer.value, &env, &env);
-                    logMessage("[Train %d] Reversing and continuing.", state->train);
-                    clockDelayBy(clock, 25);
+                    if(state->isReversing)
+                    {
+                        MessageEnvelope env;
+                        env.type = MESSAGE_TRAIN_REVERSE;
+                        env.message.MessageU16.body = (state->train << 8) | 0x0F;
+                        sysSend(state->sTrainServer.value, &env, &env);
+                        logMessage("[Train %d] Reversing and continuing.", state->train);
+                        clockDelayBy(clock, 25);
 
-                    state->direction = ~state->direction;
+                        state->direction = ~state->direction;
+                    }
+                    else
+                    {
+                        logMessage("[Train %d] Continuing.", state->train);
+                    }
+                    state->isReversing = 0;
+                    locomotiveThrottle(state, 11);  
                 }
-                else
-                {
-                    logMessage("[Train %d] Continuing.", state->train);
-                }
-                state->isReversing = 0;
-                locomotiveThrottle(state, 11);   
             }
-            
+ 
+            if(state->isPlayer) 
+                return;
+
             while(qBranchAction.count)
             {
                 U8 action, branch;
@@ -310,6 +334,7 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
                 e.message.MessageArbitrary.body = (U32*)&req;
 
                 sysSend(state->sSwitchServer.value, &e, &e);
+
             }
         }
     }
@@ -438,28 +463,31 @@ void locomotiveSensorUpdate (LocomotiveState* state, U32 sensorIndex, U32 deltaT
         state->allocatedDistance = 0;
     }
 
-    if( !state->isStopping && (state->gotoSensor == currentSensor) )
+    if (!state->isPlayer)
     {
-        if(!state->shouldStop)
+        if( !state->isStopping && (state->gotoSensor == currentSensor) )
         {
-            locomotiveThrottle(state, state->speed);
-
-            do
+            if(!state->shouldStop)
             {
+                locomotiveThrottle(state, state->speed);
+
                 do
                 {
-                    nextRandU32(&state->random);
-                    state->gotoSensor = state->random % 80;
-                } while (state->gotoSensor == 0x01 || state->gotoSensor == 0x05 || state->gotoSensor == 0x06 ||
-                         state->gotoSensor == 0x08 || state->gotoSensor == 0x0C || state->gotoSensor == 0x0D ||
-                         state->gotoSensor == 0x0E || state->gotoSensor == 0x17 || state->gotoSensor == 0x1B ||
-                         state->gotoSensor == 0x19 || state->gotoSensor == 0x22 || state->gotoSensor == 0x27);
-            } while( pathFind(state->graph, state->sensor->num, state->gotoSensor, &state->destinationPath) < 0 );
+                    do
+                    {
+                        nextRandU32(&state->random);
+                        state->gotoSensor = state->random % 80;
+                    } while (state->gotoSensor == 0x01 || state->gotoSensor == 0x05 || state->gotoSensor == 0x06 ||
+                             state->gotoSensor == 0x08 || state->gotoSensor == 0x0C || state->gotoSensor == 0x0D ||
+                             state->gotoSensor == 0x0E || state->gotoSensor == 0x17 || state->gotoSensor == 0x1B ||
+                             state->gotoSensor == 0x19 || state->gotoSensor == 0x22 || state->gotoSensor == 0x27);
+                } while( pathFind(state->graph, state->sensor->num, state->gotoSensor, &state->destinationPath) < 0 );
+            }
         }
-    }
-    else if( state->gotoSensor < 0xFF )
-    {
-        pathFind(state->graph, state->sensor->num, state->gotoSensor, &state->destinationPath);
+        else if( state->gotoSensor < 0xFF )
+        {
+            pathFind(state->graph, state->sensor->num, state->gotoSensor, &state->destinationPath);
+        }
     }
 
     if(!isFirstTime)
@@ -509,9 +537,10 @@ void locomotiveSensorUpdate (LocomotiveState* state, U32 sensorIndex, U32 deltaT
     if (state->gotoSpeed < 14)
     {
         locomotiveThrottle(state, state->gotoSpeed);
+        if(state->gotoSpeed == 0)
+            state->isStopping = 1;
         state->gotoSpeed = 0xFF;
     }
-
 }
 
 

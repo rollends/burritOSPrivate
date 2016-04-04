@@ -9,7 +9,7 @@
 #include "user/trainservers/trainservices.h"
 #include "user/trainservers/Locomotive.h"
 
-void Locomotive(void)
+void PlayerLocomotive(void)
 {
 //    const char * strPredictOldTrain = "\033[s\033[31;7m\033[s\033[44;1H\033[2KLast Prediction:\tTrain %2d | Location %c%2d | Time %dkt\033[u\033[m\033[u";
 //    const char * strPredictClearTrain = "\033[s\033[44;1H\033[2K\033[u";
@@ -31,7 +31,8 @@ void Locomotive(void)
     // Initialize State
     LocomotiveState state;
     locomotiveStateInit(&state, train);
- 
+    state.isPlayer = 1;
+
     // Train Subtasks.
     TaskID tPhysicsTick = VAL_TO_ID(0);
     TaskID tSensor = VAL_TO_ID(sysCreate(sysPriority(sysTid()) - 1, LocomotiveSensor));
@@ -134,30 +135,6 @@ void Locomotive(void)
                 sysReply(from.value, &env);
                 break;
 
-            case MESSAGE_TRAIN_GOTO:
-            {
-                sysReply(from.value, &env);
-                state.gotoSensor = env.message.MessageU32.body;
-                state.shouldStop = 0;
-                assert( pathFind(state.graph, state.sensor->num, state.gotoSensor, &state.destinationPath) >= 0 );
-                
-                if(!state.speed)
-                    locomotiveThrottle(&state, 11);
-                break;
-            }
-
-            case MESSAGE_TRAIN_STOP:
-            {
-                sysReply(from.value, &env);
-                state.gotoSensor = env.message.MessageU32.body;
-                state.shouldStop = 1;
-                assert( pathFind(state.graph, state.sensor->num, state.gotoSensor, &state.destinationPath) >= 0 );
-
-                if(!state.speed)
-                    locomotiveThrottle(&state, 11);
-                break;
-            }
-
             case MESSAGE_TRAIN_SET_SPEED:
             {
                 sysReply(from.value, &env);
@@ -173,24 +150,20 @@ void Locomotive(void)
                 break;
             }
 
-            case MESSAGE_TRAIN_DUMP_ACCEL:
+            case MESSAGE_TRAIN_REVERSE:
             {
                 sysReply(from.value, &env);
-                U8 dump = env.message.MessageU8.body;
-                U8 i;
-                for (i = 0; i < 14; i++)
+                if (state.speed)
                 {
-                    printf("\033[s\033[%d;30H \033[2K %d \033[u", i + 9, state.physics.accelMap[dump][i]);
+                    state.gotoSpeed = 0;
+                    state.isReversing = 1;
                 }
-                break;
-            }
-            case MESSAGE_TRAIN_DUMP_VEL:
-            {
-                sysReply(from.value, &env);
-                U8 i;
-                for (i = 0; i < 14; i++)
+                else
                 {
-                    printf("\033[s\033[%d;45H \033[2K %d \033[u", i + 9, state.physics.speedMap[i]);
+                    MessageEnvelope env;
+                    env.type = MESSAGE_TRAIN_REVERSE;
+                    env.message.MessageU16.body = (state.train << 8) | 0x0F;
+                    sysSend(state.sTrainServer.value, &env, &env);
                 }
                 break;
             }
@@ -202,48 +175,3 @@ void Locomotive(void)
         }
     }
 }
-
-void LocomotiveRadio(void)
-{
-    TaskID loco; 
-    
-    MessageEnvelope env;
-    sysReceive(&loco.value, &env);
-    sysReply(loco.value, &env);
-
-    U8 train = env.message.MessageU8.body;
-    for(;;)
-    {
-        env.message.MessageU8.body = train;
-        pollTrainCommand(train, &env);
-        sysSend(loco.value, &env, &env);
-    }
-}
-
-void LocomotiveSensor(void)
-{
-    TaskID sSensors = nsWhoIs(TrainSensors);
-    TaskID tParent = VAL_TO_ID(sysPid());
-    U32 sensors[5];
-    MessageEnvelope env;
-    for(;;)
-    {
-        trainReadAllSensors(sSensors, sensors);
-        env.message.MessageArbitrary.body = sensors;
-        sysSend(tParent.value, &env, &env);
-    }
-}
-
-void PhysicsTick(void)
-{
-    MessageEnvelope env;
-    TaskID clock = nsWhoIs(Clock);
-    
-    for(;;)
-    {
-        clockDelayBy(clock, 2);
-        sysSend(sysPid(), &env, &env); 
-    }
-}
-
-

@@ -165,6 +165,14 @@ void PromptDisplay(void)
         {
             sysKill();
         }
+        else if (buffer[0] == 'l' && buffer[1] == 'g' )
+        {
+            const char* str = buffer;
+            str += 2;
+            strskipws(&str);
+            U8 train = stratoui(&str);
+            trainPlayerLaunch(train);
+        }
         else if( buffer[0] == 'l' && buffer[1] == 'a' )
         {
             const char* str = buffer;

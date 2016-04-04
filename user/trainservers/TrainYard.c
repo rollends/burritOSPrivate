@@ -41,8 +41,23 @@ void TrainYardServer(void)
             sysReply(from.value, &env);
             break;
         }
+
+        case MESSAGE_RPS:
+        {
+            sysSend(sysCreate(7, &PlayerLocomotive), &env, &env);
+            sysReply(from.value, &env);
+            break;
+        }
         }
     }
+}
+
+void trainPlayerLaunch(U8 trainId)
+{
+    MessageEnvelope env;
+    env.type = MESSAGE_RPS;
+    env.message.MessageU8.body = trainId;
+    sysSend(nsWhoIs(TrainYard).value, &env, &env);
 }
 
 void trainLaunch(U8 trainId)
