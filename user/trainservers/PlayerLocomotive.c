@@ -150,6 +150,20 @@ void PlayerLocomotive(void)
                 break;
             }
 
+            case MESSAGE_TRAIN_SWITCH_STRAIGHT:
+            {
+                state.gotoBranch = 0;
+                sysReply(from.value, &env);
+                break;
+            }
+
+            case MESSAGE_TRAIN_SWITCH_CURVED:
+            {
+                state.gotoBranch = 1;
+                sysReply(from.value, &env);
+                break;
+            }
+
             case MESSAGE_TRAIN_REVERSE:
             {
                 sysReply(from.value, &env);

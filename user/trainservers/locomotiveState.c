@@ -123,7 +123,6 @@ S32 locomotiveAllocateTrack (LocomotiveState* state, S32 distanceRequired, Queue
                 SwitchState swn = (state->gotoBranch == 0 
                     ? eStraight 
                     : eCurved);
-                state->gotoBranch = 0xFF;
                 if((distanceRequired > 0) || (sensorCount < 3))
                 {
                     if(distToTravel >= state->physics.distance)
@@ -135,6 +134,7 @@ S32 locomotiveAllocateTrack (LocomotiveState* state, S32 distanceRequired, Queue
                             assertOk(queueU8Push(qBranchId, ip->num));
                             assertOk(queueU8Push(qBranchAction, swn));
                             sw = swn;
+                            state->gotoBranch = 0xFF;
                         }
                     }
                 }
