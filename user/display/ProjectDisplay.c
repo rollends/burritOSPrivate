@@ -14,6 +14,54 @@ static void displaySpeed(U8 speed, U8 index)
         index + PROJECT_SENSOR_COUNT + 4, speed);
 }
 
+static U8 sensorNodes[PROJECT_SENSOR_COUNT];
+
+static void ProjectDisplayPoll(void)
+{
+    TaskID sensors = nsWhoIs(TrainSensors);
+    TaskID attrib = nsWhoIs(NodeAttribution);
+    TaskID parent = VAL_TO_ID(sysPid());
+
+    U16 i = 0;
+    MessageEnvelope env;
+    MessageEnvelope att;
+
+    for(;;)
+    {
+        U32 sensorValues[5];
+        trainReadAllSensors(sensors, sensorValues);
+        for(i = 1; i <= 5; ++i)
+        {
+            // Read all sensors
+            U8 c = 0;
+            U16 group = (U16)sensorValues[i-1];
+            for(c = 0; c < 16; ++c)
+            {
+                if((1 << (15-c)) & group)
+                {
+                    att.message.MessageU8.body = (i-1)*16 + c;
+                    sysSend(attrib.value, &att, &att);
+                    U8 ownerValue = att.message.MessageU8.body;
+                    
+                    if (ownerValue == 70)
+                    {
+                        U8 j = 0;
+                        for(j = 0; j < PROJECT_SENSOR_COUNT; j++)
+                        {
+                            if(sensorNodes[j] == (i-1)*16 + c)
+                            {
+                                env.message.MessageU8.body = j;
+                                sysSend(parent.value, &env, &env);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 void ProjectDisplay()
 {
     MessageEnvelope env;
@@ -22,14 +70,26 @@ void ProjectDisplay()
 
     U8 index = 0;
     U8 speed = 0;
-    U8 sensorNodes[PROJECT_SENSOR_COUNT];
+    U8 sensorsHit = PROJECT_SENSOR_COUNT;
     U32 randSeed = 0x1e4f8;
+    
+    memset(sensorNodes, 0xFF, sizeof(U8)*PROJECT_SENSOR_COUNT);
 
+    TaskID poller = VAL_TO_ID(sysCreate(sysPriority(sysTid()) - 1, &ProjectDisplayPoll));
     for(;;)
     {
         sysReceive(&sender.value, &env);
 
-        if (env.type == MESSAGE_NOTIFY)
+        if (sender.value == poller.value)
+        {
+            U8 ind = env.message.MessageU8.body;
+            sensorNodes[ind] = 0xFF;
+            printf("\033[s\033[%d;20H| OK  |\033[u",
+                    ind + index + 3);
+            sensorsHit--;
+
+        }
+        else if (env.type == MESSAGE_NOTIFY)
         {
             index = env.message.MessageU8.body;
             if (index != 0)
@@ -45,14 +105,18 @@ void ProjectDisplay()
                            sensorNodes[i] / 16 + 'A',
                            sensorNodes[i] % 16 + 1);
                 }
+                sensorsHit = PROJECT_SENSOR_COUNT;
 
                 displaySpeed(speed, index);
-                assertOk(trainWhoIs(69, &trainId));
+                assertOk(trainWhoIs(70, &trainId));
             }
         }
         else if (env.type == MESSAGE_RANDOM_BYTE)
         {
             U8 command = env.message.MessageU8.body;
+            MessageEnvelope env;
+            env.type = MESSAGE_TRAIN_SET_SPEED;
+            
             if (command == 11)
             {
                 if (speed > 5)
@@ -62,6 +126,10 @@ void ProjectDisplay()
                 else if (speed == 5)
                 {
                     speed = 0;
+                }
+                else if (speed == 0)
+                {
+                    env.type = MESSAGE_TRAIN_REVERSE;
                 }
             }
             else if (command == 10)
@@ -76,8 +144,6 @@ void ProjectDisplay()
                 }
             }
 
-            MessageEnvelope env;
-            env.type = MESSAGE_TRAIN_SET_SPEED;
             env.message.MessageU8.body = speed;
             sysSend(trainId.value, &env, &env);
 

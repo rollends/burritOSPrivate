@@ -29,7 +29,7 @@ void locomotiveStateInit (LocomotiveState* state, U8 train)
 
     state->isLaunching  = 1;
     state->sensor       = 0;
-
+    state->gotoBranch   = 0xFF;
     state->gotoSensor   = 0xFF;
     state->gotoSpeed    = 0xFF;
     state->random = (train + 1) ^ (0x1a3fb13f);
@@ -118,6 +118,27 @@ S32 locomotiveAllocateTrack (LocomotiveState* state, S32 distanceRequired, Queue
                     }
                 }
             }
+            else if (state->isPlayer && state->gotoBranch != 0xFF)
+            {
+                SwitchState swn = (state->gotoBranch == 0 
+                    ? eStraight 
+                    : eCurved);
+                state->gotoBranch = 0xFF;
+                if((distanceRequired > 0) || (sensorCount < 3))
+                {
+                    if(distToTravel >= state->physics.distance)
+                    {
+                        S32 kticks = trainPhysicsGetTime(&state->physics, distToTravel - state->physics.distance) / 1000;
+                        if ((kticks >= 400) && 
+                            ((distToTravel - state->physics.distance) >= 200))
+                        {
+                            assertOk(queueU8Push(qBranchId, ip->num));
+                            assertOk(queueU8Push(qBranchAction, swn));
+                            sw = swn;
+                        }
+                    }
+                }
+            }
             edge = &ip->edge[(sw == eCurved ? DIR_CURVED : DIR_AHEAD)];  
         }
         else if(ip->type == eNodeSensor)
@@ -201,6 +222,9 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
                     env.type = MESSAGE_TRAIN_REVERSE;
                     env.message.MessageU16.body = (state->train << 8) | 0x0F;
                     sysSend(state->sTrainServer.value, &env, &env);
+                    state->sensor = state->sensor->reverse;
+                    state->physics.distance = 0;
+                    locomotiveMakePrediction(state);
                 }
             }
             else
@@ -313,8 +337,6 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
                 }
             }
  
-            if(state->isPlayer) 
-                return;
 
             while(qBranchAction.count)
             {
@@ -335,6 +357,8 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
 
                 sysSend(state->sSwitchServer.value, &e, &e);
 
+                if(state->isPlayer) 
+                    break;
             }
         }
     }

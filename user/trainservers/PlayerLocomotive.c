@@ -164,6 +164,9 @@ void PlayerLocomotive(void)
                     env.type = MESSAGE_TRAIN_REVERSE;
                     env.message.MessageU16.body = (state.train << 8) | 0x0F;
                     sysSend(state.sTrainServer.value, &env, &env);
+                    state.sensor = state.sensor->reverse;
+                    state.physics.distance = 0;
+                    locomotiveMakePrediction(&state);
                 }
                 break;
             }

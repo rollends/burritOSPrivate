@@ -26,6 +26,7 @@ typedef struct
     
     // Autopilot Features
     U8 isPlayer;
+    U8 gotoBranch;
     U32 gotoSensor;
     U32 gotoSpeed;
     U32 shouldStop;
