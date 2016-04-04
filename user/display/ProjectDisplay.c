@@ -160,8 +160,8 @@ void ProjectDisplay()
             if (command == 12 || command == 13)
             {
                 displaySwitch(index, command == 12 ? 0 : 1);
-                // if == 12, send straight
-                // if == 13, send curved
+                env.type = (command == 12 ? MESSAGE_TRAIN_SWITCH_STRAIGHT : MESSAGE_TRAIN_SWITCH_CURVED); 
+                sysSend(trainId.value, &env, &env);
             }
             else
             {
