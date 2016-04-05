@@ -143,7 +143,10 @@ void PlayerLocomotive(void)
             case MESSAGE_TRAIN_SET_SPEED:
             {
                 sysReply(from.value, &env);
-                locomotiveThrottle(&state, env.message.MessageU8.body);
+                if(state.hasConflict == 0)
+                {
+                    locomotiveThrottle(&state, env.message.MessageU8.body);
+                }
                 break;
             }
 
@@ -180,6 +183,8 @@ void PlayerLocomotive(void)
                 state.sensor = state.sensor->reverse;
                 state.physics.distance = 0;
                 locomotiveMakePrediction(&state);
+                state.direction = ~state.direction;
+                
                 sysReply(from.value, &env);
                 break;
             }

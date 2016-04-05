@@ -96,7 +96,7 @@ S32 locomotiveAllocateTrack (LocomotiveState* state, S32 distanceRequired, Queue
                         {
                             S32 kticks = trainPhysicsGetTime(&state->physics, distToTravel - state->physics.distance) / 1000;
                             if ((kticks >= 400) && 
-                                ((distToTravel - state->physics.distance) >= 200))
+                                ((distToTravel - state->physics.distance) >= (state->direction ? 200 : 0)))
                             {
                                 assertOk(queueU8Push(qBranchId, ip->num));
                                 assertOk(queueU8Push(qBranchAction, swn));
@@ -214,6 +214,7 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
 
             if(state->isPlayer)
             {
+                clockDelayBy(nsWhoIs(Clock), 100);
                 if(state->isReversing)
                 {
                     state->isReversing = 0;
@@ -225,6 +226,7 @@ void locomotiveStep (LocomotiveState* state, U32 deltaTime)
                     state->sensor = state->sensor->reverse;
                     state->physics.distance = 0;
                     locomotiveMakePrediction(state);
+                    state->direction = ~state->direction;
                 }
             }
             else
