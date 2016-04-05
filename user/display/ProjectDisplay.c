@@ -93,7 +93,7 @@ void ProjectDisplay()
     {
         sysReceive(&sender.value, &env);
 
-        if (sender.value == poller.value)
+        if (sender.value == poller.value && sensorsHit > 0)
         {
             U8 ind = env.message.MessageU8.body;
             sensorNodes[ind] = 0xFF;
@@ -101,19 +101,34 @@ void ProjectDisplay()
                     ind + index + 3);
             sensorsHit--;
 
+            if (sensorsHit == 0)
+            {
+                printf("\033[s\033[%d;40H\033[1mYou won!!\033[m\033[u", index+10);
+            }
         }
         else if (env.type == MESSAGE_NOTIFY)
         {
             index = env.message.MessageU8.body;
             if (index != 0)
             {
-                printf("\033[s\033[%d;80H\033[1mPROJECT DISPLAY\033[m\033[u", index);
+                printf("\033[s\033[%d;80H\033[1mCONNECT THE SENSORS\033[m\033[u", index);
 
                 U8 i;
                 for (i = 0; i < PROJECT_SENSOR_COUNT; i++)
                 {
-                    sensorNodes[i] = nextRandU32(&randSeed) % 80;
-                    printf("\033[s\033[%d;20H| %c%2d |\033[u",
+                    do
+                    {
+                        sensorNodes[i] = nextRandU32(&randSeed) % 80;
+                    } while (sensorNodes[i] == 0x00 || sensorNodes[i] == 0x01 || sensorNodes[i] == 0x04 ||
+                             sensorNodes[i] == 0x05 || sensorNodes[i] == 0x06 || sensorNodes[i] == 0x07 ||
+                             sensorNodes[i] == 0x08 || sensorNodes[i] == 0x09 || sensorNodes[i] == 0x0A ||
+                             sensorNodes[i] == 0x0B || sensorNodes[i] == 0x0C || sensorNodes[i] == 0x0D ||
+                             sensorNodes[i] == 0x0E || sensorNodes[i] == 0x0F || sensorNodes[i] == 0x16 ||
+                             sensorNodes[i] == 0x17 || sensorNodes[i] == 0x18 || sensorNodes[i] == 0x19 ||
+                             sensorNodes[i] == 0x1A || sensorNodes[i] == 0x1B || sensorNodes[i] == 0x22 ||
+                             sensorNodes[i] == 0x23 || sensorNodes[i] == 0x26 || sensorNodes[i] == 0x27);
+ 
+                    printf("\033[s\033[%d;20H| \033[1m%c%2d\033[m |\033[u",
                            i + index + 3,
                            sensorNodes[i] / 16 + 'A',
                            sensorNodes[i] % 16 + 1);
