@@ -305,9 +305,7 @@ The terminal server architecture is as simple as possible. The server creates tw
 \textbf{trainGo(trainServer)} - Sends a Go to the track.\\\\
 \textbf{trainSetSpeed(trainServer, train, speed)} - Sets a train to a given speed.\\\\
 
-The input and output components of the train are implemented as one I/O server. Complexity was introduced as needed for the switches and sensors. The switches need delays of 160ms between every command. In order to implement this, we took advantage of the courier design. An independent switch server handles switch requests. This switch server creates a courier that communicates to the actual train I/O server. The trick is to implement a delay inside the courier, hiding the delay from both servers and, more importantly, from any other request that may come to the train server (set speed, reverse). This model also allows the switch server to easily determine when to send a turn-off-solenoid request; this event fires when the courier arrives at the switch server without any pending switch commands.
-
-Complexity was introduced in sensor reading for performance reasons. Since the train UART is slow, we would like to send requests for a group of sensors. Unfortunately, that means tasks would send requests for more data than they’d need. Instead we choose to have a sensor server which buffers all the sensor data as fast as it can while passing along specific sensor information when clients request it.
+The input and output components of the train are implemented as one I/O server. Complexity was introduced as needed for the sensors. This was for performance reasons. Since the train UART is slow, we would like to send requests for a group of sensors. Unfortunately, that means tasks would send requests for more data than they’d need. Instead we choose to have a sensor server which buffers all the sensor data as fast as it can while passing along specific sensor information when clients request it.
 
 Tasks will almost never directly talk to the \textit{Train Server} and instead will go through another more job specific server for the command they are sending. For example, a \textit{Train Switch Server} for throwing a switch.
 
@@ -317,7 +315,7 @@ Milestone 1 provides the ability to track the position of a single train on the 
 \subsubsection{Switch Office}
 The \textit{Switch Office} (server) maintains a calendar which, in a sense, represents temporal ownership of a given switch. The server handles allocations to throw a switch into a given state at a given time and rejects invalid allocations --- i.e. a switch that was thrown into a state by someone else in that period. In order to facilitate requests effectively, the server spawns workers that utilize the \textit{Clock Service} to throw a switch at the allocated block of time.
 
-This feature is not important for this milestone but will be necessary in future submissions.
+This feature is not important and has been deprecated for the project.
 
 \subsubsection{Train Commander}
 \label{sec:traincommander}
@@ -329,18 +327,19 @@ Every train is controlled by a single task, known as the \textit{Locomotive}, wh
 The \textit{Locomotive} creates the following subsystems:
 \begin{itemize}
     \item{ \textit{Locomotive Radio}: Courier that transfers commands from central \textit{Train Commander}. These are commands entered in the command prompt.}
-    \item{ \textit{Locomotive GPS}: A server that maintains and updates position information on the track graph using sensor reads. Two couriers facilitate communication between the \textit{Locomotive} and \textit{Locomotive GPS}. }
     \item{ \textit{Physics Tick}: A notifier that provides a reasonably reliable physics integration timestep. Used by the \textit{Locomotive} to calculate stopping distance through numerical integration of the (current) velocity. }
 \end{itemize}
 
-The reasoning behind the decision to implement the \textit{Locomotive GPS} as a server with courier-communication is non-trivial. The driving motivation lay in the guarantee that the \textit{Locomotive} never wastes time. Missing a physics tick (or delaying a physics tick) can result in inaccurate calculations. Delaying an urgent user command due to a sensor read can lead to catastrophic results. It only follows that the \textit{Locomotive} task should almost never block. This is, of course, impossible without a very extensive design since it has to send commands to the driver (which blocks temporarily). Nevertheless, we attempt to minimize time spent blocked using couriers to transfer commands and position/prediction updates.
+The current revision of the project does not attempt to break up the \textit{Locomotive} task into sub-processes. The task maintains a (large) state variable that is modified through a number of sub-operations. The operations are: time stepping, prediction, and sensor update. Sensor updating simply just updates the current sensor if it is owned by the locomotive. Prediction is usually dispatched following that, and involves caches the next possible sensors. Time stepping - the largest component - consists of stepping physics, allocating track, and avoiding trains.
+
+The reason for this change in thinking is to reduce the likelihood of races. If two processes are tracking the same train, changes in direction need to propogate effectively and on time otherwise unexpected (and incorrect) behaviour may result.
 
 \subsection{Tasks - Milestone 2}
 Milestone 2 extends from the previous milestone by adding additional functionality to the Train tasks. The major (though simple) change involved adding track ownership. All other modifications extend from track ownership by simply considering which train owns what track piece. Our policy to prevent collisions simply requires that we can calculate the stopping distance of any train and allocate track ahead. Once this requirement is met, trains (the \textit{Locomotive} task) must only work with track nodes (branches, sensors) that they own. As long as all trains follow these policies, they cannot possibly collide. It is easy to show that any operation that violates these policies will likely lead to a system failure.
 
 \subsubsection{Track Ownership}
 
-\textbf{trainAllocateTrack(train, requestList)} - Revokes any previous allocation and attempts to allocate a new set of nodes to the train. Assumes the list be a contiguous sequence of nodes in the graph. \\\\
+\textbf{trainAllocateTrack(train, requestList)} - Revokes any previous allocation and attempts to allocate a new set of nodes to the train. Assumes the list be a contiguous sequence of nodes in the graph. On failure, the previous allocation is not revoked! \\\\
 \textbf{trainWhoOwnsTrack(nodeId)} - Asks the \textit{Track Manager} which train owns the track node specified. \\\\
 
 Track ownership is stored by an independent server known as the \textit{Track Manager}. The \textit{Track Manager} does not provide any protection to prevent ownership issues (such as leap-frogging) but instead provides a framework that supports ownership policies. That is, it serves as a central location to perform and store ownership information. The server provides an interface that permits a \textit{Locomotive} to allocate a sequence of nodes (path) atomically. Any allocation is preceded by a full revocation of all nodes owned by the requestor train. This gives the \textit{Locomotive} task freedom to only consider nodes it needs instead of those that it may have used in the past. This operation is atomic with respect to the \textit{Track Manager} ensuring that all contiguous path requests will remain contiguous.
@@ -358,7 +357,12 @@ Collision avoidance simply uses track ownership, as described in the \textit{Tra
 
 The random amount is placed in order to give a chance for one train to own track in the reverse direction and reduce the chance of a long-lasting live-lock. If the train can reallocate after this time has passed, it then resumes in the same direction. Otherwise, the train will reverse and try again.
 
-Unfortunately, there are occasions in which the train loses tracking during a reversal. This bug shall be fixed in the final submission.
+\subsection{Tasks - Project}
+
+\subsubsection{Player Locomotive}
+General user code did not change substantially in the feature set. Instead, the project consisted of a significant refactoring of the \textit{Locomotive} task. Removing the \textit{Locomotive GPS} (a task that independently tracked the position of a train) simplified the code and let us refactor the \textit{Locomotive} into easy to use sub-methods.
+
+Due to this simplification of the \textit{Locomotive} task, creating a user controlled locomotive was not a significant amount of work. It simply required the creation of another whose locomotive state is modified slightly to indicate that it should not be automatically directed unless a collision is imminent. Unfortunately time did not permit fixing the bugs involved with automatic/user train-train interation. 
 
 \subsection{User Interface}
 \subsubsection{Layout and Control}
