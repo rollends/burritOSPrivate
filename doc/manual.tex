@@ -18,7 +18,7 @@ rs2dsouz@uwaterloo.ca \\
 Taylor Petrick (20413951) \\
 tpetrick@uwaterloo.ca \\}
 
-\date{\textbf{CS 452 - Real Time With Bill Cowan \\ Trains 2 Demo \\ \today}}
+\date{\textbf{CS 452 - Real Time With Bill Cowan \\ Final Project \\ \today}}
 \emergencystretch1em  %
 
 \pagestyle{myfootings}
@@ -32,11 +32,11 @@ tpetrick@uwaterloo.ca \\}
 
 
 \textbf{Noteworthy Changes}\\\\
-This submission include the neccessary user space services to complete the Trains 2 milestone, as well as a new UI management system.
+A collection of new debugging and utility system calls were added, including calls for querying the PC, LR, and stack details of running tasks.\\
 
-Track graph data, taken from the course website, was added to the project for use during path finding. A variety of new tasks were also added to perform track ownership, sensor attribution and collision avoidance.
+Several new UI tasks were added to assist with debugging system state. A \textit{Stack State} task was added to display the number of free memory blocks, and the stack usage of each task. A \textit{Process State} task was added to display the task id, state, send queue length and stack summary for each task in the system. Finally, a new logging system was added to allow tasks to log to a rolling buffer. A \textit{Log Server} display task was added that displays the contents of the buffer.\\
 
-A new user interface manager was added, and display code was refactored and moved into the \textit{./user/display/} directory.
+The project implementation was also added, including a display task to show project state. A new command, \textit{lg [id]}, was added to configure a given train for use with the project.
 
 \newpage
 \tableofcontents
@@ -47,7 +47,7 @@ A new user interface manager was added, and display code was refactored and move
 \section{Compiling and Running}
 A compiled version of our Trains 1 submission can be found in the following directory on the student environment:
 \begin{center}
-\textit{/u/cs452/tftp/ARM/tpetrick/t2.elf}\\
+\textit{/u/cs452/tftp/ARM/tpetrick/p1.elf}\\
 \textit{md5 hash: ?}
 \end{center}
 The source code for our submission has been shared with the CS 452 TA via the UW GitLab, and can be accessed at the following URL:
@@ -57,18 +57,18 @@ The source code for our submission has been shared with the CS 452 TA via the UW
 \end{center}
 Additionally, the course code can also be downloaded as an archive from Taylor’s personal web server:
 \begin{center}
-\url{https://www.taylorpetrick.com/cs452/t2.tar.gz}\\
+\url{https://www.taylorpetrick.com/cs452/p1.tar.gz}\\
 \textit{md5 hash: ?}
 \end{center}
 Both source code locations contain the files listed in the File Listings section of this report.
 
-To compile the source code, simply run \textit{make} in the top level source directory. This will produce the binary file \textit{/bin/t2.elf}, which should be identical to the elf file listed above. Running \textit{make clean} will remove all build output files, and \textit{make doc} will generate documentation from the source files if Doxygen is installed on the system.
+To compile the source code, simply run \textit{make} in the top level source directory. This will produce the binary file \textit{/bin/p1.elf}, which should be identical to the elf file listed above. Running \textit{make clean} will remove all build output files, and \textit{make doc} will generate documentation from the source files if Doxygen is installed on the system.
 
 By default, code is built using a unity build technique. The makefile runs \textit{cat} on all of the source files to produce a single source file, which is then built with GCC. This can be disabled by passing \textit{UNITY=0} when running \textit{make}.
 
 The file can be loaded and run on the TS7200 board with the following Redboot commands:
 
-\textit{\textgreater load -b 0x50000 -h 10.15.167.5 /u/cs452/tftp/ARM/tpetrick/t2.elf}\\
+\textit{\textgreater load -b 0x50000 -h 10.15.167.5 /u/cs452/tftp/ARM/tpetrick/p1.elf}\\
 \textit{\textgreater go}\\\\
 
 \textbf{CAUTION:}  The load address has changed since our past submissions. We no longer use the default address of \textit{0x218000}, and require that code is loaded at \textit{0x50000} instead. This should be handled automatically by the linker script and \textit{.elf} file, however it may be necessary to specify the \textit{-b} parameter when loading to Redboot.
@@ -186,8 +186,14 @@ The \textit{System State} calls are used to monitor the state of the kernel. Cur
 \textbf{U16 = sysCreate(priority, entry\_point)} - Creates a new task with a given priority and code entry point. The new task's id is returned.\\\\
 \textbf{char* = sysName(tid)} - Returns a pointer to the string name of a given task.\\\\
 \textbf{U16 = sysTid(void)} - Returns the id of the current task.\\\\
-\textbf{U16 = sysPid(void)} - Returns the id of the current task's parent.\\\\
-\textbf{U8 = sysPriority(void)} - Returns the priority of the current task.
+\textbf{U16 = sysPid(void)} - Returns the id of the current task's parent.
+
+\subsection{Task State}
+
+\textit{Task State} system calls return state information about tasks in the systems.
+
+\textbf{U8 = sysPriority(tid)} - Returns the priority of a given task.\\\\
+\textbf{U8 = sysState(tid)} - Returns the state of a given task.
 
 \subsection{Messaging}
 
@@ -202,9 +208,16 @@ The \textit{System State} calls are used to monitor the state of the kernel. Cur
 The \textit{Performance} calls are used to monitor system performance. See \textbf{Section 4.6} for details on performance monitoring.
 
 \textbf{sysPerfReset(void)} - Resets performance tracking on all tasks.\\\\
-\textbf{sysPerfQueryP(tid, mode)} - Queries performance of task for a given mode, as a percentage of total runtime.\\\\
-\textbf{sysPerfQueryT(tid, mode)} - Queries performance of task for a given mode, as an absolute time in microseconds.\\\\
-\textbf{sysPerfCount(void)} - Queries the number of tasks currently running.
+\textbf{U32 = sysPerfQueryP(tid, mode)} - Queries performance of task for a given mode, as a percentage of total runtime.\\\\
+\textbf{U32 = sysPerfQueryT(tid, mode)} - Queries performance of task for a given mode, as an absolute time in microseconds.\\\\
+\textbf{U32 = sysPerfQueryPC(tid)} - Returns the program counter of a given task.\\\\
+\textbf{U32 = sysPerfQueryLR(tid)} - Returns the link register of a given task.\\\\
+\textbf{U32 = sysPerfQuerySP(tid)} - Returns the current stack pointer of a given task.\\\\
+\textbf{U32 = sysPerfQuerySB(tid)} - Returns the base stack pointer of a given task.\\\\
+\textbf{U32 = sysPerfQuerySI(tid)} - Returns the stack block index of task.\\\\
+\textbf{U8 = sysPerfCount(void)} - Queries the number of tasks currently running. \\\\
+\textbf{U16 = sysPerfStackCount(void)} - Queries the number of available stack blocks in the system. \\\\
+\textbf{U8 = sysPerfSendCount(tid)} - Queries the number of messages in a given tasks send queue.
 
 \subsection{Event Handling and I/O}
 
@@ -379,11 +392,15 @@ UI task must provide their own mechanism for determining when to redraw/refresh 
 
 A collection of display tasks are included the system, primarily for debugging train and track state. The tasks and their IDs are as follows:
 \begin{verbatim}
-Sensor Display      0
-Switch Display      1
-Ownership Display   2
-Performance Summary 3
-Taco Logo           4
+Sensor Display          0
+Switch Display          1
+Ownership Display       2
+Performance Summary     3
+Process Summary         4
+Log Server              5
+Stack Summary           6
+Project UI              7
+Taco Logo               8
 \end{verbatim}
 \subsubsection{Sensor Display}
 
@@ -454,6 +471,28 @@ The ownership process holds a read-only pointer to the main ownership graph, as 
 
 The performance display shows the performance of each task in the system, updated at a 2.5 second refresh rate. The output of the task is the same as the example discussed in \textbf{Section 3.6}. It is intended to be used in conjunction with the idle task performance to debug infinite loops or excessive computation in user space tasks.
 
+\subsubsection{Process Summary}
+
+The process display task shows various information about all of the tasks in the system. This includes the name, id, send queue length, and various register values like the PC, LR and SP. It also lists the state of the process, such as Ready or SendBlocked. To make sure the process summary is able to reflect the system state as best as possible, it runs at the highest priority level. This causes it to take up a larger portion of CPU time than most processes - it takes between ten and fifteen percent when attached to a UI slot.
+
+The process display can be scrolled up and down using the arrow keys, provided the UI slot it is displayed in has focus.
+
+\subsubsection{Log Server}
+
+The log server display task shows a rolling buffer of log messages. Each message has a timestamp attached to it that shows the time the message was received. The \textit{logMessage(fmt, ...)} utility method can be used to write a formatted message to the log server.
+
+\subsubsection{Stack Summary}
+
+The stack summary displays information about the stack blocks used by tasks, and reports the total number of blocks still remaining in the system. Since the blocks can also be acquired using \textit{sysAlloc}, the total block count is useful for debugging.
+
+The task displays the current stack pointer, base stack pointer, stack usage and stack block if for each of the running tasks in the system. The usage is computed from the SP and BSP, and will therefore be incorrect if the task writes to arbitrary locations on its stack.
+
+Stack overflows can easily be found using the stack display, since all memory blocks are 64kB. Additionally, the reported stack block id will not match the expected stack block id, since the id is used as canary at the base of each stack.
+
+\subsubsection{Project UI}
+
+The project UI displays the game the player has to complete. The game involves manually driving a train around the track using the arrow keys to control speed and branch direction. The goal is to hit all of the sensors in the random list on the screen.
+
 \subsubsection{Taco Logo}
 
 The taco logo is a useless UI task that simple prints a happy taco ASCII art to the screen.
@@ -478,15 +517,18 @@ q                   Cleanly shutdown the system
 k                   Forcibly kill the system
 
 la [id]             Launch train #id for calibration
-tr [id][speed]      Set train #id to a target speed
+lg [id]             Launch train #id for player control (final project)
+tr [id][speed]      Set train #id to a target #speed
 rv [id]             Reverse train #id
+rm [id]             Flip train direction without sending rv
 
-gt [id][sensor]     Drive train #id to the sensor
-sa [id][sensor]     Drive train #id to the sensor and stop
+gt [id][sensor]     Drive train #id to #sensor
+sa [id][sensor]     Drive train #id to #sensor and stop
 
 sw [id][C|S]        Set branch #id to curved or straight
 
-su [slot][id]       Set UI slot to use display task #id
+su [slot][id]       Set UI #slot to use display task #id
+fu [slot]           Set UI #slot to received arrow key input focus
 \end{verbatim}
 
 \section{Train Modeling}
@@ -543,7 +585,7 @@ The following listing contains the name and hash of all of the source files in t
 dbc1e1f655ec2eb5634d253a4e225901  common/error.h
 2d19eb27d9841b9d69477d156070414d  common/heap.c
 4599b661bc0cd5b2794afbd41e1186c7  common/heap.h
-53a48b4ad52229bbb8f8ec71a8d491b5  common/list.c
+21fb2c280e2237066cc8bef5d08c7a03  common/list.c
 0b6cd0ee4dab7252e4fc056e9d4cb8d3  common/list.h
 0a75e9ea015602357e05992d269d1cae  common/memcpy.h
 4ad96714a59e326dd08f49fa87ac8edf  common/memcpy.s
@@ -567,35 +609,34 @@ a7d11483d9452d5d8f9f784bb26e8209  common/types.h
 c71fbd7b3723c4bf4d0d104902b01487  hardware/memory.h
 6c5930b3f894fe526814ea0ce188ed4e  hardware/timer.h
 d5f38025b527f774835847d5f79ad85b  hardware/uart.h
-
 87306d757b7eda3d725cad19dc6bf919  hardware/ts7200/interrupt.c
 4b8ad1779a2c1b2c7c767a76d067e160  hardware/ts7200/start.s
 20421e2c6a4e0d22bce2d9c812680b34  hardware/ts7200/timer.c
 6055b18f1d4b2f2d6a200ff8cbcbeebf  hardware/ts7200/ts7200.h
-4e90444ef3fbdfb1078e8682dee3084e  hardware/ts7200/uart.c
 ac2247029448237de4c4590f27698a85  hardware/ts7200/vector.s
+4e90444ef3fbdfb1078e8682dee3084e  hardware/ts7200/uart.c
 
 b9ccd6cc031e6d339d7bc7bd18f7f895  kernel/assert.c
 caac750f901b606a3b2f951f3483d091  kernel/assert.h
+4a430452391bb23bc62269efbb62e01f  kernel/config.h
 74845107469cf4a11eb30e63ccedb531  kernel/bootstrap.c
-60aed85beecdff6275fe0e71a48c6df2  kernel/config.h
 59e283c66c5a66e627e33f3ef39a6f58  kernel/event.c
 26f5ecdbe74ff55fddc97b6127cee60e  kernel/event.h
 027b87b518651720441978c985804ce4  kernel/kernel.h
 8169ff0345038b3337e244491a014d07  kernel/kernelData.c
 f6c4b6303c324dcfecf1e6333b7ba02c  kernel/kernelData.h
-c1b8f89e01d797c5b606726807ac6e4b  kernel/kernelUtils.s
 f8a30fe67fb0ab3ae7905cf429aaf5a0  kernel/kernelUtils.h
-c7abe47341dd218cace01e289281a9fe  kernel/memoryAllocator.c
-4b77d920ca414341407ba26669285f02  kernel/memoryAllocator.h
+c1b8f89e01d797c5b606726807ac6e4b  kernel/kernelUtils.s
+90c960ca087068eee38a437ca5bcade2  kernel/memoryAllocator.c
+ce2a6a86fe62bb049d321d96d23d1f79  kernel/memoryAllocator.h
 269831580f0cb96b0128c175c677d590  kernel/message.h
 7617ed11988f83aa8440410517efd7f7  kernel/print.c
 6a21b1817843435936a212ce8f594f85  kernel/print.h
-d896e422a71fd553fc0b695a0f75cf25  kernel/scheduler.c
-80542279eecadf24ab1e286c34f90c92  kernel/systemCall.c
-5ee47548f3c85994e65f7fa60d72d60a  kernel/systemCall.h
-e1f4e45f2752c7d539018a020a6ba8e6  kernel/taskDescriptor.h
-523c980a823bb2647fa8e24856ad8119  kernel/taskTable.c
+a3481d9f6370bbb1f2697f969a8738c0  kernel/scheduler.c
+e5a0f5cd21d6a62a1f5eb64d6731cb0a  kernel/systemCall.c
+0369200d137568c474242afc9ae8325e  kernel/systemCall.h
+a3fbd89f67cd9802ec0ee5d04234b0fd  kernel/taskDescriptor.h
+adb7b4908e283ef35ee8cbb1a5dd40ad  kernel/taskTable.c
 e46bc116c4450befc0c0260ca9a7b0d2  kernel/taskTable.h
 
 80a2f12e7e8b279566bcb5aa9604288e  trains/train58.h
@@ -603,76 +644,89 @@ e46bc116c4450befc0c0260ca9a7b0d2  kernel/taskTable.h
 0d838afb51970bbd49f6e934eb8a581b  trains/train64.h
 fdd798504c0c09e1690671c7fc655142  trains/train68.h
 f052165bf1d5c1e8873f1c219f7e967c  trains/train69.h
+f38476700a9274f63e197ac17de4ae04  trains/train70.h
 35cb22a2ad726e5826e1f9939098f967  trains/trains.h
 7db7a1caaeb62879ba800f5fda5f3269  trains/trackData.c
 5a817f17542a9ca277a0e38779eff468  trains/trackData.h
 ba00aee82786403eb2c0d44e03a0cb47  trains/trackGraph.c
 874ca00be75e9da06367e24843222759  trains/trackGraph.h
-3f14531d9bf03b41d7709500d4aae942  trains/trainInit.h
+d714607ad4bf6ec1a6916ae0d12805d7  trains/trainInit.h
 1161c63d1c0f24c6f1b4c173d39d750d  trains/trainMath.h
 a51fee6be16c32e8298b2e8d6739cd3f  trains/trackNode.h
-0477ae09fa076576861e3eb4dbaf9418  trains/trainPhysics.c
-49d2fd40778d63d150dd6d43fff7ce04  trains/trainPhysics.h
+5aade30da22831a74472ccc885dd5285  trains/trainPhysics.c
+a27b71aaf12f636e641b2725814dd006  trains/trainPhysics.h
 
+846c211c0c81867b597479a31249c940  user/messageTypes.h
 a01d7f95458f44436a20e7ffc626b890  user/IdleTask.c
 e7ff85ba8f14ce99e0229fff7dd87d52  user/IdleTask.h
-082374ab9378b4a318dc5ba1d27096de  user/InitialTask.c
+7e54d15044b007076d6dfff7520ebf12  user/InitialTask.c
 63bb9b7bc6d198c30c328b2f2e0850f8  user/InitialTask.h
-d064dd6e925384de97a94fd3f45a9fcb  user/messageTypes.h
-e68473801de983e536d60334df591eed  user/Locomotive.c
-a833fcdae45fb79e86cbfe8aa52b4553  user/Locomotive.h
 
-f9294be93d928ddce26df31ae3bdb363  user/display/DigitalClockDisplay.c
+8efa0d5f277ba74a8e8d38c0cb7918ba  user/display/DigitalClockDisplay.c
 8b58af96d06a52275d686e4f172ff3f6  user/display/DigitalClockDisplay.h
+9b2a9792b29d4263af112239b8812d94  user/display/HydroDisplay.c
+782bbd0bf5431fe3d85dcc6de7d7cb34  user/display/HydroDisplay.h
 113e3b392cce650717fd3e628859a81d  user/display/IdlePerformanceDisplay.c
 821497be16c6603ca5787db3c01c2417  user/display/IdlePerformanceDisplay.h
+002c280d3f0380b0a326be483632f44c  user/display/LogDisplay.c
+8fd9d818e9059d91bb4a02f915e4a2c7  user/display/LogDisplay.h
+4f4a4cc9af1a84d48304c1dbe0a09b24  user/display/OwnerDisplay.c
 aec4776c794cac90c28b22c8d7f8bbf6  user/display/OwnerDisplay.h
-352f7ad9efcb9c68e69c29ccfd2e7c1e  user/display/OwnerDisplay.c
-7956317e33a4c00896fe77516fadf99b  user/display/PerformanceDisplay.c
+4c30b858d97746fbeabb5856230f4360  user/display/PerformanceDisplay.c
 046f035fbbd7081ce01790317e495379  user/display/PerformanceDisplay.h
-4be6cf13b6f2c96dc2bc387ad9ae0815  user/display/PromptDisplay.c
+03c0ca956a468672136d1bdfa26010eb  user/display/ProcessDisplay.c
+dfdac70e7d826b7e2150e5ee9b2f6917  user/display/ProcessDisplay.h
+3e5ddd3ba389e6be396645e95005de3d  user/display/ProjectDisplay.c
+0392d45ae772bcd52b6d9d47ea276149  user/display/ProjectDisplay.h
+2916c957e092265cab94b96657194121  user/display/PromptDisplay.c
 886ba450f91dfc7e80becb1a71d208cf  user/display/PromptDisplay.h
-21323d6014461243aed84d074d29a3fb  user/display/SensorDisplay.c
+85fe1774ce5d3ee516d523081c7bc848  user/display/SensorDisplay.c
 f720cb5f7c54893a176e1ffb53a53845  user/display/SensorDisplay.h
-7c2b30e0ab3e6d53a97db217700780ee  user/display/SwitchDisplay.c
+662e5706298c19a0d1f83e50927343c4  user/display/StackDisplay.c
+75d3a8ec12b8f8b912db9e2ff9954bcf  user/display/StackDisplay.h
+8650a1a7feea4382d6c781481dbdfee5  user/display/SwitchDisplay.c
 ed96aad50758f00249b6acc3ed6010b2  user/display/SwitchDisplay.h
-eae13b64433c0e191fb92e7ef6033a07  user/display/TacoDisplay.c
+9b6c7a3066eebee04925ed99b49a1c54  user/display/TacoDisplay.c
 d98a03a75c12e9db847fe90204ef14c4  user/display/TacoDisplay.h
 
 1c77c18014d4834bf7d8cc1e110f3639  user/servers/ClockNotifier.c
 fda7de6c69066a709f71851d409038c8  user/servers/ClockNotifier.h
-17927bdd3663deee85ddb9224d147384  user/servers/ClockServer.c
+93ed2a02895f1d29dab0196a920fd51f  user/servers/ClockServer.c
 368242d16e123c6910bce9bbd9be9cd0  user/servers/ClockServer.h
 5ce850a0ca90fbba0277955dfc8d74db  user/servers/NameServer.c
 7c8d6a256a3bd5ee748c79806a3e2225  user/servers/NameServer.h
-a172fa9d55a825ef2dfa891b91279ec5  user/servers/TrainDriver.c
-b1228054cb0be753d947d59480718fa5  user/servers/TrainDriver.h
-7ce679bd48689b913805726b327d8d4e  user/servers/TerminalDriver.c
+837561ccb4cf9e92498560553dc02e8c  user/servers/TerminalDriver.c
 6fd529e84ccf8f4264e0c9d22870e626  user/servers/TerminalDriver.h
-5eacdcdff21ef6905c5936b6d946d105  user/servers/TrainSensorServer.c
-a07aac2ee986a67505582d1248c13e9c  user/servers/TrainSwitchServer.c
+27bcb2dece95d683ec269f593e25d7e2  user/servers/TrainDriver.c
+b1228054cb0be753d947d59480718fa5  user/servers/TrainDriver.h
+748bca682d4ef266161f9193821f8c08  user/servers/TrainSensorServer.c
+4187f9f4987b2058fb8d86696503c6ed  user/servers/TrainSwitchServer.c
 
-db36bdd1dc6ef57eb26049aa6fe1e45a  user/services/clockService.h
 c56436accee020788546e56ff0a8cc32  user/services/clockService.c
+db36bdd1dc6ef57eb26049aa6fe1e45a  user/services/clockService.h
 b1d37cb42c79cdaa0b5728477f5dad9b  user/services/nameService.c
-5e7e5d08fc2b22e0ba0cbcdf1c7a1ee0  user/services/nameService.h
+f4e8a3efb3776eb335448bd66ab39c26  user/services/nameService.h
 cbb0a6db7a3fa6c7758e2907aa62e831  user/services/services.c
 9abbea9cf81b40755d6176a08bb9cc73  user/services/services.h
-7f1328e84e61f4d301cd6c344b500aa2  user/services/terminal.c
-bdf4cdc781bc41b9684787c8fa4b7ad3  user/services/terminal.h
+1e6b2ef9fdfc03566fed88f76a8bba03  user/services/terminal.c
+4151fe7addc8b8f120cee58f886832d2  user/services/terminal.h
 e56c99c4d12c2d3323a2189f5a28d9ab  user/services/trainCommand.c
 396ee7e3ab6ac2f220e0fda6f4432d81  user/services/trainCommand.h
 
 7134217e5a46d741e7510c5b49fc97f7  user/trainservers/trains.c
 27f1ceba9fd6a96ee341608130834ed2  user/trainservers/trainservers.h
-b1fef31c4c71d8d4ec451cf3bbf1d141  user/trainservers/trainservices.h
-de6c2eb8299d2cf9c5cdde78d714bf0b  user/trainservers/SwitchOffice.c
+0585a41c4f2266581df0a7361f44c314  user/trainservers/trainservices.h
+eecfde480a70358c86d15715978443f0  user/trainservers/Locomotive.c
+3702aae0ac910f3914e83e7487f3fa60  user/trainservers/Locomotive.h
+1d63eea78916bcf599efca0c38799f7a  user/trainservers/locomotiveState.c
+177a4c766b08dfefdbff1552a707fc91  user/trainservers/PlayerLocomotive.c
+bab56d41af31194bef8696683f95fc85  user/trainservers/SwitchOffice.c
 d831166af2f3ddc79d042e05fc67992e  user/trainservers/SwitchOffice.h
-e8a06c97f7c370dd3b8b8e0bce7a202b  user/trainservers/TrainCommander.c
+7d3e1af21999ceafc802808348da720e  user/trainservers/TrainCommander.c
 7a35d1a942d01548f0074a8bccab2a9a  user/trainservers/TrainCommander.h
-609c2a14ff539d4c5f60e174ec142ab3  user/trainservers/TrackManager.c
-a0d9ba883788bfe3e888e46171b9e58e  user/trainservers/TrackManager.h
-b98e1c08d16711687ba827b199b77eba  user/trainservers/TrainYard.c
+874d89e65f3e063fbee15c79ed106c4c  user/trainservers/TrainYard.c
 94b7fa2046faaba2d46baa3fbf5edcd7  user/trainservers/TrainYard.h
+08a2a728a2f46d014ab93f971c230fa2  user/trainservers/TrackManager.c
+a0d9ba883788bfe3e888e46171b9e58e  user/trainservers/TrackManager.h
 \end{verbatim}
 \end{document}
