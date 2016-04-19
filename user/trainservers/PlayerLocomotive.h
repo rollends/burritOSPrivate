@@ -1,5 +1,5 @@
-#ifndef LOCOMOTIVE_H
-#define LOCOMOTIVE_H
+#ifndef PLAYER_LOCOMOTIVE_H
+#define PLAYER_LOCOMOTIVE_H
 
 #include "trains/trains.h"
 
@@ -51,13 +51,13 @@ void LocomotiveRadio(void);
 void LocomotiveSensor(void);
 void PhysicsTick(void);
 
-void locomotiveStep (LocomotiveState* state, U32 deltaTime);
-void locomotiveStateInit (LocomotiveState* state, U8 train);
-void locomotiveThrottle (LocomotiveState* state, U8 speed);
-void locomotiveSensorUpdate (LocomotiveState* state, U32 sensorIndex, U32 deltaTime, U32 errorDelta);
-void locomotiveMakePrediction (LocomotiveState* state);
-
-void Locomotive(void);
 void PlayerLocomotive(void);
+
+void locomotiveThrottle (LocomotiveState* state, U8 speed);
+void locomotiveStateInit (LocomotiveState* state, U8 train);
+S32 locomotiveAllocateTrack (LocomotiveState* state, S32 distanceRequired, QueueU8* qBranchId, QueueU8* qBranchAction);
+void locomotiveStep (LocomotiveState* state, U32 deltaTime);
+void locomotiveMakePrediction (LocomotiveState* state);
+void locomotiveSensorUpdate (LocomotiveState* state, U32 sensorIndex, U32 deltaTime, U32 errorDelta);
 
 #endif

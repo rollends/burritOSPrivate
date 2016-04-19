@@ -6,7 +6,51 @@
 #include "user/messageTypes.h"
 #include "user/services/services.h"
 #include "user/trainservers/trainservices.h"
-#include "user/trainservers/Locomotive.h"
+#include "user/trainservers/PlayerLocomotive.h"
+
+void LocomotiveRadio(void)
+{
+    TaskID loco; 
+    
+    MessageEnvelope env;
+    sysReceive(&loco.value, &env);
+    sysReply(loco.value, &env);
+
+    U8 train = env.message.MessageU8.body;
+    for(;;)
+    {
+        env.message.MessageU8.body = train;
+        pollTrainCommand(train, &env);
+        sysSend(loco.value, &env, &env);
+    }
+}
+
+void LocomotiveSensor(void)
+{
+    TaskID sSensors = nsWhoIs(TrainSensors);
+    TaskID tParent = VAL_TO_ID(sysPid());
+    U32 sensors[5];
+    MessageEnvelope env;
+    for(;;)
+    {
+        trainReadAllSensors(sSensors, sensors);
+        env.message.MessageArbitrary.body = sensors;
+        sysSend(tParent.value, &env, &env);
+    }
+}
+
+void PhysicsTick(void)
+{
+    MessageEnvelope env;
+    TaskID clock = nsWhoIs(Clock);
+    
+    for(;;)
+    {
+        clockDelayBy(clock, 2);
+        sysSend(sysPid(), &env, &env); 
+    }
+}
+
 
 void locomotiveThrottle (LocomotiveState* state, U8 speed)
 {

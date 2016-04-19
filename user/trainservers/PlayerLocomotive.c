@@ -7,7 +7,7 @@
 #include "user/messageTypes.h"
 #include "user/services/services.h"
 #include "user/trainservers/trainservices.h"
-#include "user/trainservers/Locomotive.h"
+#include "user/trainservers/PlayerLocomotive.h"
 
 void PlayerLocomotive(void)
 {
